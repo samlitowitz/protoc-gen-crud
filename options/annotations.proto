@@ -1,0 +1,34 @@
+syntax = "proto3";
+
+package protoc_gen_crud.options;
+
+import "google/protobuf/descriptor.proto";
+import "protoc-gen-crud/options/crud.proto";
+
+option go_package = "github.com/samlitowitz/protoc-gen-crud";
+
+extend google.protobuf.FileOptions {
+  // All IDs are the same, as assigned. It is okay that they are the same, as they extend
+  // different descriptor messages.
+  FileOptions crud_file_options = 65535;
+}
+extend google.protobuf.MethodOptions {
+  // All IDs are the same, as assigned. It is okay that they are the same, as they extend
+  // different descriptor messages.
+  MethodOptions crud_method_options= 65535;
+}
+extend google.protobuf.MessageOptions {
+  // All IDs are the same, as assigned. It is okay that they are the same, as they extend
+  // different descriptor messages.
+  MessageOptions crud_message_options = 65535;
+}
+extend google.protobuf.ServiceOptions {
+  // All IDs are the same, as assigned. It is okay that they are the same, as they extend
+  // different descriptor messages.
+  ServiceOptions crud_service_options = 65535;
+}
+extend google.protobuf.FieldOptions {
+  // All IDs are the same, as assigned. It is okay that they are the same, as they extend
+  // different descriptor messages.
+  FieldOptions crud_field_options = 65535;
+}
