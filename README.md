@@ -1,6 +1,9 @@
 # Required annotation in protobuf definitions
 
 1. unique identifier(s)
+    1. auto-generated?
+        1. In-memory needs to specify methodology (uuid, sequential?)
+1. Every value is set/updated every time OR field mask support for partial updates/creates?
 2. Nullable?
     1. Default no
     1. Implement later, shouldn't be using null anyway

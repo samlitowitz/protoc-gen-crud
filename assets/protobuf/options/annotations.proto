@@ -3,9 +3,9 @@ syntax = "proto3";
 package protoc_gen_crud.options;
 
 import "google/protobuf/descriptor.proto";
-import "protoc-gen-crud/options/crud.proto";
+import "protoc-gen-crud/assets/protobuf/options/crud.proto";
 
-option go_package = "github.com/samlitowitz/protoc-gen-crud";
+option go_package = "github.com/samlitowitz/protoc-gen-crud/options";
 
 extend google.protobuf.FileOptions {
   // All IDs are the same, as assigned. It is okay that they are the same, as they extend

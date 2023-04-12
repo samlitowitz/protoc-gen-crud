@@ -1,0 +1,31 @@
+syntax = "proto3";
+
+package protoc_gen_crud.options;
+
+option go_package = "github.com/samlitowitz/protoc-gen-crud/options";
+
+enum Operation {
+  NONE = 0;
+  CREATE = 1;
+  READ = 2;
+  UPDATE = 3;
+  DELETE = 4;
+}
+
+message FileOptions {}
+
+message MethodOptions {}
+
+message MessageOptions {
+  repeated Operation operations = 1;
+}
+
+message ServiceOptions {}
+
+message FieldOptions {
+  repeated UniqueIdentifier unique_identifiers = 1;
+}
+
+message UniqueIdentifier {
+  string id = 1;
+}

@@ -1,0 +1,17 @@
+syntax = "proto3";
+
+package books_tracker_template.options;
+
+option go_package = "github.com/samlitowitz/protoc-gen-crud/examples/book-list";
+
+message Author {
+  string id = 1;
+  string name = 2;
+  repeated Book authored = 3;
+}
+
+message Book {
+  string id = 1;
+  string name = 2;
+  repeated Author authors = 3;
+}
