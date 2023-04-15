@@ -1,4 +1,4 @@
-package generator
+package codegenerator
 
 import (
 	"fmt"
@@ -10,7 +10,7 @@ import (
 
 // REFURL: https://github.com/grpc-ecosystem/grpc-gateway/blob/main/internal/codegenerator/parse_req.go
 
-// ParseRequest parses a code generator request from a proto Message.
+// ParseRequest parses a code codegenerator request from a proto Message.
 func ParseRequest(r io.Reader) (*pluginpb.CodeGeneratorRequest, error) {
 	input, err := io.ReadAll(r)
 	if err != nil {

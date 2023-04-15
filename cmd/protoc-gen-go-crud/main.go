@@ -5,6 +5,10 @@ import (
 	"fmt"
 	"os"
 
+	gen_go_crud "github.com/samlitowitz/protoc-gen-crud/internal/gen-go-crud"
+
+	"github.com/samlitowitz/protoc-gen-crud/internal/descriptor"
+
 	"google.golang.org/protobuf/compiler/protogen"
 )
 
@@ -29,7 +33,31 @@ func main() {
 	protogen.Options{
 		ParamFunc: flag.CommandLine.Set,
 	}.Run(func(gen *protogen.Plugin) error {
+		reg := descriptor.NewRegistry()
 
-		return nil
+		generator := gen_go_crud.New(reg)
+
+		if err := reg.LoadFromPlugin(gen); err != nil {
+			return err
+		}
+
+		targets := make([]*descriptor.File, 0, len(gen.Request.FileToGenerate))
+		for _, target := range gen.Request.FileToGenerate {
+			f, err := reg.LookupFile(target)
+			if err != nil {
+				return err
+			}
+			targets = append(targets, f)
+		}
+
+		files, err := generator.Generate(targets)
+		for _, f := range files {
+			genFile := gen.NewGeneratedFile(f.GetName(), protogen.GoImportPath(f.GoPkg.Path))
+			if _, err := genFile.Write([]byte(f.GetContent())); err != nil {
+				return err
+			}
+		}
+
+		return err
 	})
 }
