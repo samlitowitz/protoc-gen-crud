@@ -2,7 +2,7 @@
 // versions:
 // 	protoc-gen-go v1.28.1
 // 	protoc        v3.21.5
-// source: protoc-gen-crud/assets/protobuf/options/annotations.proto
+// source: protoc-gen-crud/options/annotations.proto
 
 package options
 
@@ -20,14 +20,14 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
-var file_protoc_gen_crud_assets_protobuf_options_annotations_proto_extTypes = []protoimpl.ExtensionInfo{
+var file_protoc_gen_crud_options_annotations_proto_extTypes = []protoimpl.ExtensionInfo{
 	{
 		ExtendedType:  (*descriptorpb.FileOptions)(nil),
 		ExtensionType: (*FileOptions)(nil),
 		Field:         65535,
 		Name:          "protoc_gen_crud.options.crud_file_options",
 		Tag:           "bytes,65535,opt,name=crud_file_options",
-		Filename:      "protoc-gen-crud/assets/protobuf/options/annotations.proto",
+		Filename:      "protoc-gen-crud/options/annotations.proto",
 	},
 	{
 		ExtendedType:  (*descriptorpb.MethodOptions)(nil),
@@ -35,7 +35,7 @@ var file_protoc_gen_crud_assets_protobuf_options_annotations_proto_extTypes = []
 		Field:         65535,
 		Name:          "protoc_gen_crud.options.crud_method_options",
 		Tag:           "bytes,65535,opt,name=crud_method_options",
-		Filename:      "protoc-gen-crud/assets/protobuf/options/annotations.proto",
+		Filename:      "protoc-gen-crud/options/annotations.proto",
 	},
 	{
 		ExtendedType:  (*descriptorpb.MessageOptions)(nil),
@@ -43,7 +43,7 @@ var file_protoc_gen_crud_assets_protobuf_options_annotations_proto_extTypes = []
 		Field:         65535,
 		Name:          "protoc_gen_crud.options.crud_message_options",
 		Tag:           "bytes,65535,opt,name=crud_message_options",
-		Filename:      "protoc-gen-crud/assets/protobuf/options/annotations.proto",
+		Filename:      "protoc-gen-crud/options/annotations.proto",
 	},
 	{
 		ExtendedType:  (*descriptorpb.ServiceOptions)(nil),
@@ -51,7 +51,7 @@ var file_protoc_gen_crud_assets_protobuf_options_annotations_proto_extTypes = []
 		Field:         65535,
 		Name:          "protoc_gen_crud.options.crud_service_options",
 		Tag:           "bytes,65535,opt,name=crud_service_options",
-		Filename:      "protoc-gen-crud/assets/protobuf/options/annotations.proto",
+		Filename:      "protoc-gen-crud/options/annotations.proto",
 	},
 	{
 		ExtendedType:  (*descriptorpb.FieldOptions)(nil),
@@ -59,7 +59,7 @@ var file_protoc_gen_crud_assets_protobuf_options_annotations_proto_extTypes = []
 		Field:         65535,
 		Name:          "protoc_gen_crud.options.crud_field_options",
 		Tag:           "bytes,65535,opt,name=crud_field_options",
-		Filename:      "protoc-gen-crud/assets/protobuf/options/annotations.proto",
+		Filename:      "protoc-gen-crud/options/annotations.proto",
 	},
 }
 
@@ -69,7 +69,7 @@ var (
 	// different descriptor messages.
 	//
 	// optional protoc_gen_crud.options.FileOptions crud_file_options = 65535;
-	E_CrudFileOptions = &file_protoc_gen_crud_assets_protobuf_options_annotations_proto_extTypes[0]
+	E_CrudFileOptions = &file_protoc_gen_crud_options_annotations_proto_extTypes[0]
 )
 
 // Extension fields to descriptorpb.MethodOptions.
@@ -78,7 +78,7 @@ var (
 	// different descriptor messages.
 	//
 	// optional protoc_gen_crud.options.MethodOptions crud_method_options = 65535;
-	E_CrudMethodOptions = &file_protoc_gen_crud_assets_protobuf_options_annotations_proto_extTypes[1]
+	E_CrudMethodOptions = &file_protoc_gen_crud_options_annotations_proto_extTypes[1]
 )
 
 // Extension fields to descriptorpb.MessageOptions.
@@ -87,7 +87,7 @@ var (
 	// different descriptor messages.
 	//
 	// optional protoc_gen_crud.options.MessageOptions crud_message_options = 65535;
-	E_CrudMessageOptions = &file_protoc_gen_crud_assets_protobuf_options_annotations_proto_extTypes[2]
+	E_CrudMessageOptions = &file_protoc_gen_crud_options_annotations_proto_extTypes[2]
 )
 
 // Extension fields to descriptorpb.ServiceOptions.
@@ -96,7 +96,7 @@ var (
 	// different descriptor messages.
 	//
 	// optional protoc_gen_crud.options.ServiceOptions crud_service_options = 65535;
-	E_CrudServiceOptions = &file_protoc_gen_crud_assets_protobuf_options_annotations_proto_extTypes[3]
+	E_CrudServiceOptions = &file_protoc_gen_crud_options_annotations_proto_extTypes[3]
 )
 
 // Extension fields to descriptorpb.FieldOptions.
@@ -105,22 +105,20 @@ var (
 	// different descriptor messages.
 	//
 	// optional protoc_gen_crud.options.FieldOptions crud_field_options = 65535;
-	E_CrudFieldOptions = &file_protoc_gen_crud_assets_protobuf_options_annotations_proto_extTypes[4]
+	E_CrudFieldOptions = &file_protoc_gen_crud_options_annotations_proto_extTypes[4]
 )
 
-var File_protoc_gen_crud_assets_protobuf_options_annotations_proto protoreflect.FileDescriptor
+var File_protoc_gen_crud_options_annotations_proto protoreflect.FileDescriptor
 
-var file_protoc_gen_crud_assets_protobuf_options_annotations_proto_rawDesc = []byte{
-	0x0a, 0x39, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x63, 0x2d, 0x67, 0x65, 0x6e, 0x2d, 0x63, 0x72, 0x75,
-	0x64, 0x2f, 0x61, 0x73, 0x73, 0x65, 0x74, 0x73, 0x2f, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x62, 0x75,
-	0x66, 0x2f, 0x6f, 0x70, 0x74, 0x69, 0x6f, 0x6e, 0x73, 0x2f, 0x61, 0x6e, 0x6e, 0x6f, 0x74, 0x61,
+var file_protoc_gen_crud_options_annotations_proto_rawDesc = []byte{
+	0x0a, 0x29, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x63, 0x2d, 0x67, 0x65, 0x6e, 0x2d, 0x63, 0x72, 0x75,
+	0x64, 0x2f, 0x6f, 0x70, 0x74, 0x69, 0x6f, 0x6e, 0x73, 0x2f, 0x61, 0x6e, 0x6e, 0x6f, 0x74, 0x61,
 	0x74, 0x69, 0x6f, 0x6e, 0x73, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x12, 0x17, 0x70, 0x72, 0x6f,
 	0x74, 0x6f, 0x63, 0x5f, 0x67, 0x65, 0x6e, 0x5f, 0x63, 0x72, 0x75, 0x64, 0x2e, 0x6f, 0x70, 0x74,
 	0x69, 0x6f, 0x6e, 0x73, 0x1a, 0x20, 0x67, 0x6f, 0x6f, 0x67, 0x6c, 0x65, 0x2f, 0x70, 0x72, 0x6f,
 	0x74, 0x6f, 0x62, 0x75, 0x66, 0x2f, 0x64, 0x65, 0x73, 0x63, 0x72, 0x69, 0x70, 0x74, 0x6f, 0x72,
-	0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x1a, 0x32, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x63, 0x2d, 0x67,
-	0x65, 0x6e, 0x2d, 0x63, 0x72, 0x75, 0x64, 0x2f, 0x61, 0x73, 0x73, 0x65, 0x74, 0x73, 0x2f, 0x70,
-	0x72, 0x6f, 0x74, 0x6f, 0x62, 0x75, 0x66, 0x2f, 0x6f, 0x70, 0x74, 0x69, 0x6f, 0x6e, 0x73, 0x2f,
+	0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x1a, 0x22, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x63, 0x2d, 0x67,
+	0x65, 0x6e, 0x2d, 0x63, 0x72, 0x75, 0x64, 0x2f, 0x6f, 0x70, 0x74, 0x69, 0x6f, 0x6e, 0x73, 0x2f,
 	0x63, 0x72, 0x75, 0x64, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x3a, 0x70, 0x0a, 0x11, 0x63, 0x72,
 	0x75, 0x64, 0x5f, 0x66, 0x69, 0x6c, 0x65, 0x5f, 0x6f, 0x70, 0x74, 0x69, 0x6f, 0x6e, 0x73, 0x12,
 	0x1c, 0x2e, 0x67, 0x6f, 0x6f, 0x67, 0x6c, 0x65, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x62, 0x75,
@@ -166,7 +164,7 @@ var file_protoc_gen_crud_assets_protobuf_options_annotations_proto_rawDesc = []b
 	0x6f, 0x33,
 }
 
-var file_protoc_gen_crud_assets_protobuf_options_annotations_proto_goTypes = []interface{}{
+var file_protoc_gen_crud_options_annotations_proto_goTypes = []interface{}{
 	(*descriptorpb.FileOptions)(nil),    // 0: google.protobuf.FileOptions
 	(*descriptorpb.MethodOptions)(nil),  // 1: google.protobuf.MethodOptions
 	(*descriptorpb.MessageOptions)(nil), // 2: google.protobuf.MessageOptions
@@ -178,7 +176,7 @@ var file_protoc_gen_crud_assets_protobuf_options_annotations_proto_goTypes = []i
 	(*ServiceOptions)(nil),              // 8: protoc_gen_crud.options.ServiceOptions
 	(*FieldOptions)(nil),                // 9: protoc_gen_crud.options.FieldOptions
 }
-var file_protoc_gen_crud_assets_protobuf_options_annotations_proto_depIdxs = []int32{
+var file_protoc_gen_crud_options_annotations_proto_depIdxs = []int32{
 	0,  // 0: protoc_gen_crud.options.crud_file_options:extendee -> google.protobuf.FileOptions
 	1,  // 1: protoc_gen_crud.options.crud_method_options:extendee -> google.protobuf.MethodOptions
 	2,  // 2: protoc_gen_crud.options.crud_message_options:extendee -> google.protobuf.MessageOptions
@@ -196,28 +194,28 @@ var file_protoc_gen_crud_assets_protobuf_options_annotations_proto_depIdxs = []i
 	0,  // [0:0] is the sub-list for field type_name
 }
 
-func init() { file_protoc_gen_crud_assets_protobuf_options_annotations_proto_init() }
-func file_protoc_gen_crud_assets_protobuf_options_annotations_proto_init() {
-	if File_protoc_gen_crud_assets_protobuf_options_annotations_proto != nil {
+func init() { file_protoc_gen_crud_options_annotations_proto_init() }
+func file_protoc_gen_crud_options_annotations_proto_init() {
+	if File_protoc_gen_crud_options_annotations_proto != nil {
 		return
 	}
-	file_protoc_gen_crud_assets_protobuf_options_crud_proto_init()
+	file_protoc_gen_crud_options_crud_proto_init()
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
-			RawDescriptor: file_protoc_gen_crud_assets_protobuf_options_annotations_proto_rawDesc,
+			RawDescriptor: file_protoc_gen_crud_options_annotations_proto_rawDesc,
 			NumEnums:      0,
 			NumMessages:   0,
 			NumExtensions: 5,
 			NumServices:   0,
 		},
-		GoTypes:           file_protoc_gen_crud_assets_protobuf_options_annotations_proto_goTypes,
-		DependencyIndexes: file_protoc_gen_crud_assets_protobuf_options_annotations_proto_depIdxs,
-		ExtensionInfos:    file_protoc_gen_crud_assets_protobuf_options_annotations_proto_extTypes,
+		GoTypes:           file_protoc_gen_crud_options_annotations_proto_goTypes,
+		DependencyIndexes: file_protoc_gen_crud_options_annotations_proto_depIdxs,
+		ExtensionInfos:    file_protoc_gen_crud_options_annotations_proto_extTypes,
 	}.Build()
-	File_protoc_gen_crud_assets_protobuf_options_annotations_proto = out.File
-	file_protoc_gen_crud_assets_protobuf_options_annotations_proto_rawDesc = nil
-	file_protoc_gen_crud_assets_protobuf_options_annotations_proto_goTypes = nil
-	file_protoc_gen_crud_assets_protobuf_options_annotations_proto_depIdxs = nil
+	File_protoc_gen_crud_options_annotations_proto = out.File
+	file_protoc_gen_crud_options_annotations_proto_rawDesc = nil
+	file_protoc_gen_crud_options_annotations_proto_goTypes = nil
+	file_protoc_gen_crud_options_annotations_proto_depIdxs = nil
 }

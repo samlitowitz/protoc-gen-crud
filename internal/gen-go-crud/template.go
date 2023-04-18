@@ -5,6 +5,7 @@ import (
 	"bytes"
 	"html/template"
 
+	"github.com/samlitowitz/protoc-gen-crud/internal/casing"
 	"github.com/samlitowitz/protoc-gen-crud/internal/descriptor"
 )
 
@@ -16,6 +17,16 @@ func applyTemplate(p param, reg *descriptor.Registry) (string, error) {
 	w := bytes.NewBuffer(nil)
 	if err := headerTemplate.Execute(w, p); err != nil {
 		return "", err
+	}
+
+	for _, msg := range p.Messages {
+		msgName := casing.Camel(*msg.Name)
+		msg.Name = &msgName
+	}
+	for _, msg := range p.Messages {
+		if err := repositoryTemplate.Execute(w, msg); err != nil {
+			return "", nil
+		}
 	}
 
 	return w.String(), nil
@@ -33,5 +44,22 @@ It provides an interface to implement and some implementations of the interface.
 */
 
 package {{.GoPkg.Name}}
+`))
+
+	repositoryTemplate = template.Must(template.New("repository").Parse(`
+type {{.Message.GoType}}Repository interface {
+	{{if .Message.MakeCreate}}
+	func Create([]*{{.Message.GoType}}) ([]*{{.Message.GoType}}, error)
+	{{end}}
+	{{if .Message.MakeRead}}
+	func Read([]*{{.Message.GoType}}) ([]*{{.Message.GoType}}, error)
+	{{end}}
+	{{if .Message.MakeUpdate}}
+	func Update([]*{{.Message.GoType}}) ([]*{{.Message.GoType}}, error)
+	{{end}}
+	{{if .Message.MakeDelete}}
+	func Delete([]*{{.Message.GoType}}) error
+	{{end}}
+}
 `))
 )

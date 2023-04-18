@@ -72,6 +72,11 @@ func (f *File) proto2() bool {
 	return f.Syntax == nil || f.GetSyntax() == "proto2"
 }
 
+// TODO: Create type to describe CRUD interfaces and implementations to build
+// 1. Message Type
+//    1. Desired CRUD Operations
+//    1. Unique identifiers <string> => []Field
+
 // Message describes a protocol buffer message types.
 type Message struct {
 	*descriptorpb.DescriptorProto

@@ -2,7 +2,7 @@
 // versions:
 // 	protoc-gen-go v1.28.1
 // 	protoc        v3.21.5
-// source: protoc-gen-crud/assets/protobuf/options/crud.proto
+// source: protoc-gen-crud/options/crud.proto
 
 package options
 
@@ -59,11 +59,11 @@ func (x Operation) String() string {
 }
 
 func (Operation) Descriptor() protoreflect.EnumDescriptor {
-	return file_protoc_gen_crud_assets_protobuf_options_crud_proto_enumTypes[0].Descriptor()
+	return file_protoc_gen_crud_options_crud_proto_enumTypes[0].Descriptor()
 }
 
 func (Operation) Type() protoreflect.EnumType {
-	return &file_protoc_gen_crud_assets_protobuf_options_crud_proto_enumTypes[0]
+	return &file_protoc_gen_crud_options_crud_proto_enumTypes[0]
 }
 
 func (x Operation) Number() protoreflect.EnumNumber {
@@ -72,7 +72,7 @@ func (x Operation) Number() protoreflect.EnumNumber {
 
 // Deprecated: Use Operation.Descriptor instead.
 func (Operation) EnumDescriptor() ([]byte, []int) {
-	return file_protoc_gen_crud_assets_protobuf_options_crud_proto_rawDescGZIP(), []int{0}
+	return file_protoc_gen_crud_options_crud_proto_rawDescGZIP(), []int{0}
 }
 
 type FileOptions struct {
@@ -84,7 +84,7 @@ type FileOptions struct {
 func (x *FileOptions) Reset() {
 	*x = FileOptions{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_protoc_gen_crud_assets_protobuf_options_crud_proto_msgTypes[0]
+		mi := &file_protoc_gen_crud_options_crud_proto_msgTypes[0]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -97,7 +97,7 @@ func (x *FileOptions) String() string {
 func (*FileOptions) ProtoMessage() {}
 
 func (x *FileOptions) ProtoReflect() protoreflect.Message {
-	mi := &file_protoc_gen_crud_assets_protobuf_options_crud_proto_msgTypes[0]
+	mi := &file_protoc_gen_crud_options_crud_proto_msgTypes[0]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -110,7 +110,7 @@ func (x *FileOptions) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use FileOptions.ProtoReflect.Descriptor instead.
 func (*FileOptions) Descriptor() ([]byte, []int) {
-	return file_protoc_gen_crud_assets_protobuf_options_crud_proto_rawDescGZIP(), []int{0}
+	return file_protoc_gen_crud_options_crud_proto_rawDescGZIP(), []int{0}
 }
 
 type MethodOptions struct {
@@ -122,7 +122,7 @@ type MethodOptions struct {
 func (x *MethodOptions) Reset() {
 	*x = MethodOptions{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_protoc_gen_crud_assets_protobuf_options_crud_proto_msgTypes[1]
+		mi := &file_protoc_gen_crud_options_crud_proto_msgTypes[1]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -135,7 +135,7 @@ func (x *MethodOptions) String() string {
 func (*MethodOptions) ProtoMessage() {}
 
 func (x *MethodOptions) ProtoReflect() protoreflect.Message {
-	mi := &file_protoc_gen_crud_assets_protobuf_options_crud_proto_msgTypes[1]
+	mi := &file_protoc_gen_crud_options_crud_proto_msgTypes[1]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -148,7 +148,7 @@ func (x *MethodOptions) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use MethodOptions.ProtoReflect.Descriptor instead.
 func (*MethodOptions) Descriptor() ([]byte, []int) {
-	return file_protoc_gen_crud_assets_protobuf_options_crud_proto_rawDescGZIP(), []int{1}
+	return file_protoc_gen_crud_options_crud_proto_rawDescGZIP(), []int{1}
 }
 
 type MessageOptions struct {
@@ -162,7 +162,7 @@ type MessageOptions struct {
 func (x *MessageOptions) Reset() {
 	*x = MessageOptions{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_protoc_gen_crud_assets_protobuf_options_crud_proto_msgTypes[2]
+		mi := &file_protoc_gen_crud_options_crud_proto_msgTypes[2]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -175,7 +175,7 @@ func (x *MessageOptions) String() string {
 func (*MessageOptions) ProtoMessage() {}
 
 func (x *MessageOptions) ProtoReflect() protoreflect.Message {
-	mi := &file_protoc_gen_crud_assets_protobuf_options_crud_proto_msgTypes[2]
+	mi := &file_protoc_gen_crud_options_crud_proto_msgTypes[2]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -188,7 +188,7 @@ func (x *MessageOptions) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use MessageOptions.ProtoReflect.Descriptor instead.
 func (*MessageOptions) Descriptor() ([]byte, []int) {
-	return file_protoc_gen_crud_assets_protobuf_options_crud_proto_rawDescGZIP(), []int{2}
+	return file_protoc_gen_crud_options_crud_proto_rawDescGZIP(), []int{2}
 }
 
 func (x *MessageOptions) GetOperations() []Operation {
@@ -207,7 +207,7 @@ type ServiceOptions struct {
 func (x *ServiceOptions) Reset() {
 	*x = ServiceOptions{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_protoc_gen_crud_assets_protobuf_options_crud_proto_msgTypes[3]
+		mi := &file_protoc_gen_crud_options_crud_proto_msgTypes[3]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -220,7 +220,7 @@ func (x *ServiceOptions) String() string {
 func (*ServiceOptions) ProtoMessage() {}
 
 func (x *ServiceOptions) ProtoReflect() protoreflect.Message {
-	mi := &file_protoc_gen_crud_assets_protobuf_options_crud_proto_msgTypes[3]
+	mi := &file_protoc_gen_crud_options_crud_proto_msgTypes[3]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -233,7 +233,7 @@ func (x *ServiceOptions) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ServiceOptions.ProtoReflect.Descriptor instead.
 func (*ServiceOptions) Descriptor() ([]byte, []int) {
-	return file_protoc_gen_crud_assets_protobuf_options_crud_proto_rawDescGZIP(), []int{3}
+	return file_protoc_gen_crud_options_crud_proto_rawDescGZIP(), []int{3}
 }
 
 type FieldOptions struct {
@@ -247,7 +247,7 @@ type FieldOptions struct {
 func (x *FieldOptions) Reset() {
 	*x = FieldOptions{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_protoc_gen_crud_assets_protobuf_options_crud_proto_msgTypes[4]
+		mi := &file_protoc_gen_crud_options_crud_proto_msgTypes[4]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -260,7 +260,7 @@ func (x *FieldOptions) String() string {
 func (*FieldOptions) ProtoMessage() {}
 
 func (x *FieldOptions) ProtoReflect() protoreflect.Message {
-	mi := &file_protoc_gen_crud_assets_protobuf_options_crud_proto_msgTypes[4]
+	mi := &file_protoc_gen_crud_options_crud_proto_msgTypes[4]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -273,7 +273,7 @@ func (x *FieldOptions) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use FieldOptions.ProtoReflect.Descriptor instead.
 func (*FieldOptions) Descriptor() ([]byte, []int) {
-	return file_protoc_gen_crud_assets_protobuf_options_crud_proto_rawDescGZIP(), []int{4}
+	return file_protoc_gen_crud_options_crud_proto_rawDescGZIP(), []int{4}
 }
 
 func (x *FieldOptions) GetUniqueIdentifiers() []*UniqueIdentifier {
@@ -294,7 +294,7 @@ type UniqueIdentifier struct {
 func (x *UniqueIdentifier) Reset() {
 	*x = UniqueIdentifier{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_protoc_gen_crud_assets_protobuf_options_crud_proto_msgTypes[5]
+		mi := &file_protoc_gen_crud_options_crud_proto_msgTypes[5]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -307,7 +307,7 @@ func (x *UniqueIdentifier) String() string {
 func (*UniqueIdentifier) ProtoMessage() {}
 
 func (x *UniqueIdentifier) ProtoReflect() protoreflect.Message {
-	mi := &file_protoc_gen_crud_assets_protobuf_options_crud_proto_msgTypes[5]
+	mi := &file_protoc_gen_crud_options_crud_proto_msgTypes[5]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -320,7 +320,7 @@ func (x *UniqueIdentifier) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UniqueIdentifier.ProtoReflect.Descriptor instead.
 func (*UniqueIdentifier) Descriptor() ([]byte, []int) {
-	return file_protoc_gen_crud_assets_protobuf_options_crud_proto_rawDescGZIP(), []int{5}
+	return file_protoc_gen_crud_options_crud_proto_rawDescGZIP(), []int{5}
 }
 
 func (x *UniqueIdentifier) GetId() string {
@@ -330,12 +330,11 @@ func (x *UniqueIdentifier) GetId() string {
 	return ""
 }
 
-var File_protoc_gen_crud_assets_protobuf_options_crud_proto protoreflect.FileDescriptor
+var File_protoc_gen_crud_options_crud_proto protoreflect.FileDescriptor
 
-var file_protoc_gen_crud_assets_protobuf_options_crud_proto_rawDesc = []byte{
-	0x0a, 0x32, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x63, 0x2d, 0x67, 0x65, 0x6e, 0x2d, 0x63, 0x72, 0x75,
-	0x64, 0x2f, 0x61, 0x73, 0x73, 0x65, 0x74, 0x73, 0x2f, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x62, 0x75,
-	0x66, 0x2f, 0x6f, 0x70, 0x74, 0x69, 0x6f, 0x6e, 0x73, 0x2f, 0x63, 0x72, 0x75, 0x64, 0x2e, 0x70,
+var file_protoc_gen_crud_options_crud_proto_rawDesc = []byte{
+	0x0a, 0x22, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x63, 0x2d, 0x67, 0x65, 0x6e, 0x2d, 0x63, 0x72, 0x75,
+	0x64, 0x2f, 0x6f, 0x70, 0x74, 0x69, 0x6f, 0x6e, 0x73, 0x2f, 0x63, 0x72, 0x75, 0x64, 0x2e, 0x70,
 	0x72, 0x6f, 0x74, 0x6f, 0x12, 0x17, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x63, 0x5f, 0x67, 0x65, 0x6e,
 	0x5f, 0x63, 0x72, 0x75, 0x64, 0x2e, 0x6f, 0x70, 0x74, 0x69, 0x6f, 0x6e, 0x73, 0x22, 0x0d, 0x0a,
 	0x0b, 0x46, 0x69, 0x6c, 0x65, 0x4f, 0x70, 0x74, 0x69, 0x6f, 0x6e, 0x73, 0x22, 0x0f, 0x0a, 0x0d,
@@ -367,20 +366,20 @@ var file_protoc_gen_crud_assets_protobuf_options_crud_proto_rawDesc = []byte{
 }
 
 var (
-	file_protoc_gen_crud_assets_protobuf_options_crud_proto_rawDescOnce sync.Once
-	file_protoc_gen_crud_assets_protobuf_options_crud_proto_rawDescData = file_protoc_gen_crud_assets_protobuf_options_crud_proto_rawDesc
+	file_protoc_gen_crud_options_crud_proto_rawDescOnce sync.Once
+	file_protoc_gen_crud_options_crud_proto_rawDescData = file_protoc_gen_crud_options_crud_proto_rawDesc
 )
 
-func file_protoc_gen_crud_assets_protobuf_options_crud_proto_rawDescGZIP() []byte {
-	file_protoc_gen_crud_assets_protobuf_options_crud_proto_rawDescOnce.Do(func() {
-		file_protoc_gen_crud_assets_protobuf_options_crud_proto_rawDescData = protoimpl.X.CompressGZIP(file_protoc_gen_crud_assets_protobuf_options_crud_proto_rawDescData)
+func file_protoc_gen_crud_options_crud_proto_rawDescGZIP() []byte {
+	file_protoc_gen_crud_options_crud_proto_rawDescOnce.Do(func() {
+		file_protoc_gen_crud_options_crud_proto_rawDescData = protoimpl.X.CompressGZIP(file_protoc_gen_crud_options_crud_proto_rawDescData)
 	})
-	return file_protoc_gen_crud_assets_protobuf_options_crud_proto_rawDescData
+	return file_protoc_gen_crud_options_crud_proto_rawDescData
 }
 
-var file_protoc_gen_crud_assets_protobuf_options_crud_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
-var file_protoc_gen_crud_assets_protobuf_options_crud_proto_msgTypes = make([]protoimpl.MessageInfo, 6)
-var file_protoc_gen_crud_assets_protobuf_options_crud_proto_goTypes = []interface{}{
+var file_protoc_gen_crud_options_crud_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
+var file_protoc_gen_crud_options_crud_proto_msgTypes = make([]protoimpl.MessageInfo, 6)
+var file_protoc_gen_crud_options_crud_proto_goTypes = []interface{}{
 	(Operation)(0),           // 0: protoc_gen_crud.options.Operation
 	(*FileOptions)(nil),      // 1: protoc_gen_crud.options.FileOptions
 	(*MethodOptions)(nil),    // 2: protoc_gen_crud.options.MethodOptions
@@ -389,7 +388,7 @@ var file_protoc_gen_crud_assets_protobuf_options_crud_proto_goTypes = []interfac
 	(*FieldOptions)(nil),     // 5: protoc_gen_crud.options.FieldOptions
 	(*UniqueIdentifier)(nil), // 6: protoc_gen_crud.options.UniqueIdentifier
 }
-var file_protoc_gen_crud_assets_protobuf_options_crud_proto_depIdxs = []int32{
+var file_protoc_gen_crud_options_crud_proto_depIdxs = []int32{
 	0, // 0: protoc_gen_crud.options.MessageOptions.operations:type_name -> protoc_gen_crud.options.Operation
 	6, // 1: protoc_gen_crud.options.FieldOptions.unique_identifiers:type_name -> protoc_gen_crud.options.UniqueIdentifier
 	2, // [2:2] is the sub-list for method output_type
@@ -399,13 +398,13 @@ var file_protoc_gen_crud_assets_protobuf_options_crud_proto_depIdxs = []int32{
 	0, // [0:2] is the sub-list for field type_name
 }
 
-func init() { file_protoc_gen_crud_assets_protobuf_options_crud_proto_init() }
-func file_protoc_gen_crud_assets_protobuf_options_crud_proto_init() {
-	if File_protoc_gen_crud_assets_protobuf_options_crud_proto != nil {
+func init() { file_protoc_gen_crud_options_crud_proto_init() }
+func file_protoc_gen_crud_options_crud_proto_init() {
+	if File_protoc_gen_crud_options_crud_proto != nil {
 		return
 	}
 	if !protoimpl.UnsafeEnabled {
-		file_protoc_gen_crud_assets_protobuf_options_crud_proto_msgTypes[0].Exporter = func(v interface{}, i int) interface{} {
+		file_protoc_gen_crud_options_crud_proto_msgTypes[0].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*FileOptions); i {
 			case 0:
 				return &v.state
@@ -417,7 +416,7 @@ func file_protoc_gen_crud_assets_protobuf_options_crud_proto_init() {
 				return nil
 			}
 		}
-		file_protoc_gen_crud_assets_protobuf_options_crud_proto_msgTypes[1].Exporter = func(v interface{}, i int) interface{} {
+		file_protoc_gen_crud_options_crud_proto_msgTypes[1].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*MethodOptions); i {
 			case 0:
 				return &v.state
@@ -429,7 +428,7 @@ func file_protoc_gen_crud_assets_protobuf_options_crud_proto_init() {
 				return nil
 			}
 		}
-		file_protoc_gen_crud_assets_protobuf_options_crud_proto_msgTypes[2].Exporter = func(v interface{}, i int) interface{} {
+		file_protoc_gen_crud_options_crud_proto_msgTypes[2].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*MessageOptions); i {
 			case 0:
 				return &v.state
@@ -441,7 +440,7 @@ func file_protoc_gen_crud_assets_protobuf_options_crud_proto_init() {
 				return nil
 			}
 		}
-		file_protoc_gen_crud_assets_protobuf_options_crud_proto_msgTypes[3].Exporter = func(v interface{}, i int) interface{} {
+		file_protoc_gen_crud_options_crud_proto_msgTypes[3].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*ServiceOptions); i {
 			case 0:
 				return &v.state
@@ -453,7 +452,7 @@ func file_protoc_gen_crud_assets_protobuf_options_crud_proto_init() {
 				return nil
 			}
 		}
-		file_protoc_gen_crud_assets_protobuf_options_crud_proto_msgTypes[4].Exporter = func(v interface{}, i int) interface{} {
+		file_protoc_gen_crud_options_crud_proto_msgTypes[4].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*FieldOptions); i {
 			case 0:
 				return &v.state
@@ -465,7 +464,7 @@ func file_protoc_gen_crud_assets_protobuf_options_crud_proto_init() {
 				return nil
 			}
 		}
-		file_protoc_gen_crud_assets_protobuf_options_crud_proto_msgTypes[5].Exporter = func(v interface{}, i int) interface{} {
+		file_protoc_gen_crud_options_crud_proto_msgTypes[5].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*UniqueIdentifier); i {
 			case 0:
 				return &v.state
@@ -482,19 +481,19 @@ func file_protoc_gen_crud_assets_protobuf_options_crud_proto_init() {
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
-			RawDescriptor: file_protoc_gen_crud_assets_protobuf_options_crud_proto_rawDesc,
+			RawDescriptor: file_protoc_gen_crud_options_crud_proto_rawDesc,
 			NumEnums:      1,
 			NumMessages:   6,
 			NumExtensions: 0,
 			NumServices:   0,
 		},
-		GoTypes:           file_protoc_gen_crud_assets_protobuf_options_crud_proto_goTypes,
-		DependencyIndexes: file_protoc_gen_crud_assets_protobuf_options_crud_proto_depIdxs,
-		EnumInfos:         file_protoc_gen_crud_assets_protobuf_options_crud_proto_enumTypes,
-		MessageInfos:      file_protoc_gen_crud_assets_protobuf_options_crud_proto_msgTypes,
+		GoTypes:           file_protoc_gen_crud_options_crud_proto_goTypes,
+		DependencyIndexes: file_protoc_gen_crud_options_crud_proto_depIdxs,
+		EnumInfos:         file_protoc_gen_crud_options_crud_proto_enumTypes,
+		MessageInfos:      file_protoc_gen_crud_options_crud_proto_msgTypes,
 	}.Build()
-	File_protoc_gen_crud_assets_protobuf_options_crud_proto = out.File
-	file_protoc_gen_crud_assets_protobuf_options_crud_proto_rawDesc = nil
-	file_protoc_gen_crud_assets_protobuf_options_crud_proto_goTypes = nil
-	file_protoc_gen_crud_assets_protobuf_options_crud_proto_depIdxs = nil
+	File_protoc_gen_crud_options_crud_proto = out.File
+	file_protoc_gen_crud_options_crud_proto_rawDesc = nil
+	file_protoc_gen_crud_options_crud_proto_goTypes = nil
+	file_protoc_gen_crud_options_crud_proto_depIdxs = nil
 }

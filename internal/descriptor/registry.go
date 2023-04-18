@@ -6,8 +6,10 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/samlitowitz/protoc-gen-crud/options"
 	_ "google.golang.org/genproto/googleapis/api/annotations"
 	"google.golang.org/protobuf/compiler/protogen"
+	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/descriptorpb"
 )
 
@@ -97,6 +99,36 @@ func (r *Registry) registerMsg(file *File, outerPath []string, msgs []*descripto
 		r.registerMsg(file, outers, m.GetNestedType())
 		r.registerEnum(file, outers, m.GetEnumType())
 	}
+}
+
+func extractMessageOptions(msg *descriptorpb.DescriptorProto) (*options.MessageOptions, error) {
+	if msg.Options == nil {
+		return nil, nil
+	}
+	if !proto.HasExtension(msg.Options, options.E_CrudMessageOptions) {
+		return nil, nil
+	}
+	ext := proto.GetExtension(msg.Options, options.E_CrudMessageOptions)
+	opts, ok := ext.(*options.MessageOptions)
+	if !ok {
+		return nil, fmt.Errorf("extension is %T; want CRUD", ext)
+	}
+	return opts, nil
+}
+
+func extractFieldOptions(fd *descriptorpb.FieldDescriptorProto) (*options.FieldOptions, error) {
+	if fd.Options == nil {
+		return nil, nil
+	}
+	if !proto.HasExtension(fd.Options, options.E_CrudFieldOptions) {
+		return nil, nil
+	}
+	ext := proto.GetExtension(fd.Options, options.E_CrudFieldOptions)
+	opts, ok := ext.(*options.FieldOptions)
+	if !ok {
+		return nil, fmt.Errorf("extension is %T; want CRUD", ext)
+	}
+	return opts, nil
 }
 
 func (r *Registry) registerEnum(file *File, outerPath []string, enums []*descriptorpb.EnumDescriptorProto) {
