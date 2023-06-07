@@ -44,10 +44,27 @@
 
 # To generate...
 
+1. Repository Interface
+
+```go
+
+// go_package -> `protogen.File.GoPackageName`
+package go_package
+
+// MessageName -> `protogen.Message.GoIdent`
+type MessageNameRepository interface {
+    // MessageType -> Appropriately qualified `protogen.Message.GoIdent`
+    Create([]*MessageType) ([]*MessageType, error)
+    Read() ([]*MessageType, error)
+    Update([]*MessageType) ([]*MessageType, error)
+    Delete([]*MessageType) ([]*MessageType, error)
+}
+```
+
 1. Repository interface definitions
     1. option functions
     2. Operations
-        1. Create `([]*Message, options) ([]*[]Message, error)`
+        1. Create `([]*Message, options) ([]*Message, error)`
         2. Read `([]Clause) ([]*Message, error)`
             1. Clause
                 1. IsEqual
@@ -57,6 +74,7 @@
                 5. CLAUSE
         3. Update `([]*Message, options) ([]*Message, error)`
         4. Delete `([]*Message) ([]*Message, error)`
+    5. fully qualified message names
 2. Repository interface implementations
 
 3. SQL statements to create tables
