@@ -3,7 +3,7 @@ package gen_go_crud
 
 import (
 	"bytes"
-	"html/template"
+	"text/template"
 
 	"github.com/samlitowitz/protoc-gen-crud/internal/casing"
 	"github.com/samlitowitz/protoc-gen-crud/internal/descriptor"
@@ -11,6 +11,12 @@ import (
 
 type param struct {
 	*descriptor.File
+	Imports []descriptor.GoPackage
+}
+
+type crud struct {
+	*descriptor.CRUD
+	Registry *descriptor.Registry
 }
 
 func applyTemplate(p param, reg *descriptor.Registry) (string, error) {
@@ -24,7 +30,10 @@ func applyTemplate(p param, reg *descriptor.Registry) (string, error) {
 		msg.Name = &msgName
 	}
 	for _, msg := range p.Messages {
-		if err := repositoryTemplate.Execute(w, msg); err != nil {
+		if msg.CRUD == nil {
+			continue
+		}
+		if err := repositoryTemplate.Execute(w, &crud{CRUD: msg.CRUD, Registry: reg}); err != nil {
 			return "", nil
 		}
 	}
@@ -44,22 +53,47 @@ It provides an interface to implement and some implementations of the interface.
 */
 
 package {{.GoPkg.Name}}
+{{if .Imports}}
+import (
+	{{range $i := .Imports}}{{if $i.Standard}}{{$i | printf "%s\n"}}{{end}}{{end}}
+
+	{{range $i := .Imports}}{{if not $i.Standard}}{{$i | printf "%s\n"}}{{end}}{{end}}
+)
+{{end}}
 `))
 
 	repositoryTemplate = template.Must(template.New("repository").Parse(`
-type {{.Message.GoType}}Repository interface {
-	{{if .Message.MakeCreate}}
-	func Create([]*{{.Message.GoType}}) ([]*{{.Message.GoType}}, error)
-	{{end}}
-	{{if .Message.MakeRead}}
-	func Read([]*{{.Message.GoType}}) ([]*{{.Message.GoType}}, error)
-	{{end}}
-	{{if .Message.MakeUpdate}}
-	func Update([]*{{.Message.GoType}}) ([]*{{.Message.GoType}}, error)
-	{{end}}
-	{{if .Message.MakeDelete}}
-	func Delete([]*{{.Message.GoType}}) error
+{{template "repository-interface" .}}
+`))
+
+	funcMap template.FuncMap = map[string]interface{}{
+		"camelIdentifier": casing.CamelIdentifier,
+	}
+
+	_ = template.Must(repositoryTemplate.New("repository-interface").Funcs(funcMap).Parse(`
+
+type {{.Message.GoType .Message.File.GoPkg.Path}}Repository interface {
+	/*
+		{{printf "%#v" (.Message.CRUD)}}
+	*/
+	{{if .Message.CRUD.Create}}
+	func Create([]*{{.Message.GoType .Message.File.GoPkg.Path}}) ([]*{{.Message.GoType .Message.File.GoPkg.Path}}, error)
 	{{end}}
 }
 `))
 )
+
+//type {{.Message.GoType}}Repository interface {
+//{{if .Message.CRUD.Create}}
+//func Create([]*{{.Message.GoType}}) ([]*{{.Message.GoType}}, error)
+//{{end}}
+//{{if .Message.CRUD.Read}
+//func Read([]*{{.Message.GoType}}) ([]*{{.Message.GoType}}, error)
+//{{end}}
+//{{if .Message.Update}}
+//func Update([]*{{.Message.GoType}}) ([]*{{.Message.GoType}}, error)
+//{{end}}
+//{{if .Message.Delete}}
+//func Delete([]*{{.Message.GoType}}) error
+//{{end}}
+//}

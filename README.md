@@ -1,4 +1,35 @@
-# Required annotation in protobuf definitions
+# Protobuf Annotations
+
+## Message
+
+1. operations to generate
+    1. []enum: create, read, update, delete
+2. delete strategy
+    1. enum: hard, soft
+    2. default to hard delete
+    3. add support for soft later
+        1. delete at support?
+3. use field mask for partial updates/creates if present
+    1. boolean
+    2. default true
+4. create at
+    1. boolean
+    2. default false
+5. updated at
+    1. boolean
+    2. default false
+
+## Field
+
+1. unique identifiers(s)
+    1. []string
+2. auto-generate strategy
+    1. enum: none, uuid, sequential integer
+    2. default none
+3. nullable
+    1. boolean
+    2. default false
+
 
 1. unique identifier(s)
     1. auto-generated?

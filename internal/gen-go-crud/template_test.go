@@ -5,6 +5,8 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/samlitowitz/protoc-gen-crud/options"
+
 	"github.com/samlitowitz/protoc-gen-crud/internal/descriptor"
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/descriptorpb"
@@ -21,15 +23,6 @@ func TestApplyTemplateHeader(t *testing.T) {
 	msgdesc := &descriptorpb.DescriptorProto{
 		Name: proto.String("ExampleMessage"),
 	}
-	meth := &descriptorpb.MethodDescriptorProto{
-		Name:       proto.String("Example"),
-		InputType:  proto.String("ExampleMessage"),
-		OutputType: proto.String("ExampleMessage"),
-	}
-	svc := &descriptorpb.ServiceDescriptorProto{
-		Name:   proto.String("ExampleService"),
-		Method: []*descriptorpb.MethodDescriptorProto{meth},
-	}
 	msg := &descriptor.Message{
 		DescriptorProto: msgdesc,
 	}
@@ -39,7 +32,7 @@ func TestApplyTemplateHeader(t *testing.T) {
 			Package:     proto.String("example"),
 			Dependency:  []string{"a.example/b/c.proto", "a.example/d/e.proto"},
 			MessageType: []*descriptorpb.DescriptorProto{msgdesc},
-			Service:     []*descriptorpb.ServiceDescriptorProto{svc},
+			Service:     []*descriptorpb.ServiceDescriptorProto{},
 		},
 		GoPkg: descriptor.GoPackage{
 			Path: "example.com/path/to/example/example.pb",
@@ -57,16 +50,37 @@ func TestApplyTemplateHeader(t *testing.T) {
 	}
 }
 
-func TestApplyTemplateInProcess(t *testing.T) {
+func TestApplyRepositoryTemplate(t *testing.T) {
 	msgdesc := &descriptorpb.DescriptorProto{
-		Name: proto.String("ExampleMessage"),
+		Name: proto.String("ExampleMessageOne"),
 		Field: []*descriptorpb.FieldDescriptorProto{
+			{
+				Name:     proto.String("id_one"),
+				Label:    descriptorpb.FieldDescriptorProto_LABEL_OPTIONAL.Enum(),
+				Type:     descriptorpb.FieldDescriptorProto_TYPE_STRING.Enum(),
+				TypeName: proto.String(".google.protobuf.StringValue"),
+				Number:   proto.Int32(1),
+			},
+			{
+				Name:     proto.String("id_two"),
+				Label:    descriptorpb.FieldDescriptorProto_LABEL_OPTIONAL.Enum(),
+				Type:     descriptorpb.FieldDescriptorProto_TYPE_STRING.Enum(),
+				TypeName: proto.String(".google.protobuf.StringValue"),
+				Number:   proto.Int32(2),
+			},
+			{
+				Name:     proto.String("id_three"),
+				Label:    descriptorpb.FieldDescriptorProto_LABEL_OPTIONAL.Enum(),
+				Type:     descriptorpb.FieldDescriptorProto_TYPE_STRING.Enum(),
+				TypeName: proto.String(".google.protobuf.StringValue"),
+				Number:   proto.Int32(3),
+			},
 			{
 				Name:     proto.String("nested"),
 				Label:    descriptorpb.FieldDescriptorProto_LABEL_OPTIONAL.Enum(),
 				Type:     descriptorpb.FieldDescriptorProto_TYPE_MESSAGE.Enum(),
 				TypeName: proto.String("NestedMessage"),
-				Number:   proto.Int32(1),
+				Number:   proto.Int32(4),
 			},
 		},
 	}
@@ -87,149 +101,87 @@ func TestApplyTemplateInProcess(t *testing.T) {
 			},
 		},
 	}
-	meth := &descriptorpb.MethodDescriptorProto{
-		Name:            proto.String("Echo"),
-		InputType:       proto.String("ExampleMessage"),
-		OutputType:      proto.String("ExampleMessage"),
-		ClientStreaming: proto.Bool(true),
+	msg := &descriptor.Message{
+		DescriptorProto: msgdesc,
 	}
-	svc := &descriptorpb.ServiceDescriptorProto{
-		Name:   proto.String("ExampleService"),
-		Method: []*descriptorpb.MethodDescriptorProto{meth},
-	}
-	for _, spec := range []struct {
-		clientStreaming bool
-		serverStreaming bool
-		sigWant         []string
-	}{
-		{
-			clientStreaming: false,
-			serverStreaming: false,
-			sigWant: []string{
-				`func local_request_ExampleService_Echo_0(ctx context.Context, marshaler runtime.Marshaler, server ExampleServiceServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {`,
-				`resp, md, err := local_request_ExampleService_Echo_0(annotatedContext, inboundMarshaler, server, req, pathParams)`,
+	crud := &descriptor.CRUD{
+		Message: msg,
+		Operations: map[options.Operation]struct{}{
+			options.Operation_CREATE: {},
+			options.Operation_READ:   {},
+			options.Operation_UPDATE: {},
+			options.Operation_DELETE: {},
+		},
+		UniqueIdentifiers: map[string][]*descriptor.Field{
+			"one": {
+				{
+					FieldDescriptorProto: msgdesc.Field[0],
+					Message:              msg,
+					ForcePrefixedName:    false,
+				},
+			},
+			"two": {
+				{
+					FieldDescriptorProto: msgdesc.Field[0],
+					Message:              msg,
+					ForcePrefixedName:    false,
+				},
+				{
+					FieldDescriptorProto: msgdesc.Field[1],
+					Message:              msg,
+					ForcePrefixedName:    false,
+				},
+			},
+			"three": {
+				{
+					FieldDescriptorProto: msgdesc.Field[0],
+					Message:              msg,
+					ForcePrefixedName:    false,
+				},
+				{
+					FieldDescriptorProto: msgdesc.Field[1],
+					Message:              msg,
+					ForcePrefixedName:    false,
+				},
+				{
+					FieldDescriptorProto: msgdesc.Field[2],
+					Message:              msg,
+					ForcePrefixedName:    false,
+				},
 			},
 		},
-		{
-			clientStreaming: true,
-			serverStreaming: true,
-			sigWant: []string{
-				`err := status.Error(codes.Unimplemented, "streaming calls are not yet supported in the in-process transport")`,
-			},
-		},
-		{
-			clientStreaming: true,
-			serverStreaming: false,
-			sigWant: []string{
-				`err := status.Error(codes.Unimplemented, "streaming calls are not yet supported in the in-process transport")`,
-			},
-		},
-		{
-			clientStreaming: false,
-			serverStreaming: true,
-			sigWant: []string{
-				`err := status.Error(codes.Unimplemented, "streaming calls are not yet supported in the in-process transport")`,
-			},
-		},
-	} {
-		meth.ClientStreaming = proto.Bool(spec.clientStreaming)
-		meth.ServerStreaming = proto.Bool(spec.serverStreaming)
+	}
+	msg.CRUD = crud
+	nested := &descriptor.Message{
+		DescriptorProto: nesteddesc,
+	}
 
-		msg := &descriptor.Message{
-			DescriptorProto: msgdesc,
-		}
-		nested := &descriptor.Message{
-			DescriptorProto: nesteddesc,
-		}
-
-		file := descriptor.File{
-			FileDescriptorProto: &descriptorpb.FileDescriptorProto{
-				Name:        proto.String("example.proto"),
-				Package:     proto.String("example"),
-				MessageType: []*descriptorpb.DescriptorProto{msgdesc, nesteddesc},
-				Service:     []*descriptorpb.ServiceDescriptorProto{svc},
-			},
-			GoPkg: descriptor.GoPackage{
-				Path: "example.com/path/to/example/example.pb",
-				Name: "example_pb",
-			},
-			Messages: []*descriptor.Message{msg, nested},
-		}
-		got, err := applyTemplate(param{File: crossLinkFixture(&file)}, descriptor.NewRegistry())
-		if err != nil {
-			t.Errorf("applyTemplate(%#v) failed with %v; want success", file, err)
-			return
-		}
-
-		for _, want := range spec.sigWant {
-			if !strings.Contains(got, want) {
-				t.Errorf("applyTemplate(%#v) = %s; want to contain %s", file, got, want)
-			}
-		}
-
-		if want := `func RegisterExampleServiceHandlerServer(ctx context.Context, mux *runtime.ServeMux, server ExampleServiceServer) error {`; !strings.Contains(got, want) {
-			t.Errorf("applyTemplate(%#v) = %s; want to contain %s", file, got, want)
-		}
-	}
-}
-
-func TestIdentifierCapitalization(t *testing.T) {
-	msgdesc1 := &descriptorpb.DescriptorProto{
-		Name: proto.String("Exam_pleRequest"),
-	}
-	msgdesc2 := &descriptorpb.DescriptorProto{
-		Name: proto.String("example_response"),
-	}
-	meth1 := &descriptorpb.MethodDescriptorProto{
-		Name:       proto.String("ExampleGe2t"),
-		InputType:  proto.String("Exam_pleRequest"),
-		OutputType: proto.String("example_response"),
-	}
-	meth2 := &descriptorpb.MethodDescriptorProto{
-		Name:       proto.String("Exampl_ePost"),
-		InputType:  proto.String("Exam_pleRequest"),
-		OutputType: proto.String("example_response"),
-	}
-	svc := &descriptorpb.ServiceDescriptorProto{
-		Name:   proto.String("Example"),
-		Method: []*descriptorpb.MethodDescriptorProto{meth1, meth2},
-	}
-	msg1 := &descriptor.Message{
-		DescriptorProto: msgdesc1,
-	}
-	msg2 := &descriptor.Message{
-		DescriptorProto: msgdesc2,
-	}
 	file := descriptor.File{
 		FileDescriptorProto: &descriptorpb.FileDescriptorProto{
 			Name:        proto.String("example.proto"),
 			Package:     proto.String("example"),
-			Dependency:  []string{"a.example/b/c.proto", "a.example/d/e.proto"},
-			MessageType: []*descriptorpb.DescriptorProto{msgdesc1, msgdesc2},
-			Service:     []*descriptorpb.ServiceDescriptorProto{svc},
+			MessageType: []*descriptorpb.DescriptorProto{msgdesc, nesteddesc},
+			Service:     []*descriptorpb.ServiceDescriptorProto{},
 		},
 		GoPkg: descriptor.GoPackage{
 			Path: "example.com/path/to/example/example.pb",
 			Name: "example_pb",
 		},
-		Messages: []*descriptor.Message{msg1, msg2},
+		Messages: []*descriptor.Message{msg, nested},
 	}
-
 	got, err := applyTemplate(param{File: crossLinkFixture(&file)}, descriptor.NewRegistry())
 	if err != nil {
 		t.Errorf("applyTemplate(%#v) failed with %v; want success", file, err)
 		return
 	}
-	if want := `msg, err := client.ExampleGe2T(ctx, &protoReq, grpc.Header(&metadata.HeaderMD)`; !strings.Contains(got, want) {
-		t.Errorf("applyTemplate(%#v) = %s; want to contain %s", file, got, want)
-	}
-	if want := `msg, err := client.ExamplEPost(ctx, &protoReq, grpc.Header(&metadata.HeaderMD)`; !strings.Contains(got, want) {
-		t.Errorf("applyTemplate(%#v) = %s; want to contain %s", file, got, want)
-	}
-	if want := `var protoReq ExamPleRequest`; !strings.Contains(got, want) {
-		t.Errorf("applyTemplate(%#v) = %s; want to contain %s", file, got, want)
-	}
-	if want := `var protoReq ExampleResponse`; !strings.Contains(got, want) {
+
+	//for _, want := range spec.sigWant {
+	//	if !strings.Contains(got, want) {
+	//		t.Errorf("applyTemplate(%#v) = %s; want to contain %s", file, got, want)
+	//	}
+	//}
+
+	if want := `func RegisterExampleServiceHandlerServer(ctx context.Context, mux *runtime.ServeMux, server ExampleServiceServer) error {`; !strings.Contains(got, want) {
 		t.Errorf("applyTemplate(%#v) = %s; want to contain %s", file, got, want)
 	}
 }

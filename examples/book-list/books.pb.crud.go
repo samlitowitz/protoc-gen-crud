@@ -8,3 +8,10 @@ It provides an interface to implement and some implementations of the interface.
 */
 
 package book_list
+
+type AuthorRepository interface {
+	/*
+		&descriptor.CRUD{Message:(*descriptor.Message)(0xc0004567e0), Operations:map[options.Operation]struct {}{}, UniqueIdentifiers:map[string][]*descriptor.Field{}}
+	*/
+
+}

@@ -4,7 +4,12 @@ package books_tracker_template.options;
 
 option go_package = "github.com/samlitowitz/protoc-gen-crud/examples/book-list";
 
+import "protoc-gen-crud/options/annotations.proto";
+
 message Author {
+  option (protoc_gen_crud.options.crud_message_options) = {
+    operations: [CREATE, READ, UPDATE, DELETE]
+  };
   string id = 1;
   string name = 2;
   repeated Book authored = 3;

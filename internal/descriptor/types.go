@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/samlitowitz/protoc-gen-crud/options"
+
 	"github.com/samlitowitz/protoc-gen-crud/internal/casing"
 
 	"google.golang.org/protobuf/types/descriptorpb"
@@ -72,10 +74,35 @@ func (f *File) proto2() bool {
 	return f.Syntax == nil || f.GetSyntax() == "proto2"
 }
 
-// TODO: Create type to describe CRUD interfaces and implementations to build
-// 1. Message Type
-//    1. Desired CRUD Operations
-//    1. Unique identifiers <string> => []Field
+// CRUD describes the operations and implementations to be generated.
+type CRUD struct {
+	// Message is the message which this CRUD describes.
+	Message *Message
+	// Operations is a set of CRUD operations to implement
+	Operations map[options.Operation]struct{}
+	// UniqueIdentifiers is a map of unique identifiers to the Fields which compose them.
+	UniqueIdentifiers map[string][]*Field
+}
+
+func (def *CRUD) Create() bool {
+	_, ok := def.Operations[options.Operation_CREATE]
+	return ok
+}
+
+func (def *CRUD) Read() bool {
+	_, ok := def.Operations[options.Operation_READ]
+	return ok
+}
+
+func (def *CRUD) Update() bool {
+	_, ok := def.Operations[options.Operation_UPDATE]
+	return ok
+}
+
+func (def *CRUD) Delete() bool {
+	_, ok := def.Operations[options.Operation_DELETE]
+	return ok
+}
 
 // Message describes a protocol buffer message types.
 type Message struct {
@@ -90,6 +117,7 @@ type Message struct {
 	Index int
 	// ForcePrefixedName when set to true, prefixes a type with a package prefix.
 	ForcePrefixedName bool
+	CRUD              *CRUD
 }
 
 func (m *Message) FQMN() string {

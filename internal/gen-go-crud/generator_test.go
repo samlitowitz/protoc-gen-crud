@@ -59,7 +59,7 @@ func TestGenerator_Generate(t *testing.T) {
 	if len(result) != 1 {
 		t.Fatalf("expected to generate one file, got: %d", len(result))
 	}
-	expectedName := "path/to/example.pb.gw.go"
+	expectedName := "path/to/example.pb.crud.go"
 	gotName := result[0].GetName()
 	if gotName != expectedName {
 		t.Fatalf("invalid name %q, expected %q", gotName, expectedName)
