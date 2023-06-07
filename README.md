@@ -8,11 +8,12 @@
     1. enum: hard, soft
     2. default to hard delete
     3. add support for soft later
-        1. delete at support?
-3. use field mask for partial updates/creates if present
+        1. deleted at support?
+3. use field mask for partial updates/creates
     1. boolean
     2. default true
-4. create at
+    3. ignored if no field mask field defined on message
+4. created at
     1. boolean
     2. default false
 5. updated at
@@ -62,10 +63,6 @@
 4. DB's to support, in order
     1. SQLite
     2. PgSQL
-
-# Try?
-
-1. Earthly, https://github.com/earthly/earthly
 
 # References
 
