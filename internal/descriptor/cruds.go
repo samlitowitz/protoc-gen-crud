@@ -21,10 +21,13 @@ func (r *Registry) loadCRUDs(file *File) error {
 			continue
 		}
 		def := &CRUD{
-			Message:           msg,
-			Operations:        make(map[options.Operation]struct{}),
-			UniqueIdentifiers: make(map[string][]*Field),
+			Message:    msg,
+			Operations: make(map[options.Operation]struct{}, len(msgOpts.Operations)),
 		}
+		for _, operation := range msgOpts.Operations {
+			def.Operations[operation] = struct{}{}
+		}
+
 		for _, field := range msg.Fields {
 			fieldOpts, err := extractFieldOptions(field.FieldDescriptorProto)
 			if err != nil {
@@ -33,15 +36,8 @@ func (r *Registry) loadCRUDs(file *File) error {
 			if fieldOpts == nil {
 				continue
 			}
-			for _, uid := range fieldOpts.GetUniqueIdentifiers() {
-				if _, ok := def.UniqueIdentifiers[uid.GetId()]; !ok {
-					def.UniqueIdentifiers[uid.GetId()] = make([]*Field, 1)
-				}
-				def.UniqueIdentifiers[uid.GetId()] = append(def.UniqueIdentifiers[uid.GetId()], field)
-			}
 		}
-
-		msg.CRUD = def
+		file.CRUDs = append(file.CRUDs, def)
 		r.cruds[msg.FQMN()] = def
 	}
 	return nil

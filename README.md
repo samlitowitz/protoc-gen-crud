@@ -48,16 +48,18 @@
 
 ```go
 
-// go_package -> `protogen.File.GoPackageName`
-package go_package
+// source: <PROTO_SOURCE_FILE> -> `protogen.File.Desc.Path()`
 
-// MessageName -> `protogen.Message.GoIdent`
-type MessageNameRepository interface {
-    // MessageType -> Appropriately qualified `protogen.Message.GoIdent`
-    Create([]*MessageType) ([]*MessageType, error)
-    Read() ([]*MessageType, error)
-    Update([]*MessageType) ([]*MessageType, error)
-    Delete([]*MessageType) ([]*MessageType, error)
+// <GO_PACKAGE_NAME> -> `protogen.File.GoPackageName`
+package <GO_PACKAGE_NAME>
+
+// <MESSAGE_NAME> -> `protogen.Message.GoIdent`
+type <MESSAGE_NAME>Repository interface {
+    // <QUALIFIED_MESSAGE_TYPE> -> Appropriately qualified `protogen.Message.GoIdent` (current package, imported, aliased)
+    Create([]*<QUALIFIED_MESSAGE_TYPE>) ([]*MessageType, error)
+    Read() ([]*<QUALIFIED_MESSAGE_TYPE>, error)
+    Update([]*<QUALIFIED_MESSAGE_TYPE>) ([]*<QUALIFIED_MESSAGE_TYPE>, error)
+    Delete([]*<QUALIFIED_MESSAGE_TYPE>) error
 }
 ```
 

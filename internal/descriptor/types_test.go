@@ -268,16 +268,3 @@ func TestGoType(t *testing.T) {
 	}
 
 }
-
-func crossLinkFixture(f *File) *File {
-	for _, m := range f.Messages {
-		m.File = f
-		for _, f := range m.Fields {
-			f.Message = m
-		}
-	}
-	for _, e := range f.Enums {
-		e.File = f
-	}
-	return f
-}

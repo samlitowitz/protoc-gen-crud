@@ -29,11 +29,8 @@ func applyTemplate(p param, reg *descriptor.Registry) (string, error) {
 		msgName := casing.Camel(*msg.Name)
 		msg.Name = &msgName
 	}
-	for _, msg := range p.Messages {
-		if msg.CRUD == nil {
-			continue
-		}
-		if err := repositoryTemplate.Execute(w, &crud{CRUD: msg.CRUD, Registry: reg}); err != nil {
+	for _, def := range p.CRUDs {
+		if err := repositoryTemplate.Execute(w, &crud{CRUD: def, Registry: reg}); err != nil {
 			return "", nil
 		}
 	}
@@ -72,28 +69,19 @@ import (
 
 	_ = template.Must(repositoryTemplate.New("repository-interface").Funcs(funcMap).Parse(`
 
-type {{.Message.GoType .Message.File.GoPkg.Path}}Repository interface {
-	/*
-		{{printf "%#v" (.Message.CRUD)}}
-	*/
-	{{if .Message.CRUD.Create}}
-	func Create([]*{{.Message.GoType .Message.File.GoPkg.Path}}) ([]*{{.Message.GoType .Message.File.GoPkg.Path}}, error)
+type {{.CRUD.Name}}Repository interface {
+	{{if .CRUD.Create}}
+	func Create([]*{{.CRUD.GoType .CRUD.File.GoPkg.Path}}) ([]*{{.CRUD.GoType .CRUD.File.GoPkg.Path}}, error)
+	{{end}}
+	{{if .CRUD.Read}}
+	func Read() ([]*{{.CRUD.GoType .CRUD.File.GoPkg.Path}}, error)
+	{{end}}
+	{{if .CRUD.Update}}
+	func Update([]*{{.CRUD.GoType .CRUD.File.GoPkg.Path}}) ([]*{{.CRUD.GoType .CRUD.File.GoPkg.Path}}, error)
+	{{end}}
+	{{if .CRUD.Delete}}
+	func Delete([]*{{.CRUD.GoType .CRUD.File.GoPkg.Path}}) error
 	{{end}}
 }
 `))
 )
-
-//type {{.Message.GoType}}Repository interface {
-//{{if .Message.CRUD.Create}}
-//func Create([]*{{.Message.GoType}}) ([]*{{.Message.GoType}}, error)
-//{{end}}
-//{{if .Message.CRUD.Read}
-//func Read([]*{{.Message.GoType}}) ([]*{{.Message.GoType}}, error)
-//{{end}}
-//{{if .Message.Update}}
-//func Update([]*{{.Message.GoType}}) ([]*{{.Message.GoType}}, error)
-//{{end}}
-//{{if .Message.Delete}}
-//func Delete([]*{{.Message.GoType}}) error
-//{{end}}
-//}

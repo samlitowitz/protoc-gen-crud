@@ -2,6 +2,7 @@
 package gen_go_crud
 
 import (
+	"fmt"
 	"strings"
 	"testing"
 
@@ -20,6 +21,9 @@ func crossLinkFixture(f *descriptor.File) *descriptor.File {
 }
 
 func TestApplyTemplateHeader(t *testing.T) {
+	fileName := "example.proto"
+	goPkgName := "example_pb"
+
 	msgdesc := &descriptorpb.DescriptorProto{
 		Name: proto.String("ExampleMessage"),
 	}
@@ -28,7 +32,7 @@ func TestApplyTemplateHeader(t *testing.T) {
 	}
 	file := descriptor.File{
 		FileDescriptorProto: &descriptorpb.FileDescriptorProto{
-			Name:        proto.String("example.proto"),
+			Name:        proto.String(fileName),
 			Package:     proto.String("example"),
 			Dependency:  []string{"a.example/b/c.proto", "a.example/d/e.proto"},
 			MessageType: []*descriptorpb.DescriptorProto{msgdesc},
@@ -36,7 +40,7 @@ func TestApplyTemplateHeader(t *testing.T) {
 		},
 		GoPkg: descriptor.GoPackage{
 			Path: "example.com/path/to/example/example.pb",
-			Name: "example_pb",
+			Name: goPkgName,
 		},
 		Messages: []*descriptor.Message{msg},
 	}
@@ -45,143 +49,116 @@ func TestApplyTemplateHeader(t *testing.T) {
 		t.Errorf("applyTemplate(%#v) failed with %v; want success", file, err)
 		return
 	}
-	if want := "package example_pb\n"; !strings.Contains(got, want) {
+	if want := "// source: " + fileName + "\n"; !strings.Contains(got, want) {
+		t.Errorf("applyTemplate(%#v) = %s; want to contain %s", file, got, want)
+	}
+	if want := "package " + goPkgName + "\n"; !strings.Contains(got, want) {
 		t.Errorf("applyTemplate(%#v) = %s; want to contain %s", file, got, want)
 	}
 }
 
-func TestApplyRepositoryTemplate(t *testing.T) {
-	msgdesc := &descriptorpb.DescriptorProto{
-		Name: proto.String("ExampleMessageOne"),
-		Field: []*descriptorpb.FieldDescriptorProto{
-			{
-				Name:     proto.String("id_one"),
-				Label:    descriptorpb.FieldDescriptorProto_LABEL_OPTIONAL.Enum(),
-				Type:     descriptorpb.FieldDescriptorProto_TYPE_STRING.Enum(),
-				TypeName: proto.String(".google.protobuf.StringValue"),
-				Number:   proto.Int32(1),
-			},
-			{
-				Name:     proto.String("id_two"),
-				Label:    descriptorpb.FieldDescriptorProto_LABEL_OPTIONAL.Enum(),
-				Type:     descriptorpb.FieldDescriptorProto_TYPE_STRING.Enum(),
-				TypeName: proto.String(".google.protobuf.StringValue"),
-				Number:   proto.Int32(2),
-			},
-			{
-				Name:     proto.String("id_three"),
-				Label:    descriptorpb.FieldDescriptorProto_LABEL_OPTIONAL.Enum(),
-				Type:     descriptorpb.FieldDescriptorProto_TYPE_STRING.Enum(),
-				TypeName: proto.String(".google.protobuf.StringValue"),
-				Number:   proto.Int32(3),
-			},
-			{
-				Name:     proto.String("nested"),
-				Label:    descriptorpb.FieldDescriptorProto_LABEL_OPTIONAL.Enum(),
-				Type:     descriptorpb.FieldDescriptorProto_TYPE_MESSAGE.Enum(),
-				TypeName: proto.String("NestedMessage"),
-				Number:   proto.Int32(4),
-			},
-		},
-	}
-	nesteddesc := &descriptorpb.DescriptorProto{
-		Name: proto.String("NestedMessage"),
-		Field: []*descriptorpb.FieldDescriptorProto{
-			{
-				Name:   proto.String("int32"),
-				Label:  descriptorpb.FieldDescriptorProto_LABEL_OPTIONAL.Enum(),
-				Type:   descriptorpb.FieldDescriptorProto_TYPE_INT32.Enum(),
-				Number: proto.Int32(1),
-			},
-			{
-				Name:   proto.String("bool"),
-				Label:  descriptorpb.FieldDescriptorProto_LABEL_OPTIONAL.Enum(),
-				Type:   descriptorpb.FieldDescriptorProto_TYPE_BOOL.Enum(),
-				Number: proto.Int32(2),
-			},
-		},
-	}
-	msg := &descriptor.Message{
-		DescriptorProto: msgdesc,
-	}
-	crud := &descriptor.CRUD{
-		Message: msg,
-		Operations: map[options.Operation]struct{}{
-			options.Operation_CREATE: {},
-			options.Operation_READ:   {},
-			options.Operation_UPDATE: {},
-			options.Operation_DELETE: {},
-		},
-		UniqueIdentifiers: map[string][]*descriptor.Field{
-			"one": {
-				{
-					FieldDescriptorProto: msgdesc.Field[0],
-					Message:              msg,
-					ForcePrefixedName:    false,
-				},
-			},
-			"two": {
-				{
-					FieldDescriptorProto: msgdesc.Field[0],
-					Message:              msg,
-					ForcePrefixedName:    false,
-				},
-				{
-					FieldDescriptorProto: msgdesc.Field[1],
-					Message:              msg,
-					ForcePrefixedName:    false,
-				},
-			},
-			"three": {
-				{
-					FieldDescriptorProto: msgdesc.Field[0],
-					Message:              msg,
-					ForcePrefixedName:    false,
-				},
-				{
-					FieldDescriptorProto: msgdesc.Field[1],
-					Message:              msg,
-					ForcePrefixedName:    false,
-				},
-				{
-					FieldDescriptorProto: msgdesc.Field[2],
-					Message:              msg,
-					ForcePrefixedName:    false,
-				},
-			},
-		},
-	}
-	msg.CRUD = crud
-	nested := &descriptor.Message{
-		DescriptorProto: nesteddesc,
-	}
+func TestApplyTemplate_RepositoryInterface(t *testing.T) {
+	allOperations := []options.Operation{options.Operation_CREATE, options.Operation_READ, options.Operation_UPDATE, options.Operation_DELETE}
+	combinations := allCombinations(allOperations)
+	for _, operations := range combinations {
+		msgdesc := &descriptorpb.DescriptorProto{
+			Name: proto.String("ExampleMessageOne"),
+		}
+		msg := &descriptor.Message{
+			DescriptorProto: msgdesc,
+		}
+		crud := &descriptor.CRUD{
+			Message:    msg,
+			Operations: make(map[options.Operation]struct{}),
+		}
+		for _, operation := range operations {
+			crud.Operations[operation] = struct{}{}
+		}
 
-	file := descriptor.File{
-		FileDescriptorProto: &descriptorpb.FileDescriptorProto{
-			Name:        proto.String("example.proto"),
-			Package:     proto.String("example"),
-			MessageType: []*descriptorpb.DescriptorProto{msgdesc, nesteddesc},
-			Service:     []*descriptorpb.ServiceDescriptorProto{},
-		},
-		GoPkg: descriptor.GoPackage{
-			Path: "example.com/path/to/example/example.pb",
-			Name: "example_pb",
-		},
-		Messages: []*descriptor.Message{msg, nested},
-	}
-	got, err := applyTemplate(param{File: crossLinkFixture(&file)}, descriptor.NewRegistry())
-	if err != nil {
-		t.Errorf("applyTemplate(%#v) failed with %v; want success", file, err)
-		return
-	}
+		file := descriptor.File{
+			FileDescriptorProto: &descriptorpb.FileDescriptorProto{
+				Name:        proto.String("example.proto"),
+				Package:     proto.String("example"),
+				MessageType: []*descriptorpb.DescriptorProto{msgdesc},
+				Service:     []*descriptorpb.ServiceDescriptorProto{},
+			},
+			GoPkg: descriptor.GoPackage{
+				Path: "example.com/path/to/example/example.pb",
+				Name: "example_pb",
+			},
+			Messages: []*descriptor.Message{msg},
+			CRUDs:    []*descriptor.CRUD{crud},
+		}
+		got, err := applyTemplate(param{File: crossLinkFixture(&file)}, descriptor.NewRegistry())
+		if err != nil {
+			t.Errorf("applyTemplate(%#v) failed with %v; want success", file, err)
+			return
+		}
 
-	//for _, want := range spec.sigWant {
-	//	if !strings.Contains(got, want) {
-	//		t.Errorf("applyTemplate(%#v) = %s; want to contain %s", file, got, want)
-	//	}
-	//}
+		if want := "type " + *msgdesc.Name + "Repository interface {"; !strings.Contains(got, want) {
+			t.Errorf("applyTemplate(%#v) = %s; want to contain %s", file, got, want)
+		}
 
-	if want := `func RegisterExampleServiceHandlerServer(ctx context.Context, mux *runtime.ServeMux, server ExampleServiceServer) error {`; !strings.Contains(got, want) {
-		t.Errorf("applyTemplate(%#v) = %s; want to contain %s", file, got, want)
+		for _, operation := range operations {
+			switch operation {
+			case options.Operation_CREATE:
+				want := fmt.Sprintf(
+					"func Create([]*%s) ([]*%s, error)",
+					*msgdesc.Name,
+					*msgdesc.Name,
+				)
+				if !strings.Contains(got, want) {
+					t.Errorf("applyTemplate(%#v) = %s; want to contain %s", file, got, want)
+				}
+			case options.Operation_READ:
+				want := fmt.Sprintf(
+					"func Read() ([]*%s, error)",
+					*msgdesc.Name,
+				)
+				if !strings.Contains(got, want) {
+					t.Errorf("applyTemplate(%#v) = %s; want to contain %s", file, got, want)
+				}
+			case options.Operation_UPDATE:
+				want := fmt.Sprintf(
+					"func Update([]*%s) ([]*%s, error)",
+					*msgdesc.Name,
+					*msgdesc.Name,
+				)
+				if !strings.Contains(got, want) {
+					t.Errorf("applyTemplate(%#v) = %s; want to contain %s", file, got, want)
+				}
+			case options.Operation_DELETE:
+				want := fmt.Sprintf(
+					"func Delete([]*%s) error",
+					*msgdesc.Name,
+				)
+				if !strings.Contains(got, want) {
+					t.Errorf("applyTemplate(%#v) = %s; want to contain %s", file, got, want)
+				}
+			}
+		}
 	}
+}
+
+// REFURL: https://github.com/mxschmitt/golang-combinations/blob/main/combinations.go#L8
+func allCombinations(set []options.Operation) (subsets [][]options.Operation) {
+	length := uint(len(set))
+
+	// Go through all possible combinations of objects
+	// from 1 (only first object in subset) to 2^length (all objects in subset)
+	for subsetBits := 1; subsetBits < (1 << length); subsetBits++ {
+		var subset []options.Operation
+
+		for object := uint(0); object < length; object++ {
+			// checks if object is contained in subset
+			// by checking if bit 'object' is set in subsetBits
+			if (subsetBits>>object)&1 == 1 {
+				// add object to subset
+				subset = append(subset, set[object])
+			}
+		}
+		// add subset to subsets
+		subsets = append(subsets, subset)
+	}
+	return subsets
 }

@@ -58,6 +58,8 @@ type File struct {
 	Messages []*Message
 	// Enums is the list of enums defined in this file.
 	Enums []*Enum
+	// CRUDs is a list of CRUDs for messages defined in this file
+	CRUDs []*CRUD
 }
 
 // Pkg returns package name or alias if it's present
@@ -76,12 +78,9 @@ func (f *File) proto2() bool {
 
 // CRUD describes the operations and implementations to be generated.
 type CRUD struct {
-	// Message is the message which this CRUD describes.
-	Message *Message
+	*Message
 	// Operations is a set of CRUD operations to implement
 	Operations map[options.Operation]struct{}
-	// UniqueIdentifiers is a map of unique identifiers to the Fields which compose them.
-	UniqueIdentifiers map[string][]*Field
 }
 
 func (def *CRUD) Create() bool {
@@ -117,7 +116,6 @@ type Message struct {
 	Index int
 	// ForcePrefixedName when set to true, prefixes a type with a package prefix.
 	ForcePrefixedName bool
-	CRUD              *CRUD
 }
 
 func (m *Message) FQMN() string {
