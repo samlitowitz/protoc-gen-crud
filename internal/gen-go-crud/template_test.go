@@ -59,7 +59,7 @@ func TestApplyTemplateHeader(t *testing.T) {
 
 func TestApplyTemplate_RepositoryInterface(t *testing.T) {
 	allOperations := []options.Operation{options.Operation_CREATE, options.Operation_READ, options.Operation_UPDATE, options.Operation_DELETE}
-	combinations := allCombinations(allOperations)
+	combinations := allOperationCombinations(allOperations)
 	for _, operations := range combinations {
 		msgdesc := &descriptorpb.DescriptorProto{
 			Name: proto.String("ExampleMessageOne"),
@@ -141,7 +141,7 @@ func TestApplyTemplate_RepositoryInterface(t *testing.T) {
 }
 
 // REFURL: https://github.com/mxschmitt/golang-combinations/blob/main/combinations.go#L8
-func allCombinations(set []options.Operation) (subsets [][]options.Operation) {
+func allOperationCombinations(set []options.Operation) (subsets [][]options.Operation) {
 	length := uint(len(set))
 
 	// Go through all possible combinations of objects

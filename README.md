@@ -4,19 +4,21 @@
 
 1. operations to generate
     1. []enum: create, read, update, delete
-2. delete strategy
+2. implementations to generate
+    1. []enum: in-memory
+3. delete strategy
     1. enum: hard, soft
     2. default to hard delete
     3. add support for soft later
         1. deleted at support?
-3. use field mask for partial updates/creates
+4. use field mask for partial updates/creates
     1. boolean
     2. default true
     3. ignored if no field mask field defined on message
-4. created at
+5. created at
     1. boolean
     2. default false
-5. updated at
+6. updated at
     1. boolean
     2. default false
 
@@ -31,8 +33,7 @@
     1. boolean
     2. default false
 4. non-scalar field type strategy
-   1. enum: inline, link via unique id, skip
-
+    1. enum: inline, link via unique id, skip
 
 # To generate...
 
@@ -46,12 +47,13 @@
 package <GO_PACKAGE_NAME>
 
 // <MESSAGE_NAME> -> `protogen.Message.GoIdent`
-type <MESSAGE_NAME>Repository interface {
-    // <QUALIFIED_MESSAGE_TYPE> -> Appropriately qualified `protogen.Message.GoIdent` (current package, imported, aliased)
-    Create([]*<QUALIFIED_MESSAGE_TYPE>) ([]*MessageType, error)
-    Read() ([]*<QUALIFIED_MESSAGE_TYPE>, error)
-    Update([]*<QUALIFIED_MESSAGE_TYPE>) ([]*<QUALIFIED_MESSAGE_TYPE>, error)
-    Delete([]*<QUALIFIED_MESSAGE_TYPE>) error
+type
+<MESSAGE_NAME>Repository interface {
+// <QUALIFIED_MESSAGE_TYPE> -> Appropriately qualified `protogen.Message.GoIdent` (current package, imported, aliased)
+Create([]*<QUALIFIED_MESSAGE_TYPE>) ([]*MessageType, error)
+Read() ([]*<QUALIFIED_MESSAGE_TYPE>, error)
+Update([]*<QUALIFIED_MESSAGE_TYPE>) ([]*<QUALIFIED_MESSAGE_TYPE>, error)
+Delete([]*<QUALIFIED_MESSAGE_TYPE>) error
 }
 ```
 
@@ -60,6 +62,7 @@ type <MESSAGE_NAME>Repository interface {
     2. Operations
         1. Create `([]*Message, options) ([]*Message, error)`
         2. Read `([]Clause) ([]*Message, error)`
+            1. Revisit or start simple
             1. Clause
                 1. IsEqual
                 2. IsNotEqual
@@ -68,13 +71,16 @@ type <MESSAGE_NAME>Repository interface {
                 5. CLAUSE
         3. Update `([]*Message, options) ([]*Message, error)`
         4. Delete `([]*Message) ([]*Message, error)`
-    5. fully qualified message names
+    3. fully qualified message names
 2. Repository interface implementations
-
-3. SQL statements to create tables
-4. DB's to support, in order
-    1. SQLite
-    2. PgSQL
+    1. In Memory
+        1.
+    2. SQLite
+    3. PgSQL
+3. Auxiliary Features
+    1. SQL statements to create tables
+        1. SQLite
+        2. PgSQL
 
 # References
 

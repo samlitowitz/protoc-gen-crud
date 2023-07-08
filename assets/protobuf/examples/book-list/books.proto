@@ -9,6 +9,7 @@ import "protoc-gen-crud/options/annotations.proto";
 message Author {
   option (protoc_gen_crud.options.crud_message_options) = {
     operations: [CREATE, READ, UPDATE, DELETE]
+    implementations: [IN_MEMORY]
   };
   string id = 1;
   string name = 2;

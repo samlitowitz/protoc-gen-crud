@@ -4,6 +4,10 @@ package protoc_gen_crud.options;
 
 option go_package = "github.com/samlitowitz/protoc-gen-crud/options";
 
+enum Implementation {
+  IN_MEMORY = 0;
+}
+
 enum Operation {
   CREATE = 0;
   READ = 1;
@@ -17,6 +21,7 @@ message MethodOptions {}
 
 message MessageOptions {
   repeated Operation operations = 1;
+  repeated Implementation implementations = 2;
 }
 
 message ServiceOptions {}

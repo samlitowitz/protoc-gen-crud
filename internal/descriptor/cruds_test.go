@@ -118,7 +118,7 @@ func TestExtractCRUDsWithoutAnnotation(t *testing.T) {
 
 func TestExtractCRUDOperations(t *testing.T) {
 	allOperations := []options.Operation{options.Operation_CREATE, options.Operation_READ, options.Operation_UPDATE, options.Operation_DELETE}
-	combinations := allCombinations(allOperations)
+	combinations := allOperationCombinations(allOperations)
 	for _, operations := range combinations {
 		src := `
 		name: "path/to/example.proto",
@@ -179,14 +179,99 @@ func TestExtractCRUDOperations(t *testing.T) {
 	}
 }
 
+func TestExtractCRUDImplementations(t *testing.T) {
+	allImplementations := []options.Implementation{options.Implementation_IN_MEMORY}
+	combinations := allImplementationCombinations(allImplementations)
+	for _, implementations := range combinations {
+		src := `
+		name: "path/to/example.proto",
+		package: "example"
+		message_type <
+			name: "StringMessage"
+			field <
+				name: "string"
+				number: 1
+				label: LABEL_OPTIONAL
+				type: TYPE_STRING
+			>
+			options <
+				[protoc_gen_crud.options.crud_message_options] <
+					implementations: [%s]
+				>
+			>
+		>
+	`
+		implementationsLiteral := make([]string, 0, len(implementations))
+		implementationsMap := make(map[options.Implementation]struct{})
+		for _, implementation := range implementations {
+			implementationsLiteral = append(implementationsLiteral, implementation.String())
+			implementationsMap[implementation] = struct{}{}
+		}
+
+		src = fmt.Sprintf(src, strings.Join(implementationsLiteral, ", "))
+
+		var fd descriptorpb.FileDescriptorProto
+		if err := prototext.Unmarshal([]byte(src), &fd); err != nil {
+			t.Fatalf("proto.UnmarshalText(%s, &fd) failed with %v; want success", src, err)
+		}
+		msg := &Message{
+			DescriptorProto: fd.MessageType[0],
+			Fields: []*Field{
+				{
+					FieldDescriptorProto: fd.MessageType[0].Field[0],
+				},
+			},
+		}
+		file := &File{
+			FileDescriptorProto: &fd,
+			GoPkg: GoPackage{
+				Path: "path/to/example.pb",
+				Name: "example_pb",
+			},
+			Messages: []*Message{msg},
+			CRUDs: []*CRUD{
+				{
+					Message:         msg,
+					Implementations: implementationsMap,
+				},
+			},
+		}
+
+		crossLinkFixture(file)
+		testExtractServices(t, []*descriptorpb.FileDescriptorProto{&fd}, "path/to/example.proto", file.CRUDs)
+	}
+}
+
 // REFURL: https://github.com/mxschmitt/golang-combinations/blob/main/combinations.go#L8
-func allCombinations(set []options.Operation) (subsets [][]options.Operation) {
+func allOperationCombinations(set []options.Operation) (subsets [][]options.Operation) {
 	length := uint(len(set))
 
 	// Go through all possible combinations of objects
 	// from 1 (only first object in subset) to 2^length (all objects in subset)
 	for subsetBits := 1; subsetBits < (1 << length); subsetBits++ {
 		var subset []options.Operation
+
+		for object := uint(0); object < length; object++ {
+			// checks if object is contained in subset
+			// by checking if bit 'object' is set in subsetBits
+			if (subsetBits>>object)&1 == 1 {
+				// add object to subset
+				subset = append(subset, set[object])
+			}
+		}
+		// add subset to subsets
+		subsets = append(subsets, subset)
+	}
+	return subsets
+}
+
+func allImplementationCombinations(set []options.Implementation) (subsets [][]options.Implementation) {
+	length := uint(len(set))
+
+	// Go through all possible combinations of objects
+	// from 1 (only first object in subset) to 2^length (all objects in subset)
+	for subsetBits := 1; subsetBits < (1 << length); subsetBits++ {
+		var subset []options.Implementation
 
 		for object := uint(0); object < length; object++ {
 			// checks if object is contained in subset

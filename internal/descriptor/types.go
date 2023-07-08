@@ -81,6 +81,8 @@ type CRUD struct {
 	*Message
 	// Operations is a set of CRUD operations to implement
 	Operations map[options.Operation]struct{}
+	// Implementations is a set of implementations generate for CRUD operations
+	Implementations map[options.Implementation]struct{}
 }
 
 func (def *CRUD) Create() bool {
@@ -100,6 +102,11 @@ func (def *CRUD) Update() bool {
 
 func (def *CRUD) Delete() bool {
 	_, ok := def.Operations[options.Operation_DELETE]
+	return ok
+}
+
+func (def *CRUD) InMemory() bool {
+	_, ok := def.Implementations[options.Implementation_IN_MEMORY]
 	return ok
 }
 

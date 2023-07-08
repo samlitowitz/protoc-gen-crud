@@ -61,6 +61,9 @@ import (
 
 	repositoryTemplate = template.Must(template.New("repository").Parse(`
 {{template "repository-interface" .}}
+{{if .CRUD.InMemory}}
+	{{template "repository-in-memory" .}}
+{{end}}
 `))
 
 	funcMap template.FuncMap = map[string]interface{}{
@@ -71,15 +74,20 @@ import (
 
 type {{.CRUD.Name}}Repository interface {
 	{{if .CRUD.Create}}
+	// TODO: Add Comment
 	func Create([]*{{.CRUD.GoType .CRUD.File.GoPkg.Path}}) ([]*{{.CRUD.GoType .CRUD.File.GoPkg.Path}}, error)
 	{{end}}
 	{{if .CRUD.Read}}
+	// TODO: Add Comment
+	// Read is incomplete and it should be considered unstable
 	func Read() ([]*{{.CRUD.GoType .CRUD.File.GoPkg.Path}}, error)
 	{{end}}
 	{{if .CRUD.Update}}
+	// TODO: Add Comment
 	func Update([]*{{.CRUD.GoType .CRUD.File.GoPkg.Path}}) ([]*{{.CRUD.GoType .CRUD.File.GoPkg.Path}}, error)
 	{{end}}
 	{{if .CRUD.Delete}}
+	// TODO: Add Comment
 	func Delete([]*{{.CRUD.GoType .CRUD.File.GoPkg.Path}}) error
 	{{end}}
 }
