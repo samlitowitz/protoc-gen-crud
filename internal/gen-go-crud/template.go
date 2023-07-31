@@ -80,6 +80,7 @@ type {{.CRUD.Name}}Repository interface {
 	{{if .CRUD.Read}}
 	// TODO: Add Comment
 	// Read is incomplete and it should be considered unstable
+	// Use where clauses
 	func Read() ([]*{{.CRUD.GoType .CRUD.File.GoPkg.Path}}, error)
 	{{end}}
 	{{if .CRUD.Update}}
@@ -88,6 +89,8 @@ type {{.CRUD.Name}}Repository interface {
 	{{end}}
 	{{if .CRUD.Delete}}
 	// TODO: Add Comment
+	// Delete is incomplete and it should be considered unstable
+	// Use where clauses
 	func Delete([]*{{.CRUD.GoType .CRUD.File.GoPkg.Path}}) error
 	{{end}}
 }
