@@ -6,7 +6,9 @@ var (
 	_ = template.Must(repositoryTemplate.New("repository-in-memory").Funcs(funcMap).Parse(`
 
 // TODO: Add Comment
-type InMemory{{.CRUD.Name}}Repository struct {}
+type InMemory{{.CRUD.Name}}Repository struct {
+	// TODO: Implement
+}
 
 // TODO: Add Comment
 func NewInMemory{{.CRUD.Name}}Repository() *InMemory{{.CRUD.Name}}Repository {
@@ -16,29 +18,32 @@ func NewInMemory{{.CRUD.Name}}Repository() *InMemory{{.CRUD.Name}}Repository {
 {{if .CRUD.Create}}
 // TODO: Add Comment
 func (repo *InMemory{{.CRUD.Name}}Repository) Create([]*{{.CRUD.GoType .CRUD.File.GoPkg.Path}}) ([]*{{.CRUD.GoType .CRUD.File.GoPkg.Path}}, error) {
-
+	panic("not implemented")
 }
 {{end}}
 
 {{if .CRUD.Read}}
 // TODO: Add Comment
 // Read is incomplete and it should be considered unstable
+// Use where clauses
 func (repo *InMemory{{.CRUD.Name}}Repository) Read() ([]*{{.CRUD.GoType .CRUD.File.GoPkg.Path}}, error) {
-
+	panic("not implemented")
 }
 {{end}}
 
 {{if .CRUD.Update}}
 // TODO: Add Comment
 func (repo *InMemory{{.CRUD.Name}}Repository) Update([]*{{.CRUD.GoType .CRUD.File.GoPkg.Path}}) ([]*{{.CRUD.GoType .CRUD.File.GoPkg.Path}}, error) {
-
+	panic("not implemented")
 }
 {{end}}
 
 {{if .CRUD.Delete}}
 // TODO: Add Comment
+// Delete is incomplete and it should be considered unstable
+// Use where clauses
 func (repo *InMemory{{.CRUD.Name}}Repository) Delete([]*{{.CRUD.GoType .CRUD.File.GoPkg.Path}}) error {
-
+	panic("not implemented")
 }
 {{end}}
 `))
