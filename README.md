@@ -5,7 +5,7 @@
 1. operations to generate
     1. []enum: create, read, update, delete
 2. implementations to generate
-    1. []enum: in-memory
+    1. []enum: in-memory, sqlite, pgsql
 3. delete strategy
     1. enum: hard, soft
     2. default to hard delete
@@ -64,11 +64,15 @@ Delete([]*<QUALIFIED_MESSAGE_TYPE>) error
         2. Read `([]Clause) ([]*Message, error)`
             1. Revisit or start simple
             1. Clause
-                1. IsEqual
-                2. IsNotEqual
-                3. And
-                4. Or
-                5. CLAUSE
+                1. And
+                2. Or
+                3. Not
+                4. Null
+                5. Equal
+                6. GreaterThanOrEqual
+                7. LessThanOrEqual
+                8. Like
+                9. In
         3. Update `([]*Message, options) ([]*Message, error)`
         4. Delete `([]*Message) ([]*Message, error)`
     3. fully qualified message names
@@ -81,6 +85,96 @@ Delete([]*<QUALIFIED_MESSAGE_TYPE>) error
     1. SQL statements to create tables
         1. SQLite
         2. PgSQL
+
+## Clauses
+
+### Accept expressions
+
+1. And
+2. Or
+3. Not
+
+### Accept nothing
+
+1. Null
+
+### Accept field expressions
+
+1. Equal
+2. GreaterThanOrEqual
+3. LessThanOrEqual
+4. GreaterThan
+5. LessThan
+6. Like
+7. In
+
+
+```go
+package tmp
+
+type TypID string
+const (
+	BookTypID TypID = "asfwer234sdfadsf" // hash of the fully qualified book type, `github.com/path/to/Book`
+)
+
+
+```
+
+---
+
+
+1. Generate map of field names to column names
+2. Generate function to all field names belong to the type
+    3. Generic function which takes []ValidFields, []Fields
+
+```go
+package tmp
+
+import (
+	"fmt"
+	"strings"
+)
+
+type FieldName string
+
+func ValidateFieldNames(validFieldNames map[FieldName]struct{}, fieldNames []FieldName) error {
+	invalidFieldNames := make([]string, 0)
+    for _, fieldName := range fieldNames {
+        if _, ok := validFieldNames[fieldName]; ok {
+            continue
+        }
+		invalidFieldNames = append(invalidFieldNames, string(fieldName))
+    }
+	if len(invalidFieldNames) == 0 {
+		return nil
+    }
+    return fmt.Errorf("Invalid fields: %s", strings.Join(invalidFieldNames, ", "))
+}
+```
+
+4. Generate type specific function which wraps generic function
+1. `Read` implementation validates field names belong to the type
+
+1. Avoid incorrect column names at compile time OR before executing the query
+2. Avoid incorrect value types not matching column types at compile time
+
+```go
+package test
+
+type ColumnName string
+
+func EqualInt(columnName string, value int) {
+    // ...
+}
+
+func InInt(columnName string, values ...int) {
+    // ...
+}
+
+func LessThanInt(columnName string, value int) {
+    // ...
+}
+```
 
 # References
 
