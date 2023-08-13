@@ -43,7 +43,9 @@
 2. `internal/descriptor/types.go`
     1. `type CRUD struct`
         1. Add ability to hand field option(s)
-3. `internal/descriptor/cruds_test.go`
+3. `internal/descriptor/cruds.go`
+    1. Parse/set field option(s)
+4. `internal/descriptor/cruds_test.go`
     1. Add unit test for field option(s)
 
 # To generate...
