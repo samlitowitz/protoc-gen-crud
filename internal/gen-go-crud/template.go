@@ -61,7 +61,7 @@ import (
 
 	repositoryTemplate = template.Must(template.New("repository").Parse(`
 {{template "repository-interface" .}}
-{{if .CRUD.InMemory}}
+{{if .CRUD.InMemoryImplementation}}
 	{{template "repository-in-memory" .}}
 {{end}}
 `))

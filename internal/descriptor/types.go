@@ -110,7 +110,7 @@ func (def *CRUD) Delete() bool {
 	return ok
 }
 
-func (def *CRUD) InMemory() bool {
+func (def *CRUD) InMemoryImplementation() bool {
 	_, ok := def.Implementations[options.Implementation_IN_MEMORY]
 	return ok
 }
