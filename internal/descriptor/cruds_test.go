@@ -121,7 +121,13 @@ func TestExtractCRUDsWithoutAnnotation(t *testing.T) {
 			Name: "example_pb",
 		},
 		Messages: []*Message{msg},
-		CRUDs:    []*CRUD{},
+		CRUDs: []*CRUD{
+			{
+				Message:         msg,
+				Operations:      make(map[options.Operation]struct{}),
+				Implementations: make(map[options.Implementation]struct{}),
+			},
+		},
 	}
 
 	crossLinkFixture(file)
@@ -192,6 +198,69 @@ func TestExtractCRUDOperations(t *testing.T) {
 }
 
 func TestExtractCRUDImplementations(t *testing.T) {
+	allImplementations := []options.Implementation{options.Implementation_IN_MEMORY}
+	combinations := allImplementationCombinations(allImplementations)
+	for _, implementations := range combinations {
+		src := `
+		name: "path/to/example.proto",
+		package: "example"
+		message_type <
+			name: "StringMessage"
+			field <
+				name: "string"
+				number: 1
+				label: LABEL_OPTIONAL
+				type: TYPE_STRING
+			>
+			options <
+				[protoc_gen_crud.options.crud_message_options] <
+					implementations: [%s]
+				>
+			>
+		>
+	`
+		implementationsLiteral := make([]string, 0, len(implementations))
+		implementationsMap := make(map[options.Implementation]struct{})
+		for _, implementation := range implementations {
+			implementationsLiteral = append(implementationsLiteral, implementation.String())
+			implementationsMap[implementation] = struct{}{}
+		}
+
+		src = fmt.Sprintf(src, strings.Join(implementationsLiteral, ", "))
+
+		var fd descriptorpb.FileDescriptorProto
+		if err := prototext.Unmarshal([]byte(src), &fd); err != nil {
+			t.Fatalf("proto.UnmarshalText(%s, &fd) failed with %v; want success", src, err)
+		}
+		msg := &Message{
+			DescriptorProto: fd.MessageType[0],
+			Fields: []*Field{
+				{
+					FieldDescriptorProto: fd.MessageType[0].Field[0],
+				},
+			},
+		}
+		file := &File{
+			FileDescriptorProto: &fd,
+			GoPkg: GoPackage{
+				Path: "path/to/example.pb",
+				Name: "example_pb",
+			},
+			Messages: []*Message{msg},
+			CRUDs: []*CRUD{
+				{
+					Message:         msg,
+					Implementations: implementationsMap,
+				},
+			},
+		}
+
+		crossLinkFixture(file)
+		testExtractCRUDs(t, []*descriptorpb.FileDescriptorProto{&fd}, "path/to/example.proto", file.CRUDs)
+	}
+}
+
+func TestExtractFieldOptionUniqueIdentifiers(t *testing.T) {
 	allImplementations := []options.Implementation{options.Implementation_IN_MEMORY}
 	combinations := allImplementationCombinations(allImplementations)
 	for _, implementations := range combinations {

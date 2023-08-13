@@ -17,21 +17,10 @@ func (r *Registry) loadCRUDs(file *File) error {
 		if err != nil {
 			return err
 		}
-		if msgOpts == nil {
-			continue
-		}
 		def := &CRUD{
-			Message:         msg,
-			Operations:      make(map[options.Operation]struct{}, len(msgOpts.Operations)),
-			Implementations: make(map[options.Implementation]struct{}, len(msgOpts.Implementations)),
+			Message: msg,
 		}
-		for _, operation := range msgOpts.Operations {
-			def.Operations[operation] = struct{}{}
-		}
-
-		for _, implementation := range msgOpts.Implementations {
-			def.Implementations[implementation] = struct{}{}
-		}
+		assignMessageOptions(def, msgOpts)
 
 		for _, field := range msg.Fields {
 			fieldOpts, err := extractFieldOptions(field.FieldDescriptorProto)
@@ -41,10 +30,42 @@ func (r *Registry) loadCRUDs(file *File) error {
 			if fieldOpts == nil {
 				continue
 			}
+			err = assignUniqueIdentifiers(def, field)
+			if err != nil {
+				return err
+			}
 		}
 		file.CRUDs = append(file.CRUDs, def)
 		r.cruds[msg.FQMN()] = def
 	}
+	return nil
+}
+
+func assignMessageOptions(def *CRUD, msgOpts *options.MessageOptions) {
+	if msgOpts == nil {
+		def.Operations = make(map[options.Operation]struct{})
+		def.Implementations = make(map[options.Implementation]struct{})
+		return
+	}
+
+	def.Operations = make(map[options.Operation]struct{}, len(msgOpts.Operations))
+	def.Implementations = make(map[options.Implementation]struct{}, len(msgOpts.Implementations))
+
+	for _, operation := range msgOpts.Operations {
+		def.Operations[operation] = struct{}{}
+	}
+
+	for _, implementation := range msgOpts.Implementations {
+		def.Implementations[implementation] = struct{}{}
+	}
+}
+
+// TODO: implement
+func assignUniqueIdentifiers(def *CRUD, field *Field) error {
+	//if field.Type == nil {
+	//	return fmt.Errorf("unsupported type: %s", *field.TypeName)
+	//}
+
 	return nil
 }
 
