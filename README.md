@@ -35,6 +35,17 @@
 4. non-scalar field type strategy
     1. enum: inline, link via unique id, skip
 
+### Adding field option in code
+
+1. `options/crud.proto`
+    1. `message FieldOptions`
+        1. Add field option(s)
+2. `internal/descriptor/types.go`
+    1. `type CRUD struct`
+        1. Add ability to hand field option(s)
+3. `internal/descriptor/cruds_test.go`
+    1. Add unit test for field option(s)
+
 # To generate...
 
 1. Repository Interface
@@ -108,20 +119,19 @@ Delete([]*<QUALIFIED_MESSAGE_TYPE>) error
 6. Like
 7. In
 
-
 ```go
 package tmp
 
 type TypID string
+
 const (
-	BookTypID TypID = "asfwer234sdfadsf" // hash of the fully qualified book type, `github.com/path/to/Book`
+    BookTypID TypID = "asfwer234sdfadsf" // hash of the fully qualified book type, `github.com/path/to/Book`
 )
 
 
 ```
 
 ---
-
 
 1. Generate map of field names to column names
 2. Generate function to all field names belong to the type
@@ -131,22 +141,22 @@ const (
 package tmp
 
 import (
-	"fmt"
-	"strings"
+    "fmt"
+    "strings"
 )
 
 type FieldName string
 
 func ValidateFieldNames(validFieldNames map[FieldName]struct{}, fieldNames []FieldName) error {
-	invalidFieldNames := make([]string, 0)
+    invalidFieldNames := make([]string, 0)
     for _, fieldName := range fieldNames {
         if _, ok := validFieldNames[fieldName]; ok {
             continue
         }
-		invalidFieldNames = append(invalidFieldNames, string(fieldName))
+        invalidFieldNames = append(invalidFieldNames, string(fieldName))
     }
-	if len(invalidFieldNames) == 0 {
-		return nil
+    if len(invalidFieldNames) == 0 {
+        return nil
     }
     return fmt.Errorf("Invalid fields: %s", strings.Join(invalidFieldNames, ", "))
 }
