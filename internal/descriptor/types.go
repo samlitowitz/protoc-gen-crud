@@ -79,10 +79,15 @@ func (f *File) proto2() bool {
 // CRUD describes the operations and implementations to be generated.
 type CRUD struct {
 	*Message
+
+	// Message Options
 	// Operations is a set of CRUD operations to implement
 	Operations map[options.Operation]struct{}
 	// Implementations is a set of implementations generate for CRUD operations
 	Implementations map[options.Implementation]struct{}
+
+	// Field Options
+	UniqueIdentifiers map[string][]*Field
 }
 
 func (def *CRUD) Create() bool {

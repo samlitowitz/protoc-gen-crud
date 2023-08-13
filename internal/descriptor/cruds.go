@@ -21,11 +21,16 @@ func (r *Registry) loadCRUDs(file *File) error {
 			continue
 		}
 		def := &CRUD{
-			Message:    msg,
-			Operations: make(map[options.Operation]struct{}, len(msgOpts.Operations)),
+			Message:         msg,
+			Operations:      make(map[options.Operation]struct{}, len(msgOpts.Operations)),
+			Implementations: make(map[options.Implementation]struct{}, len(msgOpts.Implementations)),
 		}
 		for _, operation := range msgOpts.Operations {
 			def.Operations[operation] = struct{}{}
+		}
+
+		for _, implementation := range msgOpts.Implementations {
+			def.Implementations[implementation] = struct{}{}
 		}
 
 		for _, field := range msg.Fields {

@@ -5,7 +5,8 @@ package protoc_gen_crud.options;
 option go_package = "github.com/samlitowitz/protoc-gen-crud/options";
 
 enum Implementation {
-  IN_MEMORY = 0;
+  NONE = 0;
+  IN_MEMORY = 1;
 }
 
 enum Operation {
@@ -26,4 +27,6 @@ message MessageOptions {
 
 message ServiceOptions {}
 
-message FieldOptions {}
+message FieldOptions {
+  repeated string uids = 1;
+}

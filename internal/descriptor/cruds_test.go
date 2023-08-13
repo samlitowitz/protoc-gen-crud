@@ -13,11 +13,11 @@ import (
 	"google.golang.org/protobuf/types/descriptorpb"
 )
 
-func testExtractServices(t *testing.T, input []*descriptorpb.FileDescriptorProto, target string, wantCRUDs []*CRUD) {
-	testExtractServicesWithRegistry(t, NewRegistry(), input, target, wantCRUDs)
+func testExtractCRUDs(t *testing.T, input []*descriptorpb.FileDescriptorProto, target string, wantCRUDs []*CRUD) {
+	testExtractCRUDsWithRegistry(t, NewRegistry(), input, target, wantCRUDs)
 }
 
-func testExtractServicesWithRegistry(t *testing.T, reg *Registry, input []*descriptorpb.FileDescriptorProto, target string, wantCRUDs []*CRUD) {
+func testExtractCRUDsWithRegistry(t *testing.T, reg *Registry, input []*descriptorpb.FileDescriptorProto, target string, wantCRUDs []*CRUD) {
 	for _, file := range input {
 		reg.loadFile(file.GetName(), &protogen.File{
 			Proto: file,
@@ -48,6 +48,18 @@ func testExtractServicesWithRegistry(t *testing.T, reg *Registry, input []*descr
 				t.Errorf("cruds[%d].Operations = nil; want %s; input %v", i, wantOperation, input)
 			}
 		}
+
+		// Ensure same implementations
+		if len(crud.Implementations) != len(wantCRUD.Implementations) {
+			t.Errorf("len(cruds[%d].Implementations) = %d; want %d; input %v", i, len(crud.Implementations), len(wantCRUD.Implementations), input)
+		}
+		for wantImplementation := range wantCRUD.Implementations {
+			if _, ok := crud.Implementations[wantImplementation]; !ok {
+				t.Errorf("cruds[%d].Implementations = nil; want %s; input %v", i, wantImplementation, input)
+			}
+		}
+
+		// Ensure same field options
 	}
 
 	for ; i < len(cruds); i++ {
@@ -113,7 +125,7 @@ func TestExtractCRUDsWithoutAnnotation(t *testing.T) {
 	}
 
 	crossLinkFixture(file)
-	testExtractServices(t, []*descriptorpb.FileDescriptorProto{&fd}, "path/to/example.proto", file.CRUDs)
+	testExtractCRUDs(t, []*descriptorpb.FileDescriptorProto{&fd}, "path/to/example.proto", file.CRUDs)
 }
 
 func TestExtractCRUDOperations(t *testing.T) {
@@ -175,7 +187,7 @@ func TestExtractCRUDOperations(t *testing.T) {
 		}
 
 		crossLinkFixture(file)
-		testExtractServices(t, []*descriptorpb.FileDescriptorProto{&fd}, "path/to/example.proto", file.CRUDs)
+		testExtractCRUDs(t, []*descriptorpb.FileDescriptorProto{&fd}, "path/to/example.proto", file.CRUDs)
 	}
 }
 
@@ -238,7 +250,7 @@ func TestExtractCRUDImplementations(t *testing.T) {
 		}
 
 		crossLinkFixture(file)
-		testExtractServices(t, []*descriptorpb.FileDescriptorProto{&fd}, "path/to/example.proto", file.CRUDs)
+		testExtractCRUDs(t, []*descriptorpb.FileDescriptorProto{&fd}, "path/to/example.proto", file.CRUDs)
 	}
 }
 
