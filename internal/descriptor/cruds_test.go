@@ -260,6 +260,94 @@ func TestExtractCRUDImplementations(t *testing.T) {
 	}
 }
 
+func TestExtractFieldOptionUniqueIdentifiersDoesNotSupportNonScalarOrEnumFieldTypes(t *testing.T) {
+	testCases := map[string]struct {
+		src      string
+		expected error
+	}{
+		"message type is unsupported": {
+			src: `
+		name: "path/to/example.proto",
+		package: "example"
+		message_type <
+			name: "ChildMessage"
+			field <
+				name: "string"
+				number: 1
+				label: LABEL_OPTIONAL
+				type: TYPE_STRING
+			>
+		>
+		message_type <
+			name: "ParentMessage"
+			field <
+				name: "child"
+				number: 1
+				label: LABEL_OPTIONAL
+				type: TYPE_MESSAGE
+				type_name: "ChildMessage"
+				options <
+					[protoc_gen_crud.options.crud_field_options] <
+						uids: ["msgUIDUnsupported"]
+					>
+				>
+			>
+		>
+			`,
+			expected: &UnsupportedTypeError{typName: "ChildMessage"},
+		},
+		"enum type is unsupported": {
+			src: `
+		name: "path/to/example.proto",
+		package: "example"
+		enum_type <
+			name: "EnumType"
+			value: [
+				<
+					name: "ZERO"
+					number: 0
+				>
+			]
+		>
+		message_type <
+			name: "EnumMessage"
+			field <
+				name: "enum"
+				number: 1
+				label: LABEL_OPTIONAL
+				type: TYPE_ENUM
+				type_name: "example.EnumType"
+				options <
+					[protoc_gen_crud.options.crud_field_options] <
+						uids: ["enumUIDUnsupported"]
+					>
+				>
+			>
+		>
+			`,
+			expected: &UnsupportedTypeError{typName: "EnumType"},
+		},
+	}
+
+	for testDesc, testCase := range testCases {
+		src := testCase.src
+		expected := testCase.expected
+		var fd descriptorpb.FileDescriptorProto
+		if err := prototext.Unmarshal([]byte(src), &fd); err != nil {
+			t.Fatalf("%s: proto.UnmarshalText(%s, &fd) failed with %v; want success", testDesc, src, err)
+		}
+
+		reg := NewRegistry()
+		reg.loadFile(fd.GetName(), &protogen.File{Proto: &fd})
+		err := reg.loadCRUDs(reg.files["path/to/example.proto"])
+		if fmt.Sprintf("%T", err) != fmt.Sprintf("%T", expected) {
+			t.Fatalf("%s: reg.loadCRUDs(&fd) failed with %T; want %T", testDesc, err, expected)
+		}
+	}
+}
+
+// test all scalar field types
+// test composite keys for all combinations of scalar field types for say [2, 5] fields?
 func TestExtractFieldOptionUniqueIdentifiers(t *testing.T) {
 	allImplementations := []options.Implementation{options.Implementation_IN_MEMORY}
 	combinations := allImplementationCombinations(allImplementations)
@@ -274,6 +362,11 @@ func TestExtractFieldOptionUniqueIdentifiers(t *testing.T) {
 				number: 1
 				label: LABEL_OPTIONAL
 				type: TYPE_STRING
+				options <
+					[protoc_gen_crud.options.crud_field_options] <
+						uids: ["test"]
+					>
+				>
 			>
 			options <
 				[protoc_gen_crud.options.crud_message_options] <

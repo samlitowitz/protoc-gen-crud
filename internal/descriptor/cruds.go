@@ -62,9 +62,21 @@ func assignMessageOptions(def *CRUD, msgOpts *options.MessageOptions) {
 
 // TODO: implement
 func assignUniqueIdentifiers(def *CRUD, field *Field) error {
-	//if field.Type == nil {
-	//	return fmt.Errorf("unsupported type: %s", *field.TypeName)
-	//}
+	if field.Type == nil && field.TypeName == nil {
+		return &UnknownTypeError{}
+	}
+	if field.Type == nil {
+		return &UnsupportedTypeError{typName: *field.TypeName}
+	}
+
+	switch *field.Type {
+	case descriptorpb.FieldDescriptorProto_TYPE_ENUM:
+		fallthrough
+	case descriptorpb.FieldDescriptorProto_TYPE_GROUP:
+		fallthrough
+	case descriptorpb.FieldDescriptorProto_TYPE_MESSAGE:
+		return &UnsupportedTypeError{typName: *field.TypeName}
+	}
 
 	return nil
 }
@@ -97,4 +109,18 @@ func extractFieldOptions(fd *descriptorpb.FieldDescriptorProto) (*options.FieldO
 		return nil, fmt.Errorf("extension is %T; want CRUD", ext)
 	}
 	return opts, nil
+}
+
+type UnknownTypeError struct{}
+
+func (err UnknownTypeError) Error() string {
+	return "unknown type"
+}
+
+type UnsupportedTypeError struct {
+	typName string
+}
+
+func (err UnsupportedTypeError) Error() string {
+	return fmt.Sprintf("unsupported type: %s", err.typName)
 }
