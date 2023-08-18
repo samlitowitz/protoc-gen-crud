@@ -346,48 +346,91 @@ func TestExtractFieldOptionUniqueIdentifiersDoesNotSupportNonScalarOrEnumFieldTy
 	}
 }
 
-// test all scalar field types
-// test composite keys for all combinations of scalar field types for say [2, 5] fields?
-func TestExtractFieldOptionUniqueIdentifiers(t *testing.T) {
-	allImplementations := []options.Implementation{options.Implementation_IN_MEMORY}
-	combinations := allImplementationCombinations(allImplementations)
-	for _, implementations := range combinations {
+func TestExtractFieldOptionUniqueIdentifiersDoesNotSupportUnsupportedScalarTypes(t *testing.T) {
+	unsupportedScalarTypes := map[string]string{
+		"double": "",
+		"float":  "",
+		"bool":   "",
+	}
+
+	for unsupportedType, unsupportedTypeName := range unsupportedScalarTypes {
 		src := `
 		name: "path/to/example.proto",
 		package: "example"
 		message_type <
-			name: "StringMessage"
+			name: "Message"
 			field <
-				name: "string"
+				name: "unsupportedFieldType"
 				number: 1
 				label: LABEL_OPTIONAL
-				type: TYPE_STRING
+				type: TYPE_MESSAGE
+				type_name: "%s"
 				options <
 					[protoc_gen_crud.options.crud_field_options] <
-						uids: ["test"]
+						uids: ["msgUIDUnsupported"]
 					>
 				>
 			>
-			options <
-				[protoc_gen_crud.options.crud_message_options] <
-					implementations: [%s]
+		>
+`
+		src = fmt.Sprintf(src, unsupportedType)
+		expected := &UnsupportedTypeError{typName: unsupportedTypeName}
+		var fd descriptorpb.FileDescriptorProto
+		if err := prototext.Unmarshal([]byte(src), &fd); err != nil {
+			t.Fatalf("%s: proto.UnmarshalText(%s, &fd) failed with %v; want success", unsupportedType, src, err)
+		}
+
+		reg := NewRegistry()
+		reg.loadFile(fd.GetName(), &protogen.File{Proto: &fd})
+		err := reg.loadCRUDs(reg.files["path/to/example.proto"])
+		if fmt.Sprintf("%T", err) != fmt.Sprintf("%T", expected) {
+			t.Fatalf("%s: reg.loadCRUDs(&fd) failed with %T; want %T", unsupportedType, err, expected)
+		}
+	}
+}
+
+func TestExtractFieldOptionUniqueIdentifiersSupportsIndividualScalarFields(t *testing.T) {
+	supportedScalarTypes := []string{
+		"int32",
+		"int64",
+		"uint32",
+		"uint64",
+		"sint32",
+		"sint64",
+		"fixed32",
+		"fixed64",
+		"sfixed32",
+		"sfixed64",
+		"string",
+		"bytes",
+	}
+	for _, supportedType := range supportedScalarTypes {
+		uidName := "msgUIDSupported"
+		src := `
+		name: "path/to/example.proto",
+		package: "example"
+		message_type <
+			name: "Message"
+			field <
+				name: "supportedFieldType"
+				number: 1
+				label: LABEL_OPTIONAL
+				type: TYPE_%s
+				type_name: "%s"
+				options <
+					[protoc_gen_crud.options.crud_field_options] <
+						uids: ["%s"]
+					>
 				>
 			>
 		>
-	`
-		implementationsLiteral := make([]string, 0, len(implementations))
-		implementationsMap := make(map[options.Implementation]struct{})
-		for _, implementation := range implementations {
-			implementationsLiteral = append(implementationsLiteral, implementation.String())
-			implementationsMap[implementation] = struct{}{}
-		}
-
-		src = fmt.Sprintf(src, strings.Join(implementationsLiteral, ", "))
-
+`
+		src = fmt.Sprintf(src, strings.ToUpper(supportedType), supportedType, uidName)
 		var fd descriptorpb.FileDescriptorProto
 		if err := prototext.Unmarshal([]byte(src), &fd); err != nil {
 			t.Fatalf("proto.UnmarshalText(%s, &fd) failed with %v; want success", src, err)
 		}
+
 		msg := &Message{
 			DescriptorProto: fd.MessageType[0],
 			Fields: []*Field{
@@ -405,10 +448,235 @@ func TestExtractFieldOptionUniqueIdentifiers(t *testing.T) {
 			Messages: []*Message{msg},
 			CRUDs: []*CRUD{
 				{
-					Message:         msg,
-					Implementations: implementationsMap,
+					Message: msg,
+					UniqueIdentifiers: map[string][]*Field{
+						uidName: {
+							{
+								FieldDescriptorProto: fd.MessageType[0].Field[0],
+							},
+						},
+					},
 				},
 			},
+		}
+
+		crossLinkFixture(file)
+		testExtractCRUDs(t, []*descriptorpb.FileDescriptorProto{&fd}, "path/to/example.proto", file.CRUDs)
+	}
+}
+
+func TestExtractFieldOptionUniqueIdentifiersSupportsSingleUIDCompositeScalarFields(t *testing.T) {
+	supportedScalarTypes := []string{
+		"int32",
+		"int64",
+		"uint32",
+		"uint64",
+		"sint32",
+		"sint64",
+		"fixed32",
+		"fixed64",
+		"sfixed32",
+		"sfixed64",
+		"string",
+		"bytes",
+	}
+
+	fieldTemplate := `
+			field: <
+				name: "%s_%d"
+				number: %d
+				label: LABEL_OPTIONAL
+				type: TYPE_%s
+				type_name: "%s"
+				options <
+					[protoc_gen_crud.options.crud_field_options] <
+						uids: ["%s"]
+					>
+				>
+			>
+`
+
+	combinations := allStringCombinations(supportedScalarTypes)
+	for _, combination := range combinations {
+		sharedUID := "sharedUID"
+		fieldsSrcs := make([]string, 0, len(combination))
+		for i, typ := range combination {
+			fieldsSrcs = append(
+				fieldsSrcs,
+				fmt.Sprintf(
+					fieldTemplate,
+					typ,
+					i,
+					i,
+					strings.ToUpper(typ),
+					typ,
+					sharedUID,
+				),
+			)
+		}
+
+		src := `
+		name: "path/to/example.proto",
+		package: "example"
+		message_type <
+			name: "Message"
+%s
+		>
+`
+		src = fmt.Sprintf(src, strings.Join(fieldsSrcs, "\n"))
+		var fd descriptorpb.FileDescriptorProto
+		if err := prototext.Unmarshal([]byte(src), &fd); err != nil {
+			t.Fatalf("proto.UnmarshalText(%s, &fd) failed with %v; want success", src, err)
+		}
+
+		msg := &Message{
+			DescriptorProto: fd.MessageType[0],
+			Fields:          make([]*Field, 0, len(fd.MessageType[0].Field)),
+		}
+		file := &File{
+			FileDescriptorProto: &fd,
+			GoPkg: GoPackage{
+				Path: "path/to/example.pb",
+				Name: "example_pb",
+			},
+			Messages: []*Message{msg},
+			CRUDs: []*CRUD{
+				{
+					Message: msg,
+					UniqueIdentifiers: map[string][]*Field{
+						sharedUID: {},
+					},
+				},
+			},
+		}
+
+		for _, fieldDef := range fd.MessageType[0].Field {
+			msg.Fields = append(
+				msg.Fields,
+				&Field{
+					FieldDescriptorProto: fieldDef,
+				},
+			)
+			file.CRUDs[0].UniqueIdentifiers[sharedUID] = append(
+				file.CRUDs[0].UniqueIdentifiers[sharedUID],
+				&Field{
+					FieldDescriptorProto: fieldDef,
+				},
+			)
+		}
+
+		crossLinkFixture(file)
+		testExtractCRUDs(t, []*descriptorpb.FileDescriptorProto{&fd}, "path/to/example.proto", file.CRUDs)
+	}
+}
+
+func TestExtractFieldOptionUniqueIdentifiersSupportsMultipleUIDCompositeScalarFields(t *testing.T) {
+	supportedScalarTypes := []string{
+		"int32",
+		"int64",
+		"uint32",
+		"uint64",
+		"sint32",
+		"sint64",
+		"fixed32",
+		"fixed64",
+		"sfixed32",
+		"sfixed64",
+		"string",
+		"bytes",
+	}
+
+	fieldTemplate := `
+			field: <
+				name: "%s_%d"
+				number: %d
+				label: LABEL_OPTIONAL
+				type: TYPE_%s
+				type_name: "%s"
+				options <
+					[protoc_gen_crud.options.crud_field_options] <
+						uids: [%s]
+					>
+				>
+			>
+`
+
+	combinations := allStringCombinations(supportedScalarTypes)
+	for _, combination := range combinations {
+		sharedUID := "sharedUID"
+		fieldsSrcs := make([]string, 0, len(combination))
+		for i, typ := range combination {
+			fieldsSrcs = append(
+				fieldsSrcs,
+				fmt.Sprintf(
+					fieldTemplate,
+					typ,
+					i,
+					i,
+					strings.ToUpper(typ),
+					typ,
+					"\""+strings.Join([]string{
+						sharedUID,
+						fmt.Sprintf("%s_%d", typ, i),
+					}, "\", \"")+"\"",
+				),
+			)
+		}
+
+		src := `
+		name: "path/to/example.proto",
+		package: "example"
+		message_type <
+			name: "Message"
+%s
+		>
+`
+		src = fmt.Sprintf(src, strings.Join(fieldsSrcs, "\n"))
+		var fd descriptorpb.FileDescriptorProto
+		if err := prototext.Unmarshal([]byte(src), &fd); err != nil {
+			t.Fatalf("proto.UnmarshalText(%s, &fd) failed with %v; want success", src, err)
+		}
+
+		msg := &Message{
+			DescriptorProto: fd.MessageType[0],
+			Fields:          make([]*Field, 0, len(fd.MessageType[0].Field)),
+		}
+		file := &File{
+			FileDescriptorProto: &fd,
+			GoPkg: GoPackage{
+				Path: "path/to/example.pb",
+				Name: "example_pb",
+			},
+			Messages: []*Message{msg},
+			CRUDs: []*CRUD{
+				{
+					Message: msg,
+					UniqueIdentifiers: map[string][]*Field{
+						sharedUID: {},
+					},
+				},
+			},
+		}
+
+		for _, fieldDef := range fd.MessageType[0].Field {
+			msg.Fields = append(
+				msg.Fields,
+				&Field{
+					FieldDescriptorProto: fieldDef,
+				},
+			)
+
+			file.CRUDs[0].UniqueIdentifiers[sharedUID] = append(
+				file.CRUDs[0].UniqueIdentifiers[sharedUID],
+				&Field{
+					FieldDescriptorProto: fieldDef,
+				},
+			)
+			file.CRUDs[0].UniqueIdentifiers[*fieldDef.Name] = []*Field{
+				{
+					FieldDescriptorProto: fieldDef,
+				},
+			}
 		}
 
 		crossLinkFixture(file)
@@ -446,6 +714,28 @@ func allImplementationCombinations(set []options.Implementation) (subsets [][]op
 	// from 1 (only first object in subset) to 2^length (all objects in subset)
 	for subsetBits := 1; subsetBits < (1 << length); subsetBits++ {
 		var subset []options.Implementation
+
+		for object := uint(0); object < length; object++ {
+			// checks if object is contained in subset
+			// by checking if bit 'object' is set in subsetBits
+			if (subsetBits>>object)&1 == 1 {
+				// add object to subset
+				subset = append(subset, set[object])
+			}
+		}
+		// add subset to subsets
+		subsets = append(subsets, subset)
+	}
+	return subsets
+}
+
+func allStringCombinations(set []string) (subsets [][]string) {
+	length := uint(len(set))
+
+	// Go through all possible combinations of objects
+	// from 1 (only first object in subset) to 2^length (all objects in subset)
+	for subsetBits := 1; subsetBits < (1 << length); subsetBits++ {
+		var subset []string
 
 		for object := uint(0); object < length; object++ {
 			// checks if object is contained in subset

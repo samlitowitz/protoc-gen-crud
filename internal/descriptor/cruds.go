@@ -30,7 +30,7 @@ func (r *Registry) loadCRUDs(file *File) error {
 			if fieldOpts == nil {
 				continue
 			}
-			err = assignUniqueIdentifiers(def, field)
+			err = assignUniqueIdentifiers(def, field, fieldOpts)
 			if err != nil {
 				return err
 			}
@@ -60,8 +60,7 @@ func assignMessageOptions(def *CRUD, msgOpts *options.MessageOptions) {
 	}
 }
 
-// TODO: implement
-func assignUniqueIdentifiers(def *CRUD, field *Field) error {
+func assignUniqueIdentifiers(def *CRUD, field *Field, fieldOpts *options.FieldOptions) error {
 	if field.Type == nil && field.TypeName == nil {
 		return &UnknownTypeError{}
 	}
@@ -70,12 +69,28 @@ func assignUniqueIdentifiers(def *CRUD, field *Field) error {
 	}
 
 	switch *field.Type {
+	case descriptorpb.FieldDescriptorProto_TYPE_DOUBLE:
+		fallthrough
+	case descriptorpb.FieldDescriptorProto_TYPE_FLOAT:
+		fallthrough
+	case descriptorpb.FieldDescriptorProto_TYPE_BOOL:
+		fallthrough
 	case descriptorpb.FieldDescriptorProto_TYPE_ENUM:
 		fallthrough
 	case descriptorpb.FieldDescriptorProto_TYPE_GROUP:
 		fallthrough
 	case descriptorpb.FieldDescriptorProto_TYPE_MESSAGE:
 		return &UnsupportedTypeError{typName: *field.TypeName}
+	}
+
+	if def.UniqueIdentifiers == nil {
+		def.UniqueIdentifiers = make(map[string][]*Field)
+	}
+	for _, uid := range fieldOpts.Uids {
+		if _, ok := def.UniqueIdentifiers[uid]; !ok {
+			def.UniqueIdentifiers[uid] = make([]*Field, 1)
+		}
+		def.UniqueIdentifiers[uid] = append(def.UniqueIdentifiers[uid], field)
 	}
 
 	return nil
