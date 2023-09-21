@@ -10,19 +10,18 @@ It provides an interface to implement and some implementations of the interface.
 package book_list
 
 type AuthorRepository interface {
-
-	// TODO: Add Comment
+	// Create creates new Authors
 	Create([]*Author) ([]*Author, error)
 
-	// TODO: Add Comment
+	// Read returns a set of Authors matching the provided criteria
 	// Read is incomplete and it should be considered unstable
 	// Use where clauses
 	Read() ([]*Author, error)
 
-	// TODO: Add Comment
+	// Update modifies existing Authors based on the defined unique identifiers
 	Update([]*Author) ([]*Author, error)
 
-	// TODO: Add Comment
+	// Delete deletes Authors based on the defined unique identifiers
 	// Delete is incomplete and it should be considered unstable
 	// Use where clauses
 	Delete([]*Author) error

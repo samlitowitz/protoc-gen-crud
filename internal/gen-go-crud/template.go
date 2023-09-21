@@ -79,22 +79,21 @@ import (
 	_ = template.Must(repositoryTemplate.New("repository-interface").Funcs(funcMap).Parse(`
 
 type {{.CRUD.Name}}Repository interface {
-	{{if .CRUD.Create}}
-	// TODO: Add Comment
+	{{if .CRUD.Create}}// Create creates new {{.CRUD.Name}}s
 	Create([]*{{.CRUD.GoType .CRUD.File.GoPkg.Path}}) ([]*{{.CRUD.GoType .CRUD.File.GoPkg.Path}}, error)
 	{{end}}
 	{{if .CRUD.Read}}
-	// TODO: Add Comment
+	// Read returns a set of {{.CRUD.Name}}s matching the provided criteria
 	// Read is incomplete and it should be considered unstable
 	// Use where clauses
 	Read() ([]*{{.CRUD.GoType .CRUD.File.GoPkg.Path}}, error)
 	{{end}}
 	{{if .CRUD.Update}}
-	// TODO: Add Comment
+	// Update modifies existing {{.CRUD.Name}}s based on the defined unique identifiers
 	Update([]*{{.CRUD.GoType .CRUD.File.GoPkg.Path}}) ([]*{{.CRUD.GoType .CRUD.File.GoPkg.Path}}, error)
 	{{end}}
 	{{if .CRUD.Delete}}
-	// TODO: Add Comment
+	// Delete deletes {{.CRUD.Name}}s based on the defined unique identifiers
 	// Delete is incomplete and it should be considered unstable
 	// Use where clauses
 	Delete([]*{{.CRUD.GoType .CRUD.File.GoPkg.Path}}) error
