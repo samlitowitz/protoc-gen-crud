@@ -103,7 +103,7 @@ func TestApplyTemplate_RepositoryInterface(t *testing.T) {
 			switch operation {
 			case options.Operation_CREATE:
 				want := fmt.Sprintf(
-					"func Create([]*%s) ([]*%s, error)",
+					"Create([]*%s) ([]*%s, error)",
 					*msgdesc.Name,
 					*msgdesc.Name,
 				)
@@ -112,7 +112,7 @@ func TestApplyTemplate_RepositoryInterface(t *testing.T) {
 				}
 			case options.Operation_READ:
 				want := fmt.Sprintf(
-					"func Read() ([]*%s, error)",
+					"Read() ([]*%s, error)",
 					*msgdesc.Name,
 				)
 				if !strings.Contains(got, want) {
@@ -120,7 +120,7 @@ func TestApplyTemplate_RepositoryInterface(t *testing.T) {
 				}
 			case options.Operation_UPDATE:
 				want := fmt.Sprintf(
-					"func Update([]*%s) ([]*%s, error)",
+					"Update([]*%s) ([]*%s, error)",
 					*msgdesc.Name,
 					*msgdesc.Name,
 				)
@@ -129,7 +129,7 @@ func TestApplyTemplate_RepositoryInterface(t *testing.T) {
 				}
 			case options.Operation_DELETE:
 				want := fmt.Sprintf(
-					"func Delete([]*%s) error",
+					"Delete([]*%s) error",
 					*msgdesc.Name,
 				)
 				if !strings.Contains(got, want) {

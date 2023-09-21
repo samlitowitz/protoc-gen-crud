@@ -10,6 +10,22 @@ It provides an interface to implement and some implementations of the interface.
 package book_list
 
 type AuthorRepository interface {
+
+	// TODO: Add Comment
+	Create([]*Author) ([]*Author, error)
+
+	// TODO: Add Comment
+	// Read is incomplete and it should be considered unstable
+	// Use where clauses
+	Read() ([]*Author, error)
+
+	// TODO: Add Comment
+	Update([]*Author) ([]*Author, error)
+
+	// TODO: Add Comment
+	// Delete is incomplete and it should be considered unstable
+	// Use where clauses
+	Delete([]*Author) error
 }
 
 // TODO: Add Comment
@@ -20,6 +36,30 @@ type InMemoryAuthorRepository struct {
 // TODO: Add Comment
 func NewInMemoryAuthorRepository() *InMemoryAuthorRepository {
 	return &InMemoryAuthorRepository{}
+}
+
+// TODO: Add Comment
+func (repo *InMemoryAuthorRepository) Create([]*Author) ([]*Author, error) {
+	panic("not implemented")
+}
+
+// TODO: Add Comment
+// Read is incomplete and it should be considered unstable
+// Use where clauses
+func (repo *InMemoryAuthorRepository) Read() ([]*Author, error) {
+	panic("not implemented")
+}
+
+// TODO: Add Comment
+func (repo *InMemoryAuthorRepository) Update([]*Author) ([]*Author, error) {
+	panic("not implemented")
+}
+
+// TODO: Add Comment
+// Delete is incomplete and it should be considered unstable
+// Use where clauses
+func (repo *InMemoryAuthorRepository) Delete([]*Author) error {
+	panic("not implemented")
 }
 
 type BookRepository interface {

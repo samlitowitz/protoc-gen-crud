@@ -81,23 +81,23 @@ import (
 type {{.CRUD.Name}}Repository interface {
 	{{if .CRUD.Create}}
 	// TODO: Add Comment
-	func Create([]*{{.CRUD.GoType .CRUD.File.GoPkg.Path}}) ([]*{{.CRUD.GoType .CRUD.File.GoPkg.Path}}, error)
+	Create([]*{{.CRUD.GoType .CRUD.File.GoPkg.Path}}) ([]*{{.CRUD.GoType .CRUD.File.GoPkg.Path}}, error)
 	{{end}}
 	{{if .CRUD.Read}}
 	// TODO: Add Comment
 	// Read is incomplete and it should be considered unstable
 	// Use where clauses
-	func Read() ([]*{{.CRUD.GoType .CRUD.File.GoPkg.Path}}, error)
+	Read() ([]*{{.CRUD.GoType .CRUD.File.GoPkg.Path}}, error)
 	{{end}}
 	{{if .CRUD.Update}}
 	// TODO: Add Comment
-	func Update([]*{{.CRUD.GoType .CRUD.File.GoPkg.Path}}) ([]*{{.CRUD.GoType .CRUD.File.GoPkg.Path}}, error)
+	Update([]*{{.CRUD.GoType .CRUD.File.GoPkg.Path}}) ([]*{{.CRUD.GoType .CRUD.File.GoPkg.Path}}, error)
 	{{end}}
 	{{if .CRUD.Delete}}
 	// TODO: Add Comment
 	// Delete is incomplete and it should be considered unstable
 	// Use where clauses
-	func Delete([]*{{.CRUD.GoType .CRUD.File.GoPkg.Path}}) error
+	Delete([]*{{.CRUD.GoType .CRUD.File.GoPkg.Path}}) error
 	{{end}}
 }
 `))
