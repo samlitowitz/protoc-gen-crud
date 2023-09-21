@@ -86,27 +86,32 @@ func (im inMemory) uidKeyTypeByFieldDefs(defs []*descriptor.Field) (string, erro
 var (
 	_ = template.Must(repositoryTemplate.New("repository-in-memory").Funcs(funcMap).Parse(`
 
-// TODO: Add Comment
+// InMemory{{.CRUD.Name}}Repository is an in memory implementation of the {{.CRUD.Name}}Repository interface.
 type InMemory{{.CRUD.Name}}Repository struct {
 	{{range $name, $typ := .InMemory.UIDTypeByUIDNames .CRUD}}
 	{{$name}} map[{{$typ}}]*{{$.CRUD.GoType $.CRUD.File.GoPkg.Path}}
 	{{end}}
+	iTable []*{{.CRUD.GoType .CRUD.File.GoPkg.Path}} // Internal table of all {{.CRUD.Name}}s
 }
 
-// TODO: Add Comment
+// NewInMemory creates a new InMemory{{.CRUD.Name}}Repository to be used.
 func NewInMemory{{.CRUD.Name}}Repository() *InMemory{{.CRUD.Name}}Repository {
-	return &InMemory{{.CRUD.Name}}Repository{}
+	return &InMemory{{.CRUD.Name}}Repository{
+		{{range $name, $typ := .InMemory.UIDTypeByUIDNames .CRUD}}{{$name}}: make(map[{{$typ}}]*{{$.CRUD.GoType $.CRUD.File.GoPkg.Path}}),{{end}}
+		iTable: make([]*{{.CRUD.GoType .CRUD.File.GoPkg.Path}}, 0),
+	}
 }
 
 {{if .CRUD.Create}}
-// TODO: Add Comment
+// Create creates new {{.CRUD.Name}}s.
+// Successfully created {{.CRUD.Name}}s are returned along with any errors that may have occurred.
 func (repo *InMemory{{.CRUD.Name}}Repository) Create([]*{{.CRUD.GoType .CRUD.File.GoPkg.Path}}) ([]*{{.CRUD.GoType .CRUD.File.GoPkg.Path}}, error) {
 	panic("not implemented")
 }
 {{end}}
 
 {{if .CRUD.Read}}
-// TODO: Add Comment
+// Read returns a set of {{.CRUD.Name}}s matching the provided criteria
 // Read is incomplete and it should be considered unstable
 // Use where clauses
 func (repo *InMemory{{.CRUD.Name}}Repository) Read() ([]*{{.CRUD.GoType .CRUD.File.GoPkg.Path}}, error) {
@@ -115,14 +120,14 @@ func (repo *InMemory{{.CRUD.Name}}Repository) Read() ([]*{{.CRUD.GoType .CRUD.Fi
 {{end}}
 
 {{if .CRUD.Update}}
-// TODO: Add Comment
+// Update modifies existing {{.CRUD.Name}}s based on the defined unique identifiers.
 func (repo *InMemory{{.CRUD.Name}}Repository) Update([]*{{.CRUD.GoType .CRUD.File.GoPkg.Path}}) ([]*{{.CRUD.GoType .CRUD.File.GoPkg.Path}}, error) {
 	panic("not implemented")
 }
 {{end}}
 
 {{if .CRUD.Delete}}
-// TODO: Add Comment
+// Delete deletes {{.CRUD.Name}}s based on the defined unique identifiers
 // Delete is incomplete and it should be considered unstable
 // Use where clauses
 func (repo *InMemory{{.CRUD.Name}}Repository) Delete([]*{{.CRUD.GoType .CRUD.File.GoPkg.Path}}) error {

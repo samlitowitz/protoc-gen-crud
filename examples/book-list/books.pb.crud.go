@@ -10,7 +10,8 @@ It provides an interface to implement and some implementations of the interface.
 package book_list
 
 type AuthorRepository interface {
-	// Create creates new Authors
+	// Create creates new Authors.
+	// Successfully created Authors are returned along with any errors that may have occurred.
 	Create([]*Author) ([]*Author, error)
 
 	// Read returns a set of Authors matching the provided criteria
@@ -18,7 +19,8 @@ type AuthorRepository interface {
 	// Use where clauses
 	Read() ([]*Author, error)
 
-	// Update modifies existing Authors based on the defined unique identifiers
+	// Update modifies existing Authors based on the defined unique identifiers.
+	// Successfully modified Authors are returned along with any errors that may have occurred.
 	Update([]*Author) ([]*Author, error)
 
 	// Delete deletes Authors based on the defined unique identifiers
@@ -27,34 +29,40 @@ type AuthorRepository interface {
 	Delete([]*Author) error
 }
 
-// TODO: Add Comment
+// InMemoryAuthorRepository is an in memory implementation of the AuthorRepository interface.
 type InMemoryAuthorRepository struct {
 	authorById map[string]*Author
+
+	iTable []*Author // Internal table of all Authors
 }
 
-// TODO: Add Comment
+// NewInMemory creates a new InMemoryAuthorRepository to be used.
 func NewInMemoryAuthorRepository() *InMemoryAuthorRepository {
-	return &InMemoryAuthorRepository{}
+	return &InMemoryAuthorRepository{
+		authorById: make(map[string]*Author),
+		iTable:     make([]*Author, 0),
+	}
 }
 
-// TODO: Add Comment
+// Create creates new Authors.
+// Successfully created Authors are returned along with any errors that may have occurred.
 func (repo *InMemoryAuthorRepository) Create([]*Author) ([]*Author, error) {
 	panic("not implemented")
 }
 
-// TODO: Add Comment
+// Read returns a set of Authors matching the provided criteria
 // Read is incomplete and it should be considered unstable
 // Use where clauses
 func (repo *InMemoryAuthorRepository) Read() ([]*Author, error) {
 	panic("not implemented")
 }
 
-// TODO: Add Comment
+// Update modifies existing Authors based on the defined unique identifiers.
 func (repo *InMemoryAuthorRepository) Update([]*Author) ([]*Author, error) {
 	panic("not implemented")
 }
 
-// TODO: Add Comment
+// Delete deletes Authors based on the defined unique identifiers
 // Delete is incomplete and it should be considered unstable
 // Use where clauses
 func (repo *InMemoryAuthorRepository) Delete([]*Author) error {

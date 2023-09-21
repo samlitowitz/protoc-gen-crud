@@ -79,7 +79,8 @@ import (
 	_ = template.Must(repositoryTemplate.New("repository-interface").Funcs(funcMap).Parse(`
 
 type {{.CRUD.Name}}Repository interface {
-	{{if .CRUD.Create}}// Create creates new {{.CRUD.Name}}s
+	{{if .CRUD.Create}}// Create creates new {{.CRUD.Name}}s.
+	// Successfully created {{.CRUD.Name}}s are returned along with any errors that may have occurred.
 	Create([]*{{.CRUD.GoType .CRUD.File.GoPkg.Path}}) ([]*{{.CRUD.GoType .CRUD.File.GoPkg.Path}}, error)
 	{{end}}
 	{{if .CRUD.Read}}
@@ -89,7 +90,8 @@ type {{.CRUD.Name}}Repository interface {
 	Read() ([]*{{.CRUD.GoType .CRUD.File.GoPkg.Path}}, error)
 	{{end}}
 	{{if .CRUD.Update}}
-	// Update modifies existing {{.CRUD.Name}}s based on the defined unique identifiers
+	// Update modifies existing {{.CRUD.Name}}s based on the defined unique identifiers.
+	// Successfully modified {{.CRUD.Name}}s are returned along with any errors that may have occurred.
 	Update([]*{{.CRUD.GoType .CRUD.File.GoPkg.Path}}) ([]*{{.CRUD.GoType .CRUD.File.GoPkg.Path}}, error)
 	{{end}}
 	{{if .CRUD.Delete}}
