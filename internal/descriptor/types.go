@@ -9,6 +9,7 @@ import (
 
 	"github.com/samlitowitz/protoc-gen-crud/internal/casing"
 
+	"github.com/iancoleman/strcase"
 	"google.golang.org/protobuf/types/descriptorpb"
 	"google.golang.org/protobuf/types/pluginpb"
 )
@@ -88,6 +89,10 @@ type CRUD struct {
 
 	// Field Options
 	UniqueIdentifiers map[string][]*Field
+}
+
+func (def *CRUD) CamelCaseName() string {
+	return strcase.ToLowerCamel(*def.Name)
 }
 
 func (def *CRUD) Create() bool {

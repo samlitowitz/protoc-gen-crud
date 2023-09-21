@@ -5,6 +5,8 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/iancoleman/strcase"
+
 	"github.com/samlitowitz/protoc-gen-crud/internal/descriptor"
 	"github.com/samlitowitz/protoc-gen-crud/options"
 	"google.golang.org/protobuf/proto"
@@ -14,6 +16,7 @@ import (
 func TestApplyTemplate_RepositoryInMemory(t *testing.T) {
 	allOperations := []options.Operation{options.Operation_CREATE, options.Operation_READ, options.Operation_UPDATE, options.Operation_DELETE}
 	operationCombinations := allOperationCombinations(allOperations)
+
 	implementation := options.Implementation_IN_MEMORY
 	for _, operations := range operationCombinations {
 		msgdesc := &descriptorpb.DescriptorProto{
@@ -104,4 +107,239 @@ func TestApplyTemplate_RepositoryInMemory(t *testing.T) {
 			}
 		}
 	}
+}
+
+func TestApplyTemplate_RepositoryInMemoryUIDs(t *testing.T) {
+	allOperations := []options.Operation{options.Operation_CREATE, options.Operation_READ, options.Operation_UPDATE, options.Operation_DELETE}
+	operationCombinations := allOperationCombinations(allOperations)
+
+	supportedScalarTypes := []string{
+		"int32",
+		"int64",
+		"uint32",
+		"uint64",
+		"sint32",
+		"sint64",
+		"fixed32",
+		"fixed64",
+		"sfixed32",
+		"sfixed64",
+		"string",
+		"bytes",
+	}
+	uidCombinations := allStringCombinations(supportedScalarTypes)
+
+	implementation := options.Implementation_IN_MEMORY
+	for _, operations := range operationCombinations {
+		for _, uidCombination := range uidCombinations {
+			fieldDescs := make([]*descriptorpb.FieldDescriptorProto, 0, len(uidCombination))
+			fields := make([]*descriptor.Field, 0, len(uidCombination))
+			for i, typ := range uidCombination {
+				typName := "TYPE_" + strings.ToUpper(typ)
+				fieldLabel := new(descriptorpb.FieldDescriptorProto_Label)
+				*fieldLabel = descriptorpb.FieldDescriptorProto_LABEL_OPTIONAL
+				fieldTyp := new(descriptorpb.FieldDescriptorProto_Type)
+				*fieldTyp = descriptorpb.FieldDescriptorProto_Type(descriptorpb.FieldDescriptorProto_Type_value[typName])
+
+				fieldDesc := &descriptorpb.FieldDescriptorProto{
+					Name:     proto.String("field_" + typ),
+					Number:   proto.Int32(int32(i)),
+					Label:    fieldLabel,
+					Type:     fieldTyp,
+					TypeName: proto.String(typName),
+				}
+				field := &descriptor.Field{
+					FieldDescriptorProto: fieldDesc,
+				}
+
+				fieldDescs = append(fieldDescs, fieldDesc)
+				fields = append(fields, field)
+			}
+			uidName := "uidName"
+			uidMap := map[string][]*descriptor.Field{
+				uidName: fields,
+			}
+
+			msgDesc := &descriptorpb.DescriptorProto{
+				Name:  proto.String("ExampleMessageOne"),
+				Field: fieldDescs,
+			}
+			msg := &descriptor.Message{
+				DescriptorProto: msgDesc,
+				Fields:          fields,
+			}
+			for _, def := range fields {
+				def.Message = msg
+			}
+			crud := &descriptor.CRUD{
+				Message:           msg,
+				Operations:        make(map[options.Operation]struct{}),
+				Implementations:   map[options.Implementation]struct{}{implementation: {}},
+				UniqueIdentifiers: uidMap,
+			}
+			for _, operation := range operations {
+				crud.Operations[operation] = struct{}{}
+			}
+
+			file := descriptor.File{
+				FileDescriptorProto: &descriptorpb.FileDescriptorProto{
+					Name:        proto.String("example.proto"),
+					Package:     proto.String("example"),
+					MessageType: []*descriptorpb.DescriptorProto{msgDesc},
+					Service:     []*descriptorpb.ServiceDescriptorProto{},
+				},
+				GoPkg: descriptor.GoPackage{
+					Path: "example.com/path/to/example/example.pb",
+					Name: "example_pb",
+				},
+				Messages: []*descriptor.Message{msg},
+				CRUDs:    []*descriptor.CRUD{crud},
+			}
+			got, err := applyTemplate(param{File: crossLinkFixture(&file)}, descriptor.NewRegistry())
+			if err != nil {
+				t.Errorf("applyTemplate(%#v) failed with %v; want success", file, err)
+				return
+			}
+
+			// Assert struct definition
+			if want := "type InMemory" + *msgDesc.Name + "Repository struct {"; !strings.Contains(got, want) {
+				t.Errorf("applyTemplate(%#v) = %s; want to contain %s", file, got, want)
+			}
+
+			// Assert UID maps
+			goTyp, err := goTypeByFieldDescType(fields)
+			if err != nil {
+				t.Errorf("failed to generate go type for UID map: %s", err)
+			}
+			uidMapDef := fmt.Sprintf(
+				"%sBy%s map[%s]*%s",
+				crud.CamelCaseName(),
+				strcase.ToCamel(uidName),
+				goTyp,
+				crud.GoType(crud.File.GoPkg.Path),
+			)
+			if want := uidMapDef; !strings.Contains(got, want) {
+				t.Errorf("applyTemplate(%#v) = %s; want to contain %s", file, got, want)
+			}
+
+			// Assert "constructor" function
+			if want := "func NewInMemory" + *msgDesc.Name + "Repository"; !strings.Contains(got, want) {
+				t.Errorf("applyTemplate(%#v) = %s; want to contain %s", file, got, want)
+			}
+
+			for _, operation := range operations {
+				switch operation {
+				case options.Operation_CREATE:
+					want := fmt.Sprintf(
+						"func (repo *InMemory%sRepository) Create([]*%s) ([]*%s, error)",
+						*msgDesc.Name,
+						*msgDesc.Name,
+						*msgDesc.Name,
+					)
+					if !strings.Contains(got, want) {
+						t.Errorf("applyTemplate(%#v) = %s; want to contain %s", file, got, want)
+					}
+				case options.Operation_READ:
+					want := fmt.Sprintf(
+						"func (repo *InMemory%sRepository) Read() ([]*%s, error)",
+						*msgDesc.Name,
+						*msgDesc.Name,
+					)
+					if !strings.Contains(got, want) {
+						t.Errorf("applyTemplate(%#v) = %s; want to contain %s", file, got, want)
+					}
+				case options.Operation_UPDATE:
+					want := fmt.Sprintf(
+						"func (repo *InMemory%sRepository) Update([]*%s) ([]*%s, error)",
+						*msgDesc.Name,
+						*msgDesc.Name,
+						*msgDesc.Name,
+					)
+					if !strings.Contains(got, want) {
+						t.Errorf("applyTemplate(%#v) = %s; want to contain %s", file, got, want)
+					}
+				case options.Operation_DELETE:
+					want := fmt.Sprintf(
+						"func (repo *InMemory%sRepository) Delete([]*%s) error",
+						*msgDesc.Name,
+						*msgDesc.Name,
+					)
+					if !strings.Contains(got, want) {
+						t.Errorf("applyTemplate(%#v) = %s; want to contain %s", file, got, want)
+					}
+				}
+			}
+		}
+	}
+}
+
+func allStringCombinations(set []string) (subsets [][]string) {
+	length := uint(len(set))
+
+	// Go through all possible combinations of objects
+	// from 1 (only first object in subset) to 2^length (all objects in subset)
+	for subsetBits := 1; subsetBits < (1 << length); subsetBits++ {
+		var subset []string
+
+		for object := uint(0); object < length; object++ {
+			// checks if object is contained in subset
+			// by checking if bit 'object' is set in subsetBits
+			if (subsetBits>>object)&1 == 1 {
+				// add object to subset
+				subset = append(subset, set[object])
+			}
+		}
+		// add subset to subsets
+		subsets = append(subsets, subset)
+	}
+	return subsets
+}
+
+func goTypeByFieldDescType(defs []*descriptor.Field) (string, error) {
+	if len(defs) < 1 {
+		return "", fmt.Errorf("no fields found, cannot build key type")
+	}
+	if len(defs) == 1 {
+		def := defs[0]
+		switch *def.Type {
+		case descriptorpb.FieldDescriptorProto_TYPE_DOUBLE:
+			fallthrough
+		case descriptorpb.FieldDescriptorProto_TYPE_FLOAT:
+			fallthrough
+		case descriptorpb.FieldDescriptorProto_TYPE_BOOL:
+			fallthrough
+		case descriptorpb.FieldDescriptorProto_TYPE_ENUM:
+			fallthrough
+		case descriptorpb.FieldDescriptorProto_TYPE_GROUP:
+			fallthrough
+		case descriptorpb.FieldDescriptorProto_TYPE_MESSAGE:
+			return "", &descriptor.UnsupportedTypeError{TypName: *def.TypeName}
+
+		case descriptorpb.FieldDescriptorProto_TYPE_UINT32:
+			return "uint32", nil
+		case descriptorpb.FieldDescriptorProto_TYPE_UINT64:
+			return "uint64", nil
+
+		case descriptorpb.FieldDescriptorProto_TYPE_INT32:
+			fallthrough
+		case descriptorpb.FieldDescriptorProto_TYPE_FIXED32:
+			fallthrough
+		case descriptorpb.FieldDescriptorProto_TYPE_SINT32:
+			return "int32", nil
+
+		case descriptorpb.FieldDescriptorProto_TYPE_INT64:
+			fallthrough
+		case descriptorpb.FieldDescriptorProto_TYPE_FIXED64:
+			fallthrough
+		case descriptorpb.FieldDescriptorProto_TYPE_SINT64:
+			return "int64", nil
+
+		case descriptorpb.FieldDescriptorProto_TYPE_BYTES:
+			return "string", nil
+
+		case descriptorpb.FieldDescriptorProto_TYPE_STRING:
+			return "string", nil
+		}
+	}
+	return "string", nil
 }

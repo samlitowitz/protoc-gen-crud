@@ -11,7 +11,11 @@ message Author {
     operations: [CREATE, READ, UPDATE, DELETE]
     implementations: [IN_MEMORY]
   };
-  string id = 1;
+  string id = 1 [
+    (protoc_gen_crud.options.crud_field_options) = {
+      uids: ["id"]
+    }
+  ];
   string name = 2;
   repeated Book authored = 3;
 }

@@ -65,7 +65,7 @@ func assignUniqueIdentifiers(def *CRUD, field *Field, fieldOpts *options.FieldOp
 		return &UnknownTypeError{}
 	}
 	if field.Type == nil {
-		return &UnsupportedTypeError{typName: *field.TypeName}
+		return &UnsupportedTypeError{TypName: *field.TypeName}
 	}
 
 	switch *field.Type {
@@ -80,7 +80,7 @@ func assignUniqueIdentifiers(def *CRUD, field *Field, fieldOpts *options.FieldOp
 	case descriptorpb.FieldDescriptorProto_TYPE_GROUP:
 		fallthrough
 	case descriptorpb.FieldDescriptorProto_TYPE_MESSAGE:
-		return &UnsupportedTypeError{typName: *field.TypeName}
+		return &UnsupportedTypeError{TypName: *field.TypeName}
 	}
 
 	if def.UniqueIdentifiers == nil {
@@ -133,9 +133,9 @@ func (err UnknownTypeError) Error() string {
 }
 
 type UnsupportedTypeError struct {
-	typName string
+	TypName string
 }
 
 func (err UnsupportedTypeError) Error() string {
-	return fmt.Sprintf("unsupported type: %s", err.typName)
+	return fmt.Sprintf("unsupported type: %s", err.TypName)
 }

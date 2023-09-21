@@ -294,7 +294,7 @@ func TestExtractFieldOptionUniqueIdentifiersDoesNotSupportNonScalarOrEnumFieldTy
 			>
 		>
 			`,
-			expected: &UnsupportedTypeError{typName: "ChildMessage"},
+			expected: &UnsupportedTypeError{TypName: "ChildMessage"},
 		},
 		"enum type is unsupported": {
 			src: `
@@ -325,7 +325,7 @@ func TestExtractFieldOptionUniqueIdentifiersDoesNotSupportNonScalarOrEnumFieldTy
 			>
 		>
 			`,
-			expected: &UnsupportedTypeError{typName: "EnumType"},
+			expected: &UnsupportedTypeError{TypName: "EnumType"},
 		},
 	}
 
@@ -374,7 +374,7 @@ func TestExtractFieldOptionUniqueIdentifiersDoesNotSupportUnsupportedScalarTypes
 		>
 `
 		src = fmt.Sprintf(src, unsupportedType)
-		expected := &UnsupportedTypeError{typName: unsupportedTypeName}
+		expected := &UnsupportedTypeError{TypName: unsupportedTypeName}
 		var fd descriptorpb.FileDescriptorProto
 		if err := prototext.Unmarshal([]byte(src), &fd); err != nil {
 			t.Fatalf("%s: proto.UnmarshalText(%s, &fd) failed with %v; want success", unsupportedType, src, err)

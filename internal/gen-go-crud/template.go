@@ -17,6 +17,7 @@ type param struct {
 type crud struct {
 	*descriptor.CRUD
 	Registry *descriptor.Registry
+	InMemory *inMemory
 }
 
 func applyTemplate(p param, reg *descriptor.Registry) (string, error) {
@@ -30,7 +31,12 @@ func applyTemplate(p param, reg *descriptor.Registry) (string, error) {
 		msg.Name = &msgName
 	}
 	for _, def := range p.CRUDs {
-		if err := repositoryTemplate.Execute(w, &crud{CRUD: def, Registry: reg}); err != nil {
+		inject := &crud{
+			CRUD:     def,
+			Registry: reg,
+			InMemory: &inMemory{},
+		}
+		if err := repositoryTemplate.Execute(w, inject); err != nil {
 			return "", nil
 		}
 	}
