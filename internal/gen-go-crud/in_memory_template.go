@@ -19,6 +19,8 @@ type inMemory struct {
 	uidKeyTypeByUIDNames map[string]string
 }
 
+// For each uid we'll need a function to take an input of []*{{$.CRUD.GoType $.CRUD.File.GoPkg.Path}} and return a map[{{$typ}}]*{{$.CRUD.GoType $.CRUD.File.GoPkg.Path}}
+
 func (im *inMemory) UIDKeyTypeByUIDNames(crud *descriptor.CRUD) map[string]string {
 	if im.uidKeyTypeByUIDNames != nil {
 		return im.uidKeyTypeByUIDNames
@@ -137,6 +139,17 @@ func (repo *InMemory{{.CRUD.Name}}Repository) Update([]*{{.CRUD.GoType .CRUD.Fil
 // Use where clauses
 func (repo *InMemory{{.CRUD.Name}}Repository) Delete([]*{{.CRUD.GoType .CRUD.File.GoPkg.Path}}) error {
 	panic("not implemented")
+}
+{{end}}
+
+{{range $name, $typ := .InMemory.UIDKeyTypeByUIDNames .CRUD}}
+func (repo *InMemory{{.CRUD.Name}}Repository) get{{.CRUD.Name}}By{{$name}}([]*{{.CRUD.GoType .CRUD.File.GoPkg.Path}}) ([]*{{.CRUD.GoType .CRUD.File.GoPkg.Path}}, error) {
+	{{$name}} := make(map[{{$typ}}]*{{$.CRUD.GoType $.CRUD.File.GoPkg.Path}})
+	for _, def := range {
+
+	}
+
+{{$name}} map[{{$typ}}]*{{$.CRUD.GoType $.CRUD.File.GoPkg.Path}}
 }
 {{end}}
 `))
