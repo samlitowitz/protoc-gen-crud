@@ -15,10 +15,15 @@ func init() {
 	strcase.ConfigureAcronym("UID", "uid")
 }
 
-type inMemory struct{}
+type inMemory struct {
+	uidKeyTypeByUIDNames map[string]string
+}
 
-func (im inMemory) UIDTypeByUIDNames(crud *descriptor.CRUD) map[string]string {
-	uidTypesByName := make(map[string]string)
+func (im *inMemory) UIDKeyTypeByUIDNames(crud *descriptor.CRUD) map[string]string {
+	if im.uidKeyTypeByUIDNames != nil {
+		return im.uidKeyTypeByUIDNames
+	}
+	im.uidKeyTypeByUIDNames = make(map[string]string)
 	for name, fieldDefs := range crud.UniqueIdentifiers {
 		typ, err := im.uidKeyTypeByFieldDefs(fieldDefs)
 		if err != nil {
@@ -29,9 +34,9 @@ func (im inMemory) UIDTypeByUIDNames(crud *descriptor.CRUD) map[string]string {
 			crud.CamelCaseName(),
 			strcase.ToCamel(name),
 		)
-		uidTypesByName[name] = typ
+		im.uidKeyTypeByUIDNames[name] = typ
 	}
-	return uidTypesByName
+	return im.uidKeyTypeByUIDNames
 }
 
 func (im inMemory) uidKeyTypeByFieldDefs(defs []*descriptor.Field) (string, error) {
@@ -88,7 +93,7 @@ var (
 
 // InMemory{{.CRUD.Name}}Repository is an in memory implementation of the {{.CRUD.Name}}Repository interface.
 type InMemory{{.CRUD.Name}}Repository struct {
-	{{range $name, $typ := .InMemory.UIDTypeByUIDNames .CRUD}}
+	{{range $name, $typ := .InMemory.UIDKeyTypeByUIDNames .CRUD}}
 	{{$name}} map[{{$typ}}]*{{$.CRUD.GoType $.CRUD.File.GoPkg.Path}}
 	{{end}}
 	iTable []*{{.CRUD.GoType .CRUD.File.GoPkg.Path}} // Internal table of all {{.CRUD.Name}}s
@@ -97,7 +102,7 @@ type InMemory{{.CRUD.Name}}Repository struct {
 // NewInMemory creates a new InMemory{{.CRUD.Name}}Repository to be used.
 func NewInMemory{{.CRUD.Name}}Repository() *InMemory{{.CRUD.Name}}Repository {
 	return &InMemory{{.CRUD.Name}}Repository{
-		{{range $name, $typ := .InMemory.UIDTypeByUIDNames .CRUD}}{{$name}}: make(map[{{$typ}}]*{{$.CRUD.GoType $.CRUD.File.GoPkg.Path}}),{{end}}
+		{{range $name, $typ := .InMemory.UIDKeyTypeByUIDNames .CRUD}}{{$name}}: make(map[{{$typ}}]*{{$.CRUD.GoType $.CRUD.File.GoPkg.Path}}),{{end}}
 		iTable: make([]*{{.CRUD.GoType .CRUD.File.GoPkg.Path}}, 0),
 	}
 }
