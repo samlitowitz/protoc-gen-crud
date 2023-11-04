@@ -98,14 +98,12 @@ type InMemory{{.CRUD.Name}}Repository struct {
 	{{range $name, $typ := .InMemory.UIDKeyTypeByUIDNames .CRUD}}
 	{{$name}} map[{{$typ}}]*{{$.CRUD.GoType $.CRUD.File.GoPkg.Path}}
 	{{end}}
-	iTable []*{{.CRUD.GoType .CRUD.File.GoPkg.Path}} // Internal table of all {{.CRUD.Name}}s
 }
 
 // NewInMemory creates a new InMemory{{.CRUD.Name}}Repository to be used.
 func NewInMemory{{.CRUD.Name}}Repository() *InMemory{{.CRUD.Name}}Repository {
 	return &InMemory{{.CRUD.Name}}Repository{
 		{{range $name, $typ := .InMemory.UIDKeyTypeByUIDNames .CRUD}}{{$name}}: make(map[{{$typ}}]*{{$.CRUD.GoType $.CRUD.File.GoPkg.Path}}),{{end}}
-		iTable: make([]*{{.CRUD.GoType .CRUD.File.GoPkg.Path}}, 0),
 	}
 }
 
@@ -138,18 +136,21 @@ func (repo *InMemory{{.CRUD.Name}}Repository) Update([]*{{.CRUD.GoType .CRUD.Fil
 // Delete is incomplete and it should be considered unstable
 // Use where clauses
 func (repo *InMemory{{.CRUD.Name}}Repository) Delete([]*{{.CRUD.GoType .CRUD.File.GoPkg.Path}}) error {
+	// TODO: Get structs by uid(s)
+	// TODO: Remove found structs
+	// TODO: Return error(s)
 	panic("not implemented")
 }
 {{end}}
 
+// TODO: private getters for each uid hash
 {{range $name, $typ := .InMemory.UIDKeyTypeByUIDNames .CRUD}}
-func (repo *InMemory{{.CRUD.Name}}Repository) get{{.CRUD.Name}}By{{$name}}([]*{{.CRUD.GoType .CRUD.File.GoPkg.Path}}) ([]*{{.CRUD.GoType .CRUD.File.GoPkg.Path}}, error) {
+func get{{$.CRUD.Name}}By{{camelIdentifier $name}}([]*{{$.CRUD.GoType $.CRUD.File.GoPkg.Path}}) (map[{{$typ}}]*{{$.CRUD.GoType $.CRUD.File.GoPkg.Path}}, error) {
 	{{$name}} := make(map[{{$typ}}]*{{$.CRUD.GoType $.CRUD.File.GoPkg.Path}})
 	for _, def := range {
 
 	}
-
-{{$name}} map[{{$typ}}]*{{$.CRUD.GoType $.CRUD.File.GoPkg.Path}}
+	return {{$name}}
 }
 {{end}}
 `))
