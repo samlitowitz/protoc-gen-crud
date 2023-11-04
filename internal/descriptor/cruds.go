@@ -90,6 +90,9 @@ func assignUniqueIdentifiers(def *CRUD, field *Field, fieldOpts *options.FieldOp
 		if _, ok := def.UniqueIdentifiers[uid]; !ok {
 			def.UniqueIdentifiers[uid] = make([]*Field, 1)
 		}
+		if len(def.UniqueIdentifiers[uid]) > 0 {
+			return fmt.Errorf("unique identifiers may only have one field")
+		}
 		def.UniqueIdentifiers[uid] = append(def.UniqueIdentifiers[uid], field)
 	}
 
