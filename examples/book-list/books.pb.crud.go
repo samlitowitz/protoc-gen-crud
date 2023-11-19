@@ -105,11 +105,8 @@ func (repo *InMemoryAuthorRepository) Create(toCreate []*Author) ([]*Author, err
 
 	created := make([]*Author, 0, len(indicesToCreate))
 	for i, val := range indicesToCreate {
-
 		repo.authorById[idByIndex[i]] = val
-
 		repo.authorByIdName[idNameByIndex[i]] = val
-
 		created = append(created, val)
 	}
 	return created, nil
@@ -182,11 +179,8 @@ func (repo *InMemoryAuthorRepository) Delete(toDelete []*Author) error {
 	}
 
 	for i, _ := range indicesToDelete {
-
 		delete(repo.authorById, idByIndex[i])
-
 		delete(repo.authorByIdName, idNameByIndex[i])
-
 	}
 	return nil
 }
@@ -223,7 +217,6 @@ func buildIdNameMap(authors []*Author) (
 	var err error
 	h := sha256.New()
 	for i, def := range authors {
-
 		err = binary.Write(h, binary.LittleEndian, "{{")
 		if err != nil {
 			return nil, nil, nil, err
@@ -236,7 +229,6 @@ func buildIdNameMap(authors []*Author) (
 		if err != nil {
 			return nil, nil, nil, err
 		}
-
 		err = binary.Write(h, binary.LittleEndian, "{{")
 		if err != nil {
 			return nil, nil, nil, err

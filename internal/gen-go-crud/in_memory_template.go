@@ -158,8 +158,7 @@ func (im inMemory) buildUIDData(defs []*descriptor.Field) (*inMemoryUIDData, err
 		if uidData.KeyIsComposite {
 			keyGenCodeBuf.WriteString(
 				fmt.Sprintf(
-					`
-err = binary.Write(%%[1]s, binary.LittleEndian, "{{")
+					`err = binary.Write(%%[1]s, binary.LittleEndian, "{{")
 if err != nil {
 	return nil, nil, nil, err
 }
@@ -281,9 +280,9 @@ func (repo *InMemory{{.CRUD.Name}}Repository) Create(toCreate []*{{.CRUD.GoType 
 
 	created := make([]*{{.CRUD.GoType .CRUD.File.GoPkg.Path}}, 0, len(indicesToCreate))
 	for i, val := range indicesToCreate {
-		{{range $name, $data := .InMemory.UIDDataByUIDNames .CRUD}}
+		{{- range $name, $data := .InMemory.UIDDataByUIDNames .CRUD}}
 		repo.{{$name}}[{{$data.KeyByIndexMapName}}[i]] = val
-		{{end}}
+		{{- end}}
 		created = append(created, val)
 	}
 	return created, nil
@@ -338,9 +337,9 @@ func (repo *InMemory{{.CRUD.Name}}Repository) Delete(toDelete []*{{.CRUD.GoType 
 	{{end}}
 
 	for i, _ := range indicesToDelete {
-		{{range $name, $data := .InMemory.UIDDataByUIDNames .CRUD}}
+		{{- range $name, $data := .InMemory.UIDDataByUIDNames .CRUD}}
 		delete(repo.{{$name}}, {{$data.KeyByIndexMapName}}[i])
-		{{end}}
+		{{- end}}
 	}
 	return nil
 }
