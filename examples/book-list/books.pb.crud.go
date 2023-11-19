@@ -50,8 +50,69 @@ func NewInMemoryAuthorRepository() *InMemoryAuthorRepository {
 
 // Create creates new Authors.
 // Successfully created Authors are returned along with any errors that may have occurred.
-func (repo *InMemoryAuthorRepository) Create([]*Author) ([]*Author, error) {
-	panic("not implemented")
+func (repo *InMemoryAuthorRepository) Create(toCreate []*Author) ([]*Author, error) {
+	indicesToCreate := make(map[int]*Author)
+
+	indexById, idByIndex, authorById, err := buildIdMap(toCreate)
+	if err != nil {
+		return nil, err
+	}
+	for key, val := range authorById {
+		if _, ok := indexById[key]; !ok {
+			// internal error, should never happen
+			continue
+		}
+		if _, ok := idByIndex[indexById[key]]; !ok {
+			// internal error, should never happen
+			continue
+
+		}
+		if _, ok := repo.authorById[key]; ok {
+			// add error about duplicate
+			delete(indicesToCreate, indexById[key])
+			continue
+		}
+		if _, ok := indicesToCreate[indexById[key]]; !ok {
+			// mark index as to be created
+			indicesToCreate[indexById[key]] = val
+		}
+	}
+
+	indexByIdName, idNameByIndex, authorByIdName, err := buildIdNameMap(toCreate)
+	if err != nil {
+		return nil, err
+	}
+	for key, val := range authorByIdName {
+		if _, ok := indexByIdName[key]; !ok {
+			// internal error, should never happen
+			continue
+		}
+		if _, ok := idNameByIndex[indexByIdName[key]]; !ok {
+			// internal error, should never happen
+			continue
+
+		}
+		if _, ok := repo.authorByIdName[key]; ok {
+			// add error about duplicate
+			delete(indicesToCreate, indexByIdName[key])
+			continue
+		}
+		if _, ok := indicesToCreate[indexByIdName[key]]; !ok {
+			// mark index as to be created
+			indicesToCreate[indexByIdName[key]] = val
+		}
+	}
+
+	created := make([]*Author, 0, len(indicesToCreate))
+	for i, val := range indicesToCreate {
+
+		repo.authorById[idByIndex[i]] = val
+
+		repo.authorByIdName[idNameByIndex[i]] = val
+
+		created = append(created, val)
+	}
+	return created, nil
 }
 
 // Read returns a set of Authors matching the provided criteria
@@ -76,55 +137,73 @@ func (repo *InMemoryAuthorRepository) Delete([]*Author) error {
 	panic("not implemented")
 }
 
-func buildAuthorByIdMap(authors []*Author) (map[string]*Author, error) {
+func buildIdMap(authors []*Author) (
+	map[string]int,
+	map[int]string,
+	map[string]*Author,
+	error,
+) {
+	indexById := make(map[string]int)
+	idByIndex := make(map[int]string)
 	authorById := make(map[string]*Author)
 
-	for _, def := range authors {
+	for i, def := range authors {
+		indexById[def.Id] = i
+		idByIndex[i] = def.Id
 		authorById[def.Id] = def
 	}
 
-	return authorById, nil
+	return indexById, idByIndex, authorById, nil
 }
 
-func buildAuthorByIdNameMap(authors []*Author) (map[string]*Author, error) {
+func buildIdNameMap(authors []*Author) (
+	map[string]int,
+	map[int]string,
+	map[string]*Author,
+	error,
+) {
+	indexByIdName := make(map[string]int)
+	idNameByIndex := make(map[int]string)
 	authorByIdName := make(map[string]*Author)
 
 	var err error
 	h := sha256.New()
-	for _, def := range authors {
+	for i, def := range authors {
 
 		err = binary.Write(h, binary.LittleEndian, "{{")
 		if err != nil {
-			return nil, err
+			return nil, nil, nil, err
 		}
 		err = binary.Write(h, binary.LittleEndian, def.Id)
 		if err != nil {
-			return nil, err
+			return nil, nil, nil, err
 		}
 		err = binary.Write(h, binary.LittleEndian, "}}")
 		if err != nil {
-			return nil, err
+			return nil, nil, nil, err
 		}
 
 		err = binary.Write(h, binary.LittleEndian, "{{")
 		if err != nil {
-			return nil, err
+			return nil, nil, nil, err
 		}
 		err = binary.Write(h, binary.LittleEndian, def.Name)
 		if err != nil {
-			return nil, err
+			return nil, nil, nil, err
 		}
 		err = binary.Write(h, binary.LittleEndian, "}}")
 		if err != nil {
-			return nil, err
+			return nil, nil, nil, err
 		}
 
 		key := string(h.Sum(nil))
+		indexByIdName[key] = i
+		idNameByIndex[i] = key
 		authorByIdName[key] = def
 		h.Reset()
 	}
 
-	return authorByIdName, nil
+	return indexByIdName, idNameByIndex, authorByIdName, nil
 }
 
 type BookRepository interface {

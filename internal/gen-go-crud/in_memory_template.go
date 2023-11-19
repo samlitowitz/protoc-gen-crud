@@ -27,8 +27,11 @@ func inMemoryBuildMapWrap(crud *descriptor.CRUD, name string, data *inMemoryUIDD
 }
 
 type inMemoryUIDData struct {
-	KeyType        string
-	KeyIsComposite bool
+	KeyType           string
+	KeyIsComposite    bool
+	BuildMapFnName    string
+	IndexByKeyMapName string
+	KeyByIndexMapName string
 
 	keyGenerationCode string
 }
@@ -65,13 +68,15 @@ func (im *inMemory) UIDDataByUIDNames(crud *descriptor.CRUD) map[string]*inMemor
 		if err != nil {
 			panic(err)
 		}
-		name = fmt.Sprintf(
+		uidMapName := fmt.Sprintf(
 			"%sBy%s",
 			crud.CamelCaseName(),
 			strcase.ToCamel(name),
 		)
-
-		im.uidDataByUIDNames[name] = uidData
+		uidData.BuildMapFnName = fmt.Sprintf("build%sMap", strcase.ToCamel(name))
+		uidData.IndexByKeyMapName = fmt.Sprintf("indexBy%s", strcase.ToCamel(name))
+		uidData.KeyByIndexMapName = fmt.Sprintf("%sByIndex", strcase.ToLowerCamel(name))
+		im.uidDataByUIDNames[uidMapName] = uidData
 	}
 	return im.uidDataByUIDNames
 }
@@ -81,8 +86,8 @@ func (im inMemory) buildUIDData(defs []*descriptor.Field) (*inMemoryUIDData, err
 		return nil, fmt.Errorf("no fields found, cannot build key type")
 	}
 	uidData := &inMemoryUIDData{
-		KeyIsComposite: len(defs) > 1,
 		KeyType:        "string",
+		KeyIsComposite: len(defs) > 1,
 	}
 
 	keyGenCodeBuf := bytes.Buffer{}
@@ -156,15 +161,15 @@ func (im inMemory) buildUIDData(defs []*descriptor.Field) (*inMemoryUIDData, err
 					`
 err = binary.Write(%%[1]s, binary.LittleEndian, "{{")
 if err != nil {
-	return nil, err
+	return nil, nil, nil, err
 }
 err = binary.Write(%%[1]s, binary.LittleEndian, %%[2]s.%s)
 if err != nil {
-	return nil, err
+	return nil, nil, nil, err
 }
 err = binary.Write(%%[1]s, binary.LittleEndian, "}}")
 if err != nil {
-	return nil, err
+	return nil, nil, nil, err
 }
 `,
 					casing.CamelIdentifier(*def.Name),
@@ -245,8 +250,43 @@ func NewInMemory{{.CRUD.Name}}Repository() *InMemory{{.CRUD.Name}}Repository {
 {{if .CRUD.Create}}
 // Create creates new {{.CRUD.Name}}s.
 // Successfully created {{.CRUD.Name}}s are returned along with any errors that may have occurred.
-func (repo *InMemory{{.CRUD.Name}}Repository) Create([]*{{.CRUD.GoType .CRUD.File.GoPkg.Path}}) ([]*{{.CRUD.GoType .CRUD.File.GoPkg.Path}}, error) {
-	panic("not implemented")
+func (repo *InMemory{{.CRUD.Name}}Repository) Create(toCreate []*{{.CRUD.GoType .CRUD.File.GoPkg.Path}}) ([]*{{.CRUD.GoType .CRUD.File.GoPkg.Path}}, error) {
+	indicesToCreate := make(map[int]*{{.CRUD.GoType .CRUD.File.GoPkg.Path}})
+	{{range $name, $data := .InMemory.UIDDataByUIDNames .CRUD}}
+	{{$data.IndexByKeyMapName}}, {{$data.KeyByIndexMapName}}, {{$name}}, err := {{$data.BuildMapFnName}}(toCreate)
+	if err != nil {
+		return nil, err
+	}
+	for key, val := range {{$name}} {
+		if _, ok := {{$data.IndexByKeyMapName}}[key]; !ok {
+			// internal error, should never happen
+			continue
+		}
+		if _, ok := {{$data.KeyByIndexMapName}}[{{$data.IndexByKeyMapName}}[key]]; !ok {
+			// internal error, should never happen
+			continue
+
+		}
+		if _, ok := repo.{{$name}}[key]; ok {
+			// add error about duplicate
+			delete(indicesToCreate, {{$data.IndexByKeyMapName}}[key])
+			continue
+		}
+		if _, ok := indicesToCreate[{{$data.IndexByKeyMapName}}[key]]; !ok {
+			// mark index as to be created
+			indicesToCreate[{{$data.IndexByKeyMapName}}[key]] = val
+		}
+	}
+	{{end}}
+
+	created := make([]*{{.CRUD.GoType .CRUD.File.GoPkg.Path}}, 0, len(indicesToCreate))
+	for i, val := range indicesToCreate {
+		{{range $name, $data := .InMemory.UIDDataByUIDNames .CRUD}}
+		repo.{{$name}}[{{$data.KeyByIndexMapName}}[i]] = val
+		{{end}}
+		created = append(created, val)
+	}
+	return created, nil
 }
 {{end}}
 
@@ -279,29 +319,40 @@ func (repo *InMemory{{.CRUD.Name}}Repository) Delete([]*{{.CRUD.GoType .CRUD.Fil
 {{end}}
 
 {{range $name, $data := .InMemory.UIDDataByUIDNames .CRUD}}
-func build{{camelIdentifier $name}}Map({{$.CRUD.CamelCaseName}}s []*{{$.CRUD.GoType $.CRUD.File.GoPkg.Path}}) (map[{{.KeyType}}]*{{$.CRUD.GoType $.CRUD.File.GoPkg.Path}}, error) {
+func {{$data.BuildMapFnName}}({{$.CRUD.CamelCaseName}}s []*{{$.CRUD.GoType $.CRUD.File.GoPkg.Path}}) (
+	map[{{.KeyType}}]int,
+	map[int]{{.KeyType}},
+	map[{{.KeyType}}]*{{$.CRUD.GoType $.CRUD.File.GoPkg.Path}},
+	error,
+) {
+	{{$data.IndexByKeyMapName}} := make(map[{{.KeyType}}]int)
+	{{$data.KeyByIndexMapName}} := make(map[int]{{.KeyType}})
 	{{$name}} := make(map[{{.KeyType}}]*{{$.CRUD.GoType $.CRUD.File.GoPkg.Path}})
 	{{if $data.KeyIsComposite}}
 	{{- template "repository-in-memory-build-map-for-complex-keys" (inMemoryBuildMapWrap $.CRUD $name $data) -}}
 	{{else}}
 	{{- template "repository-in-memory-build-map-for-simple-keys" (inMemoryBuildMapWrap $.CRUD $name $data) -}}
 	{{end}}
-	return {{$name}}, nil
+	return {{$data.IndexByKeyMapName}}, {{$data.KeyByIndexMapName}}, {{$name}}, nil
 }
 {{end}}
 `))
 
 	_ = template.Must(repositoryTemplate.New("repository-in-memory-build-map-for-simple-keys").Funcs(funcMap).Parse(`
-	for _, def := range {{.CRUD.CamelCaseName}}s {
+	for i, def := range {{.CRUD.CamelCaseName}}s {
+		{{.Data.IndexByKeyMapName}}[{{.Data.SimpleKeyGenerationCode "def"}}] = i
+		{{.Data.KeyByIndexMapName}}[i] = {{.Data.SimpleKeyGenerationCode "def"}}
 		{{.Name}}[{{.Data.SimpleKeyGenerationCode "def"}}] = def
 	}
 `))
 	_ = template.Must(repositoryTemplate.New("repository-in-memory-build-map-for-complex-keys").Funcs(funcMap).Parse(`
 	var err error
 	h := sha256.New()
-	for _, def := range {{$.CRUD.CamelCaseName}}s {
+	for i, def := range {{$.CRUD.CamelCaseName}}s {
 		{{.Data.CompositeKeyGenerationCode "def" "h"}}
 		key := string(h.Sum(nil))
+		{{.Data.IndexByKeyMapName}}[key] = i
+		{{.Data.KeyByIndexMapName}}[i] = key
 		{{.Name}}[key] = def
 		h.Reset()
 	}
