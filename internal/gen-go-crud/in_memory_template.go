@@ -308,13 +308,41 @@ func (repo *InMemory{{.CRUD.Name}}Repository) Update([]*{{.CRUD.GoType .CRUD.Fil
 
 {{if .CRUD.Delete}}
 // Delete deletes {{.CRUD.Name}}s based on the defined unique identifiers
-// Delete is incomplete and it should be considered unstable
-// Use where clauses
-func (repo *InMemory{{.CRUD.Name}}Repository) Delete([]*{{.CRUD.GoType .CRUD.File.GoPkg.Path}}) error {
-	// TODO: Get structs by uid(s)
-	// TODO: Remove found structs
-	// TODO: Return error(s)
-	panic("not implemented")
+func (repo *InMemory{{.CRUD.Name}}Repository) Delete(toDelete []*{{.CRUD.GoType .CRUD.File.GoPkg.Path}}) error {
+	indicesToDelete := make(map[int]struct{})
+	{{range $name, $data := .InMemory.UIDDataByUIDNames .CRUD}}
+	{{$data.IndexByKeyMapName}}, {{$data.KeyByIndexMapName}}, {{$name}}, err := {{$data.BuildMapFnName}}(toDelete)
+	if err != nil {
+		return err
+	}
+	for key, _ := range {{$name}} {
+		if _, ok := {{$data.IndexByKeyMapName}}[key]; !ok {
+			// internal error, should never happen
+			continue
+		}
+		if _, ok := {{$data.KeyByIndexMapName}}[{{$data.IndexByKeyMapName}}[key]]; !ok {
+			// internal error, should never happen
+			continue
+
+		}
+		if _, ok := repo.{{$name}}[key]; ok {
+			// add error about duplicate
+			delete(indicesToDelete, {{$data.IndexByKeyMapName}}[key])
+			continue
+		}
+		if _, ok := indicesToDelete[{{$data.IndexByKeyMapName}}[key]]; !ok {
+			// mark index as to be created
+			indicesToDelete[{{$data.IndexByKeyMapName}}[key]] = struct{}{}
+		}
+	}
+	{{end}}
+
+	for i, _ := range indicesToDelete {
+		{{range $name, $data := .InMemory.UIDDataByUIDNames .CRUD}}
+		delete(repo.{{$name}}, {{$data.KeyByIndexMapName}}[i])
+		{{end}}
+	}
+	return nil
 }
 {{end}}
 

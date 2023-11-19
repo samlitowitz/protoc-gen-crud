@@ -128,13 +128,67 @@ func (repo *InMemoryAuthorRepository) Update([]*Author) ([]*Author, error) {
 }
 
 // Delete deletes Authors based on the defined unique identifiers
-// Delete is incomplete and it should be considered unstable
-// Use where clauses
-func (repo *InMemoryAuthorRepository) Delete([]*Author) error {
-	// TODO: Get structs by uid(s)
-	// TODO: Remove found structs
-	// TODO: Return error(s)
-	panic("not implemented")
+func (repo *InMemoryAuthorRepository) Delete(toDelete []*Author) error {
+	indicesToDelete := make(map[int]struct{})
+
+	indexById, idByIndex, authorById, err := buildIdMap(toDelete)
+	if err != nil {
+		return err
+	}
+	for key, _ := range authorById {
+		if _, ok := indexById[key]; !ok {
+			// internal error, should never happen
+			continue
+		}
+		if _, ok := idByIndex[indexById[key]]; !ok {
+			// internal error, should never happen
+			continue
+
+		}
+		if _, ok := repo.authorById[key]; ok {
+			// add error about duplicate
+			delete(indicesToDelete, indexById[key])
+			continue
+		}
+		if _, ok := indicesToDelete[indexById[key]]; !ok {
+			// mark index as to be created
+			indicesToDelete[indexById[key]] = struct{}{}
+		}
+	}
+
+	indexByIdName, idNameByIndex, authorByIdName, err := buildIdNameMap(toDelete)
+	if err != nil {
+		return err
+	}
+	for key, _ := range authorByIdName {
+		if _, ok := indexByIdName[key]; !ok {
+			// internal error, should never happen
+			continue
+		}
+		if _, ok := idNameByIndex[indexByIdName[key]]; !ok {
+			// internal error, should never happen
+			continue
+
+		}
+		if _, ok := repo.authorByIdName[key]; ok {
+			// add error about duplicate
+			delete(indicesToDelete, indexByIdName[key])
+			continue
+		}
+		if _, ok := indicesToDelete[indexByIdName[key]]; !ok {
+			// mark index as to be created
+			indicesToDelete[indexByIdName[key]] = struct{}{}
+		}
+	}
+
+	for i, _ := range indicesToDelete {
+
+		delete(repo.authorById, idByIndex[i])
+
+		delete(repo.authorByIdName, idNameByIndex[i])
+
+	}
+	return nil
 }
 
 func buildIdMap(authors []*Author) (
