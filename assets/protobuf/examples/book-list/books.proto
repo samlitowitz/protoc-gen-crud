@@ -13,10 +13,14 @@ message Author {
   };
   string id = 1 [
     (protoc_gen_crud.options.crud_field_options) = {
-      uids: ["id"]
+      uids: ["id", "id-name"]
     }
   ];
-  string name = 2;
+  string name = 2 [
+    (protoc_gen_crud.options.crud_field_options) = {
+      uids: ["id-name"]
+    }
+  ];
   repeated Book authored = 3;
 }
 

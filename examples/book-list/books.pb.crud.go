@@ -9,6 +9,11 @@ It provides an interface to implement and some implementations of the interface.
 
 package book_list
 
+import (
+	"bytes"
+	"encoding/binary"
+)
+
 type AuthorRepository interface {
 	// Create creates new Authors.
 	// Successfully created Authors are returned along with any errors that may have occurred.
@@ -32,12 +37,14 @@ type AuthorRepository interface {
 // InMemoryAuthorRepository is an in memory implementation of the AuthorRepository interface.
 type InMemoryAuthorRepository struct {
 	authorById map[string]*Author
+
+	authorByIdName map[string]*Author
 }
 
 // NewInMemory creates a new InMemoryAuthorRepository to be used.
 func NewInMemoryAuthorRepository() *InMemoryAuthorRepository {
 	return &InMemoryAuthorRepository{
-		authorById: make(map[string]*Author),
+		authorById: make(map[string]*Author), authorByIdName: make(map[string]*Author),
 	}
 }
 
@@ -76,6 +83,25 @@ func getAuthorById(authors []*Author) (map[string]*Author, error) {
 		authorById[key] = def
 	}
 	return authorById, nil
+}
+
+func getAuthorByIdName(authors []*Author) (map[string]*Author, error) {
+	authorByIdName := make(map[string]*Author)
+	for _, def := range authors {
+		buf := bytes.Buffer{}
+		err := binary.Write(buf, binary.LittleEndian, def.id)
+		if err != nil {
+			return nil, err
+		}
+
+		err := binary.Write(buf, binary.LittleEndian, def.name)
+		if err != nil {
+			return nil, err
+		}
+		key := buf.String()
+		authorByIdName[key] = def
+	}
+	return authorByIdName, nil
 }
 
 type BookRepository interface {
