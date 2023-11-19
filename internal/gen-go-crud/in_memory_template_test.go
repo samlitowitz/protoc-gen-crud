@@ -201,9 +201,11 @@ func TestApplyTemplate_RepositoryInMemoryUIDs(t *testing.T) {
 				return
 			}
 
+			uidCombinationStr := strings.Join(uidCombination, ", ")
+
 			// Assert struct definition
 			if want := "type InMemory" + *msgDesc.Name + "Repository struct {"; !strings.Contains(got, want) {
-				t.Errorf("applyTemplate(%#v) = %s; want to contain %s", file, got, want)
+				t.Errorf("%s: applyTemplate(%#v) = %s; want to contain %s", uidCombinationStr, file, got, want)
 			}
 
 			// Assert UID maps
@@ -219,7 +221,7 @@ func TestApplyTemplate_RepositoryInMemoryUIDs(t *testing.T) {
 				crud.GoType(crud.File.GoPkg.Path),
 			)
 			if want := uidMapDef; !strings.Contains(got, want) {
-				t.Errorf("applyTemplate(%#v) = %s; want to contain %s", file, got, want)
+				t.Errorf("%s: applyTemplate(%#v) = %s; want to contain %s", uidCombinationStr, file, got, want)
 			}
 
 			// Assert "constructor" function
@@ -324,12 +326,16 @@ func goTypeByFieldDescType(defs []*descriptor.Field) (string, error) {
 			fallthrough
 		case descriptorpb.FieldDescriptorProto_TYPE_FIXED32:
 			fallthrough
+		case descriptorpb.FieldDescriptorProto_TYPE_SFIXED32:
+			fallthrough
 		case descriptorpb.FieldDescriptorProto_TYPE_SINT32:
 			return "int32", nil
 
 		case descriptorpb.FieldDescriptorProto_TYPE_INT64:
 			fallthrough
 		case descriptorpb.FieldDescriptorProto_TYPE_FIXED64:
+			fallthrough
+		case descriptorpb.FieldDescriptorProto_TYPE_SFIXED64:
 			fallthrough
 		case descriptorpb.FieldDescriptorProto_TYPE_SINT64:
 			return "int64", nil

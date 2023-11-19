@@ -114,13 +114,13 @@ func (g *generator) addCrudPathParamImports(file *descriptor.File, crud *descrip
 		if len(fields) <= 1 {
 			continue
 		}
-		if !pkgSeen["bytes"] {
-			pkgSeen["bytes"] = true
-			imports = append(imports, descriptor.GoPackage{Path: "bytes", Name: "bytes"})
-		}
 		if !pkgSeen["encoding/binary"] {
 			pkgSeen["encoding/binary"] = true
 			imports = append(imports, descriptor.GoPackage{Path: "encoding/binary", Name: "binary"})
+		}
+		if !pkgSeen["crypto/sha256"] {
+			pkgSeen["crypto/sha256"] = true
+			imports = append(imports, descriptor.GoPackage{Path: "crypto/sha256", Name: "sha256"})
 		}
 	}
 	return imports

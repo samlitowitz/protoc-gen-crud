@@ -18,122 +18,50 @@ func init() {
 	strcase.ConfigureAcronym("UID", "uid")
 }
 
-type inMemoryUIDData struct {
-	KeyType string
-	fields  []*descriptor.Field
+func inMemoryBuildMapWrap(crud *descriptor.CRUD, name string, data *inMemoryUIDData) map[string]interface{} {
+	return map[string]interface{}{
+		"CRUD": crud,
+		"Name": name,
+		"Data": data,
+	}
 }
 
-func (uidData *inMemoryUIDData) KeyGenerationCode(fieldDefVarName string, keyVarName string) string {
-	if len(uidData.fields) < 1 {
+type inMemoryUIDData struct {
+	KeyType        string
+	KeyIsComposite bool
+
+	keyGenerationCode string
+}
+
+func (uidData *inMemoryUIDData) SimpleKeyGenerationCode(fieldDefVarName string) string {
+	if uidData.KeyIsComposite {
 		return ""
 	}
-	if len(uidData.fields) == 1 {
-		def := uidData.fields[0]
-		switch *def.Type {
-		case descriptorpb.FieldDescriptorProto_TYPE_DOUBLE:
-			fallthrough
-		case descriptorpb.FieldDescriptorProto_TYPE_FLOAT:
-			fallthrough
-		case descriptorpb.FieldDescriptorProto_TYPE_BOOL:
-			fallthrough
-		case descriptorpb.FieldDescriptorProto_TYPE_ENUM:
-			fallthrough
-		case descriptorpb.FieldDescriptorProto_TYPE_GROUP:
-			fallthrough
-		case descriptorpb.FieldDescriptorProto_TYPE_MESSAGE:
-			return ""
-
-		case descriptorpb.FieldDescriptorProto_TYPE_UINT32:
-			fallthrough
-		case descriptorpb.FieldDescriptorProto_TYPE_UINT64:
-			fallthrough
-		case descriptorpb.FieldDescriptorProto_TYPE_INT32:
-			fallthrough
-		case descriptorpb.FieldDescriptorProto_TYPE_FIXED32:
-			fallthrough
-		case descriptorpb.FieldDescriptorProto_TYPE_SINT32:
-			fallthrough
-		case descriptorpb.FieldDescriptorProto_TYPE_INT64:
-			fallthrough
-		case descriptorpb.FieldDescriptorProto_TYPE_FIXED64:
-			fallthrough
-		case descriptorpb.FieldDescriptorProto_TYPE_SINT64:
-			fallthrough
-		case descriptorpb.FieldDescriptorProto_TYPE_STRING:
-			return fmt.Sprintf("%s := %s.%s", keyVarName, fieldDefVarName, casing.CamelIdentifier(*def.Name))
-
-		case descriptorpb.FieldDescriptorProto_TYPE_BYTES:
-			return fmt.Sprintf("%s := string(%s.%s)", keyVarName, fieldDefVarName, *def.Name)
-		}
-	}
-	buf := bytes.Buffer{}
-	buf.WriteString("buf := bytes.Buffer{}")
-	for _, def := range uidData.fields {
-		switch *def.Type {
-		case descriptorpb.FieldDescriptorProto_TYPE_DOUBLE:
-			fallthrough
-		case descriptorpb.FieldDescriptorProto_TYPE_FLOAT:
-			fallthrough
-		case descriptorpb.FieldDescriptorProto_TYPE_BOOL:
-			fallthrough
-		case descriptorpb.FieldDescriptorProto_TYPE_ENUM:
-			fallthrough
-		case descriptorpb.FieldDescriptorProto_TYPE_GROUP:
-			fallthrough
-		case descriptorpb.FieldDescriptorProto_TYPE_MESSAGE:
-			continue
-
-		case descriptorpb.FieldDescriptorProto_TYPE_UINT32:
-			fallthrough
-		case descriptorpb.FieldDescriptorProto_TYPE_UINT64:
-			fallthrough
-		case descriptorpb.FieldDescriptorProto_TYPE_INT32:
-			fallthrough
-		case descriptorpb.FieldDescriptorProto_TYPE_FIXED32:
-			fallthrough
-		case descriptorpb.FieldDescriptorProto_TYPE_SINT32:
-			fallthrough
-		case descriptorpb.FieldDescriptorProto_TYPE_INT64:
-			fallthrough
-		case descriptorpb.FieldDescriptorProto_TYPE_FIXED64:
-			fallthrough
-		case descriptorpb.FieldDescriptorProto_TYPE_SINT64:
-			fallthrough
-		case descriptorpb.FieldDescriptorProto_TYPE_STRING:
-			fallthrough
-		case descriptorpb.FieldDescriptorProto_TYPE_BYTES:
-			buf.WriteString(
-				fmt.Sprintf(`
-err := binary.Write(buf, binary.LittleEndian, %s.%s)
-if err != nil {
-	return nil, err
+	return fmt.Sprintf(uidData.keyGenerationCode, fieldDefVarName)
 }
-`,
-					fieldDefVarName,
-					*def.Name,
-				),
-			)
-		}
+
+func (uidData *inMemoryUIDData) CompositeKeyGenerationCode(
+	fieldDefVarName string,
+	hashVarName string,
+) string {
+	if !uidData.KeyIsComposite {
+		return ""
 	}
-	buf.WriteString(
-		fmt.Sprintf("%s := buf.String()", keyVarName),
-	)
-	return buf.String()
+	return fmt.Sprintf(uidData.keyGenerationCode, hashVarName, fieldDefVarName)
 }
 
 type inMemory struct {
-	uidKeyTypeByUIDNames map[string]*inMemoryUIDData
+	uidDataByUIDNames map[string]*inMemoryUIDData
 }
 
 // For each uid we'll need a function to take an input of []*{{$.CRUD.GoType $.CRUD.File.GoPkg.Path}} and return a map[{{$typ}}]*{{$.CRUD.GoType $.CRUD.File.GoPkg.Path}}
-
 func (im *inMemory) UIDDataByUIDNames(crud *descriptor.CRUD) map[string]*inMemoryUIDData {
-	if im.uidKeyTypeByUIDNames != nil {
-		return im.uidKeyTypeByUIDNames
+	if im.uidDataByUIDNames != nil {
+		return im.uidDataByUIDNames
 	}
-	im.uidKeyTypeByUIDNames = make(map[string]*inMemoryUIDData)
+	im.uidDataByUIDNames = make(map[string]*inMemoryUIDData)
 	for name, fieldDefs := range crud.UniqueIdentifiers {
-		typ, err := im.uidKeyTypeByFieldDefs(fieldDefs)
+		uidData, err := im.buildUIDData(fieldDefs)
 		if err != nil {
 			panic(err)
 		}
@@ -143,12 +71,109 @@ func (im *inMemory) UIDDataByUIDNames(crud *descriptor.CRUD) map[string]*inMemor
 			strcase.ToCamel(name),
 		)
 
-		im.uidKeyTypeByUIDNames[name] = &inMemoryUIDData{
-			KeyType: typ,
-			fields:  fieldDefs,
+		im.uidDataByUIDNames[name] = uidData
+	}
+	return im.uidDataByUIDNames
+}
+
+func (im inMemory) buildUIDData(defs []*descriptor.Field) (*inMemoryUIDData, error) {
+	if len(defs) < 1 {
+		return nil, fmt.Errorf("no fields found, cannot build key type")
+	}
+	uidData := &inMemoryUIDData{
+		KeyIsComposite: len(defs) > 1,
+		KeyType:        "string",
+	}
+
+	keyGenCodeBuf := bytes.Buffer{}
+	for _, def := range defs {
+		uidData.keyGenerationCode = fmt.Sprintf("%%s.%s", casing.CamelIdentifier(*def.Name))
+
+		switch *def.Type {
+		case descriptorpb.FieldDescriptorProto_TYPE_DOUBLE:
+			fallthrough
+		case descriptorpb.FieldDescriptorProto_TYPE_FLOAT:
+			fallthrough
+		case descriptorpb.FieldDescriptorProto_TYPE_BOOL:
+			fallthrough
+		case descriptorpb.FieldDescriptorProto_TYPE_ENUM:
+			fallthrough
+		case descriptorpb.FieldDescriptorProto_TYPE_GROUP:
+			fallthrough
+		case descriptorpb.FieldDescriptorProto_TYPE_MESSAGE:
+			return nil, &descriptor.UnsupportedTypeError{TypName: *def.TypeName}
+
+		case descriptorpb.FieldDescriptorProto_TYPE_UINT32:
+			if !uidData.KeyIsComposite {
+				uidData.KeyType = "uint32"
+				return uidData, nil
+			}
+
+		case descriptorpb.FieldDescriptorProto_TYPE_UINT64:
+			if !uidData.KeyIsComposite {
+				uidData.KeyType = "uint64"
+				return uidData, nil
+			}
+
+		case descriptorpb.FieldDescriptorProto_TYPE_INT32:
+			fallthrough
+		case descriptorpb.FieldDescriptorProto_TYPE_FIXED32:
+			fallthrough
+		case descriptorpb.FieldDescriptorProto_TYPE_SFIXED32:
+			fallthrough
+		case descriptorpb.FieldDescriptorProto_TYPE_SINT32:
+			if !uidData.KeyIsComposite {
+				uidData.KeyType = "int32"
+				return uidData, nil
+			}
+
+		case descriptorpb.FieldDescriptorProto_TYPE_INT64:
+			fallthrough
+		case descriptorpb.FieldDescriptorProto_TYPE_FIXED64:
+			fallthrough
+		case descriptorpb.FieldDescriptorProto_TYPE_SFIXED64:
+			fallthrough
+		case descriptorpb.FieldDescriptorProto_TYPE_SINT64:
+			if !uidData.KeyIsComposite {
+				uidData.KeyType = "int64"
+				return uidData, nil
+			}
+
+		case descriptorpb.FieldDescriptorProto_TYPE_BYTES:
+			if !uidData.KeyIsComposite {
+				uidData.keyGenerationCode = fmt.Sprintf("string(%%s.%s)", casing.CamelIdentifier(*def.Name))
+				return uidData, nil
+			}
+
+		case descriptorpb.FieldDescriptorProto_TYPE_STRING:
+			if !uidData.KeyIsComposite {
+				return uidData, nil
+			}
+		}
+		if uidData.KeyIsComposite {
+			keyGenCodeBuf.WriteString(
+				fmt.Sprintf(
+					`
+err = binary.Write(%%[1]s, binary.LittleEndian, "{{")
+if err != nil {
+	return nil, err
+}
+err = binary.Write(%%[1]s, binary.LittleEndian, %%[2]s.%s)
+if err != nil {
+	return nil, err
+}
+err = binary.Write(%%[1]s, binary.LittleEndian, "}}")
+if err != nil {
+	return nil, err
+}
+`,
+					casing.CamelIdentifier(*def.Name),
+				),
+			)
+			uidData.keyGenerationCode = keyGenCodeBuf.String()
 		}
 	}
-	return im.uidKeyTypeByUIDNames
+	return uidData, nil
 }
 
 func (im inMemory) uidKeyTypeByFieldDefs(defs []*descriptor.Field) (string, error) {
@@ -254,14 +279,31 @@ func (repo *InMemory{{.CRUD.Name}}Repository) Delete([]*{{.CRUD.GoType .CRUD.Fil
 {{end}}
 
 {{range $name, $data := .InMemory.UIDDataByUIDNames .CRUD}}
-	func get{{camelIdentifier $name}}({{$.CRUD.CamelCaseName}}s []*{{$.CRUD.GoType $.CRUD.File.GoPkg.Path}}) (map[{{.KeyType}}]*{{$.CRUD.GoType $.CRUD.File.GoPkg.Path}}, error) {
+func build{{camelIdentifier $name}}Map({{$.CRUD.CamelCaseName}}s []*{{$.CRUD.GoType $.CRUD.File.GoPkg.Path}}) (map[{{.KeyType}}]*{{$.CRUD.GoType $.CRUD.File.GoPkg.Path}}, error) {
 	{{$name}} := make(map[{{.KeyType}}]*{{$.CRUD.GoType $.CRUD.File.GoPkg.Path}})
-	for _, def := range {{$.CRUD.CamelCaseName}}s {
-		{{$data.KeyGenerationCode "def" "key"}}
-		{{$name}}[key] = def
-	}
+	{{if $data.KeyIsComposite}}
+	{{- template "repository-in-memory-build-map-for-complex-keys" (inMemoryBuildMapWrap $.CRUD $name $data) -}}
+	{{else}}
+	{{- template "repository-in-memory-build-map-for-simple-keys" (inMemoryBuildMapWrap $.CRUD $name $data) -}}
+	{{end}}
 	return {{$name}}, nil
 }
 {{end}}
+`))
+
+	_ = template.Must(repositoryTemplate.New("repository-in-memory-build-map-for-simple-keys").Funcs(funcMap).Parse(`
+	for _, def := range {{.CRUD.CamelCaseName}}s {
+		{{.Name}}[{{.Data.SimpleKeyGenerationCode "def"}}] = def
+	}
+`))
+	_ = template.Must(repositoryTemplate.New("repository-in-memory-build-map-for-complex-keys").Funcs(funcMap).Parse(`
+	var err error
+	h := sha256.New()
+	for _, def := range {{$.CRUD.CamelCaseName}}s {
+		{{.Data.CompositeKeyGenerationCode "def" "h"}}
+		key := string(h.Sum(nil))
+		{{.Name}}[key] = def
+		h.Reset()
+	}
 `))
 )

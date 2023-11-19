@@ -73,7 +73,8 @@ import (
 `))
 
 	funcMap template.FuncMap = map[string]interface{}{
-		"camelIdentifier": casing.CamelIdentifier,
+		"camelIdentifier":      casing.CamelIdentifier,
+		"inMemoryBuildMapWrap": inMemoryBuildMapWrap,
 	}
 
 	_ = template.Must(repositoryTemplate.New("repository-interface").Funcs(funcMap).Parse(`

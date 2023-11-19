@@ -10,7 +10,7 @@ It provides an interface to implement and some implementations of the interface.
 package book_list
 
 import (
-	"bytes"
+	"crypto/sha256"
 	"encoding/binary"
 )
 
@@ -76,31 +76,54 @@ func (repo *InMemoryAuthorRepository) Delete([]*Author) error {
 	panic("not implemented")
 }
 
-func getAuthorById(authors []*Author) (map[string]*Author, error) {
+func buildAuthorByIdMap(authors []*Author) (map[string]*Author, error) {
 	authorById := make(map[string]*Author)
+
 	for _, def := range authors {
-		key := def.Id
-		authorById[key] = def
+		authorById[def.Id] = def
 	}
+
 	return authorById, nil
 }
 
-func getAuthorByIdName(authors []*Author) (map[string]*Author, error) {
+func buildAuthorByIdNameMap(authors []*Author) (map[string]*Author, error) {
 	authorByIdName := make(map[string]*Author)
+
+	var err error
+	h := sha256.New()
 	for _, def := range authors {
-		buf := bytes.Buffer{}
-		err := binary.Write(buf, binary.LittleEndian, def.id)
+
+		err = binary.Write(h, binary.LittleEndian, "{{")
+		if err != nil {
+			return nil, err
+		}
+		err = binary.Write(h, binary.LittleEndian, def.Id)
+		if err != nil {
+			return nil, err
+		}
+		err = binary.Write(h, binary.LittleEndian, "}}")
 		if err != nil {
 			return nil, err
 		}
 
-		err := binary.Write(buf, binary.LittleEndian, def.name)
+		err = binary.Write(h, binary.LittleEndian, "{{")
 		if err != nil {
 			return nil, err
 		}
-		key := buf.String()
+		err = binary.Write(h, binary.LittleEndian, def.Name)
+		if err != nil {
+			return nil, err
+		}
+		err = binary.Write(h, binary.LittleEndian, "}}")
+		if err != nil {
+			return nil, err
+		}
+
+		key := string(h.Sum(nil))
 		authorByIdName[key] = def
+		h.Reset()
 	}
+
 	return authorByIdName, nil
 }
 
