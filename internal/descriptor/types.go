@@ -210,6 +210,11 @@ type Field struct {
 	ForcePrefixedName bool
 }
 
+// FQFN returns a fully qualified field name of this field.
+func (f *Field) FQFN() string {
+	return strings.Join([]string{f.Message.FQMN(), f.GetName()}, ".")
+}
+
 // FieldPath is a path to a field from a request message.
 type FieldPath []FieldPathComponent
 

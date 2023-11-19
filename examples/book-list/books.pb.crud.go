@@ -32,15 +32,12 @@ type AuthorRepository interface {
 // InMemoryAuthorRepository is an in memory implementation of the AuthorRepository interface.
 type InMemoryAuthorRepository struct {
 	authorById map[string]*Author
-
-	iTable []*Author // Internal table of all Authors
 }
 
 // NewInMemory creates a new InMemoryAuthorRepository to be used.
 func NewInMemoryAuthorRepository() *InMemoryAuthorRepository {
 	return &InMemoryAuthorRepository{
 		authorById: make(map[string]*Author),
-		iTable:     make([]*Author, 0),
 	}
 }
 
@@ -66,7 +63,19 @@ func (repo *InMemoryAuthorRepository) Update([]*Author) ([]*Author, error) {
 // Delete is incomplete and it should be considered unstable
 // Use where clauses
 func (repo *InMemoryAuthorRepository) Delete([]*Author) error {
+	// TODO: Get structs by uid(s)
+	// TODO: Remove found structs
+	// TODO: Return error(s)
 	panic("not implemented")
+}
+
+func getAuthorById(authors []*Author) (map[string]*Author, error) {
+	authorById := make(map[string]*Author)
+	for _, def := range authors {
+		key := def.Id
+		authorById[key] = def
+	}
+	return authorById, nil
 }
 
 type BookRepository interface {

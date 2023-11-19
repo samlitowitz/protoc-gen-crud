@@ -142,7 +142,7 @@ func TestApplyTemplate_RepositoryInMemoryUIDs(t *testing.T) {
 				*fieldTyp = descriptorpb.FieldDescriptorProto_Type(descriptorpb.FieldDescriptorProto_Type_value[typName])
 
 				fieldDesc := &descriptorpb.FieldDescriptorProto{
-					Name:     proto.String("field_" + typ),
+					Name:     proto.String("Field_" + typ),
 					Number:   proto.Int32(int32(i)),
 					Label:    fieldLabel,
 					Type:     fieldTyp,

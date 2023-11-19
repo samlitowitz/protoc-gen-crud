@@ -1,8 +1,11 @@
 package gen_go_crud
 
 import (
+	"bytes"
 	"fmt"
 	"text/template"
+
+	"github.com/samlitowitz/protoc-gen-crud/internal/casing"
 
 	"github.com/iancoleman/strcase"
 
@@ -15,17 +18,120 @@ func init() {
 	strcase.ConfigureAcronym("UID", "uid")
 }
 
+type inMemoryUIDData struct {
+	KeyType string
+	fields  []*descriptor.Field
+}
+
+func (uidData *inMemoryUIDData) KeyGenerationCode(fieldDefVarName string, keyVarName string) string {
+	if len(uidData.fields) < 1 {
+		return ""
+	}
+	if len(uidData.fields) == 1 {
+		def := uidData.fields[0]
+		switch *def.Type {
+		case descriptorpb.FieldDescriptorProto_TYPE_DOUBLE:
+			fallthrough
+		case descriptorpb.FieldDescriptorProto_TYPE_FLOAT:
+			fallthrough
+		case descriptorpb.FieldDescriptorProto_TYPE_BOOL:
+			fallthrough
+		case descriptorpb.FieldDescriptorProto_TYPE_ENUM:
+			fallthrough
+		case descriptorpb.FieldDescriptorProto_TYPE_GROUP:
+			fallthrough
+		case descriptorpb.FieldDescriptorProto_TYPE_MESSAGE:
+			return ""
+
+		case descriptorpb.FieldDescriptorProto_TYPE_UINT32:
+			fallthrough
+		case descriptorpb.FieldDescriptorProto_TYPE_UINT64:
+			fallthrough
+		case descriptorpb.FieldDescriptorProto_TYPE_INT32:
+			fallthrough
+		case descriptorpb.FieldDescriptorProto_TYPE_FIXED32:
+			fallthrough
+		case descriptorpb.FieldDescriptorProto_TYPE_SINT32:
+			fallthrough
+		case descriptorpb.FieldDescriptorProto_TYPE_INT64:
+			fallthrough
+		case descriptorpb.FieldDescriptorProto_TYPE_FIXED64:
+			fallthrough
+		case descriptorpb.FieldDescriptorProto_TYPE_SINT64:
+			fallthrough
+		case descriptorpb.FieldDescriptorProto_TYPE_STRING:
+			return fmt.Sprintf("%s := %s.%s", keyVarName, fieldDefVarName, casing.CamelIdentifier(*def.Name))
+
+		case descriptorpb.FieldDescriptorProto_TYPE_BYTES:
+			return fmt.Sprintf("%s := string(%s.%s)", keyVarName, fieldDefVarName, *def.Name)
+		}
+	}
+	buf := bytes.Buffer{}
+	buf.WriteString("buf := bytes.Buffer{}")
+	for _, def := range uidData.fields {
+		switch *def.Type {
+		case descriptorpb.FieldDescriptorProto_TYPE_DOUBLE:
+			fallthrough
+		case descriptorpb.FieldDescriptorProto_TYPE_FLOAT:
+			fallthrough
+		case descriptorpb.FieldDescriptorProto_TYPE_BOOL:
+			fallthrough
+		case descriptorpb.FieldDescriptorProto_TYPE_ENUM:
+			fallthrough
+		case descriptorpb.FieldDescriptorProto_TYPE_GROUP:
+			fallthrough
+		case descriptorpb.FieldDescriptorProto_TYPE_MESSAGE:
+			continue
+
+		case descriptorpb.FieldDescriptorProto_TYPE_UINT32:
+			fallthrough
+		case descriptorpb.FieldDescriptorProto_TYPE_UINT64:
+			fallthrough
+		case descriptorpb.FieldDescriptorProto_TYPE_INT32:
+			fallthrough
+		case descriptorpb.FieldDescriptorProto_TYPE_FIXED32:
+			fallthrough
+		case descriptorpb.FieldDescriptorProto_TYPE_SINT32:
+			fallthrough
+		case descriptorpb.FieldDescriptorProto_TYPE_INT64:
+			fallthrough
+		case descriptorpb.FieldDescriptorProto_TYPE_FIXED64:
+			fallthrough
+		case descriptorpb.FieldDescriptorProto_TYPE_SINT64:
+			fallthrough
+		case descriptorpb.FieldDescriptorProto_TYPE_STRING:
+			fallthrough
+		case descriptorpb.FieldDescriptorProto_TYPE_BYTES:
+			buf.WriteString(
+				fmt.Sprintf(`
+err := binary.Write(buf, binary.LittleEndian, %s.%s)
+if err != nil {
+	return nil, err
+}
+`,
+					fieldDefVarName,
+					*def.Name,
+				),
+			)
+		}
+	}
+	buf.WriteString(
+		fmt.Sprintf("%s := buf.String()", keyVarName),
+	)
+	return buf.String()
+}
+
 type inMemory struct {
-	uidKeyTypeByUIDNames map[string]string
+	uidKeyTypeByUIDNames map[string]*inMemoryUIDData
 }
 
 // For each uid we'll need a function to take an input of []*{{$.CRUD.GoType $.CRUD.File.GoPkg.Path}} and return a map[{{$typ}}]*{{$.CRUD.GoType $.CRUD.File.GoPkg.Path}}
 
-func (im *inMemory) UIDKeyTypeByUIDNames(crud *descriptor.CRUD) map[string]string {
+func (im *inMemory) UIDDataByUIDNames(crud *descriptor.CRUD) map[string]*inMemoryUIDData {
 	if im.uidKeyTypeByUIDNames != nil {
 		return im.uidKeyTypeByUIDNames
 	}
-	im.uidKeyTypeByUIDNames = make(map[string]string)
+	im.uidKeyTypeByUIDNames = make(map[string]*inMemoryUIDData)
 	for name, fieldDefs := range crud.UniqueIdentifiers {
 		typ, err := im.uidKeyTypeByFieldDefs(fieldDefs)
 		if err != nil {
@@ -36,7 +142,11 @@ func (im *inMemory) UIDKeyTypeByUIDNames(crud *descriptor.CRUD) map[string]strin
 			crud.CamelCaseName(),
 			strcase.ToCamel(name),
 		)
-		im.uidKeyTypeByUIDNames[name] = typ
+
+		im.uidKeyTypeByUIDNames[name] = &inMemoryUIDData{
+			KeyType: typ,
+			fields:  fieldDefs,
+		}
 	}
 	return im.uidKeyTypeByUIDNames
 }
@@ -95,15 +205,15 @@ var (
 
 // InMemory{{.CRUD.Name}}Repository is an in memory implementation of the {{.CRUD.Name}}Repository interface.
 type InMemory{{.CRUD.Name}}Repository struct {
-	{{range $name, $typ := .InMemory.UIDKeyTypeByUIDNames .CRUD}}
-	{{$name}} map[{{$typ}}]*{{$.CRUD.GoType $.CRUD.File.GoPkg.Path}}
+	{{range $name, $data := .InMemory.UIDDataByUIDNames .CRUD}}
+	{{$name}} map[{{$data.KeyType}}]*{{$.CRUD.GoType $.CRUD.File.GoPkg.Path}}
 	{{end}}
 }
 
 // NewInMemory creates a new InMemory{{.CRUD.Name}}Repository to be used.
 func NewInMemory{{.CRUD.Name}}Repository() *InMemory{{.CRUD.Name}}Repository {
 	return &InMemory{{.CRUD.Name}}Repository{
-		{{range $name, $typ := .InMemory.UIDKeyTypeByUIDNames .CRUD}}{{$name}}: make(map[{{$typ}}]*{{$.CRUD.GoType $.CRUD.File.GoPkg.Path}}),{{end}}
+		{{range $name, $data := .InMemory.UIDDataByUIDNames .CRUD}}{{$name}}: make(map[{{$data.KeyType}}]*{{$.CRUD.GoType $.CRUD.File.GoPkg.Path}}),{{end}}
 	}
 }
 
@@ -143,14 +253,14 @@ func (repo *InMemory{{.CRUD.Name}}Repository) Delete([]*{{.CRUD.GoType .CRUD.Fil
 }
 {{end}}
 
-// TODO: private getters for each uid hash
-{{range $name, $typ := .InMemory.UIDKeyTypeByUIDNames .CRUD}}
-func get{{$.CRUD.Name}}By{{camelIdentifier $name}}([]*{{$.CRUD.GoType $.CRUD.File.GoPkg.Path}}) (map[{{$typ}}]*{{$.CRUD.GoType $.CRUD.File.GoPkg.Path}}, error) {
-	{{$name}} := make(map[{{$typ}}]*{{$.CRUD.GoType $.CRUD.File.GoPkg.Path}})
-	for _, def := range {
-
+{{range $name, $data := .InMemory.UIDDataByUIDNames .CRUD}}
+	func get{{camelIdentifier $name}}({{$.CRUD.CamelCaseName}}s []*{{$.CRUD.GoType $.CRUD.File.GoPkg.Path}}) (map[{{.KeyType}}]*{{$.CRUD.GoType $.CRUD.File.GoPkg.Path}}, error) {
+	{{$name}} := make(map[{{.KeyType}}]*{{$.CRUD.GoType $.CRUD.File.GoPkg.Path}})
+	for _, def := range {{$.CRUD.CamelCaseName}}s {
+		{{$data.KeyGenerationCode "def" "key"}}
+		{{$name}}[key] = def
 	}
-	return {{$name}}
+	return {{$name}}, nil
 }
 {{end}}
 `))

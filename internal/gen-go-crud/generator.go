@@ -75,6 +75,13 @@ func (g *generator) generate(file *descriptor.File) (string, error) {
 		imports = append(imports, pkg)
 	}
 
+	for _, msg := range file.Messages {
+		imports = append(imports, g.addMessagePathParamImports(file, msg, pkgSeen)...)
+	}
+	for _, crud := range file.CRUDs {
+		imports = append(imports, g.addCrudPathParamImports(file, crud, pkgSeen)...)
+	}
+
 	params := param{
 		File:    file,
 		Imports: imports,
@@ -97,6 +104,24 @@ func (g *generator) addMessagePathParamImports(file *descriptor.File, m *descrip
 		}
 		pkgSeen[pkg.Path] = true
 		imports = append(imports, pkg)
+	}
+	return imports
+}
+
+func (g *generator) addCrudPathParamImports(file *descriptor.File, crud *descriptor.CRUD, pkgSeen map[string]bool) []descriptor.GoPackage {
+	var imports []descriptor.GoPackage
+	for _, fields := range crud.UniqueIdentifiers {
+		if len(fields) <= 1 {
+			continue
+		}
+		if !pkgSeen["bytes"] {
+			pkgSeen["bytes"] = true
+			imports = append(imports, descriptor.GoPackage{Path: "bytes", Name: "bytes"})
+		}
+		if !pkgSeen["encoding/binary"] {
+			pkgSeen["encoding/binary"] = true
+			imports = append(imports, descriptor.GoPackage{Path: "encoding/binary", Name: "binary"})
+		}
 	}
 	return imports
 }
