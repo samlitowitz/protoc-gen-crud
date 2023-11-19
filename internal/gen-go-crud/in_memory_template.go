@@ -234,15 +234,17 @@ var (
 
 // InMemory{{.CRUD.Name}}Repository is an in memory implementation of the {{.CRUD.Name}}Repository interface.
 type InMemory{{.CRUD.Name}}Repository struct {
-	{{range $name, $data := .InMemory.UIDDataByUIDNames .CRUD}}
+	{{- range $name, $data := .InMemory.UIDDataByUIDNames .CRUD}}
 	{{$name}} map[{{$data.KeyType}}]*{{$.CRUD.GoType $.CRUD.File.GoPkg.Path}}
-	{{end}}
+	{{- end}}
 }
 
 // NewInMemory creates a new InMemory{{.CRUD.Name}}Repository to be used.
 func NewInMemory{{.CRUD.Name}}Repository() *InMemory{{.CRUD.Name}}Repository {
 	return &InMemory{{.CRUD.Name}}Repository{
-		{{range $name, $data := .InMemory.UIDDataByUIDNames .CRUD}}{{$name}}: make(map[{{$data.KeyType}}]*{{$.CRUD.GoType $.CRUD.File.GoPkg.Path}}),{{end}}
+		{{- range $name, $data := .InMemory.UIDDataByUIDNames .CRUD}}
+		{{$name}}: make(map[{{$data.KeyType}}]*{{$.CRUD.GoType $.CRUD.File.GoPkg.Path}}),
+		{{- end}}
 	}
 }
 

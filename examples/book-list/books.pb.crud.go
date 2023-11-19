@@ -36,15 +36,15 @@ type AuthorRepository interface {
 
 // InMemoryAuthorRepository is an in memory implementation of the AuthorRepository interface.
 type InMemoryAuthorRepository struct {
-	authorById map[string]*Author
-
+	authorById     map[string]*Author
 	authorByIdName map[string]*Author
 }
 
 // NewInMemory creates a new InMemoryAuthorRepository to be used.
 func NewInMemoryAuthorRepository() *InMemoryAuthorRepository {
 	return &InMemoryAuthorRepository{
-		authorById: make(map[string]*Author), authorByIdName: make(map[string]*Author),
+		authorById:     make(map[string]*Author),
+		authorByIdName: make(map[string]*Author),
 	}
 }
 
