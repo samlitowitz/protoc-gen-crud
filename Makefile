@@ -1,13 +1,13 @@
 VERSION=`git describe --tags|sed -e "s/\-/\./g"`
 BUILD=`date +%FT%T%z`
 COMMIT=`git rev-parse HEAD`
-TARGETDIR=${GOPATH}/bin/
+TARGETDIR=${GOPATH}/bin
 
 LDFLAGS_DEB=-ldflags "-X main.Date=${BUILD} -X main.Commit=${COMMIT}"
 LDFLAGS_REL=-ldflags "-s -w -X main.Version=${VERSION} -X main.Date=${BUILD} -X main.Commit=${COMMIT}"
 
 clean:
-	rm ${TARGETDIR}/protoc-gen-go-crud
+	rm -f ${TARGETDIR}/protoc-gen-go-crud
 
 release:
 	go build ${LDFLAGS_REL} -o ${TARGETDIR}/protoc-gen-go-crud ./cmd/protoc-gen-go-crud
