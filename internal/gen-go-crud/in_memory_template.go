@@ -302,8 +302,43 @@ func (repo *InMemory{{.CRUD.Name}}Repository) Read() ([]*{{.CRUD.GoType .CRUD.Fi
 
 {{if .CRUD.Update}}
 // Update modifies existing {{.CRUD.Name}}s based on the defined unique identifiers.
-func (repo *InMemory{{.CRUD.Name}}Repository) Update([]*{{.CRUD.GoType .CRUD.File.GoPkg.Path}}) ([]*{{.CRUD.GoType .CRUD.File.GoPkg.Path}}, error) {
-	panic("not implemented")
+func (repo *InMemory{{.CRUD.Name}}Repository) Update(toUpdate []*{{.CRUD.GoType .CRUD.File.GoPkg.Path}}) ([]*{{.CRUD.GoType .CRUD.File.GoPkg.Path}}, error) {
+	indicesToUpdate := make(map[int]*{{.CRUD.GoType .CRUD.File.GoPkg.Path}})
+	{{range $name, $data := .InMemory.UIDDataByUIDNames .CRUD}}
+	{{$data.IndexByKeyMapName}}, {{$data.KeyByIndexMapName}}, {{$name}}, err := {{$data.BuildMapFnName}}(toUpdate)
+	if err != nil {
+		return nil, err
+	}
+	for key, val := range {{$name}} {
+		if _, ok := {{$data.IndexByKeyMapName}}[key]; !ok {
+			// internal error, should never happen
+			continue
+		}
+		if _, ok := {{$data.KeyByIndexMapName}}[{{$data.IndexByKeyMapName}}[key]]; !ok {
+			// internal error, should never happen
+			continue
+
+		}
+		if _, ok := repo.{{$name}}[key]; ok {
+			// add error about duplicate
+			delete(indicesToUpdate, {{$data.IndexByKeyMapName}}[key])
+			continue
+		}
+		if _, ok := indicesToUpdate[{{$data.IndexByKeyMapName}}[key]]; !ok {
+			// mark index as to be created
+			indicesToUpdate[{{$data.IndexByKeyMapName}}[key]] = val
+		}
+	}
+	{{end}}
+
+	updated := make([]*{{.CRUD.GoType .CRUD.File.GoPkg.Path}}, 0, len(indicesToUpdate))
+	for i, val := range indicesToUpdate {
+		{{- range $name, $data := .InMemory.UIDDataByUIDNames .CRUD}}
+		repo.{{$name}}[{{$data.KeyByIndexMapName}}[i]] = val
+		{{- end}}
+		updated = append(updated, val)
+	}
+	return updated, nil
 }
 {{end}}
 

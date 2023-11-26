@@ -120,8 +120,66 @@ func (repo *InMemoryAuthorRepository) Read() ([]*Author, error) {
 }
 
 // Update modifies existing Authors based on the defined unique identifiers.
-func (repo *InMemoryAuthorRepository) Update([]*Author) ([]*Author, error) {
-	panic("not implemented")
+func (repo *InMemoryAuthorRepository) Update(toUpdate []*Author) ([]*Author, error) {
+	indicesToUpdate := make(map[int]*Author)
+
+	indexById, idByIndex, authorById, err := buildIdMap(toUpdate)
+	if err != nil {
+		return nil, err
+	}
+	for key, val := range authorById {
+		if _, ok := indexById[key]; !ok {
+			// internal error, should never happen
+			continue
+		}
+		if _, ok := idByIndex[indexById[key]]; !ok {
+			// internal error, should never happen
+			continue
+
+		}
+		if _, ok := repo.authorById[key]; ok {
+			// add error about duplicate
+			delete(indicesToUpdate, indexById[key])
+			continue
+		}
+		if _, ok := indicesToUpdate[indexById[key]]; !ok {
+			// mark index as to be created
+			indicesToUpdate[indexById[key]] = val
+		}
+	}
+
+	indexByIdName, idNameByIndex, authorByIdName, err := buildIdNameMap(toUpdate)
+	if err != nil {
+		return nil, err
+	}
+	for key, val := range authorByIdName {
+		if _, ok := indexByIdName[key]; !ok {
+			// internal error, should never happen
+			continue
+		}
+		if _, ok := idNameByIndex[indexByIdName[key]]; !ok {
+			// internal error, should never happen
+			continue
+
+		}
+		if _, ok := repo.authorByIdName[key]; ok {
+			// add error about duplicate
+			delete(indicesToUpdate, indexByIdName[key])
+			continue
+		}
+		if _, ok := indicesToUpdate[indexByIdName[key]]; !ok {
+			// mark index as to be created
+			indicesToUpdate[indexByIdName[key]] = val
+		}
+	}
+
+	updated := make([]*Author, 0, len(indicesToUpdate))
+	for i, val := range indicesToUpdate {
+		repo.authorById[idByIndex[i]] = val
+		repo.authorByIdName[idNameByIndex[i]] = val
+		updated = append(updated, val)
+	}
+	return updated, nil
 }
 
 // Delete deletes Authors based on the defined unique identifiers
