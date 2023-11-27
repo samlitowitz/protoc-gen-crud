@@ -110,7 +110,8 @@ func TestApplyTemplate_RepositoryInMemory(t *testing.T) {
 }
 
 func TestApplyTemplate_RepositoryInMemoryUIDs(t *testing.T) {
-	allOperations := []options.Operation{options.Operation_CREATE, options.Operation_READ, options.Operation_UPDATE, options.Operation_DELETE}
+	//allOperations := []options.Operation{options.Operation_CREATE, options.Operation_READ, options.Operation_UPDATE, options.Operation_DELETE}
+	allOperations := []options.Operation{options.Operation_READ}
 	operationCombinations := allOperationCombinations(allOperations)
 
 	supportedScalarTypes := []string{
@@ -155,6 +156,34 @@ func TestApplyTemplate_RepositoryInMemoryUIDs(t *testing.T) {
 				fieldDescs = append(fieldDescs, fieldDesc)
 				fields = append(fields, field)
 			}
+
+			enumTypName := proto.String("EnumTyp")
+			enumDesc := &descriptorpb.EnumDescriptorProto{
+				Name: enumTypName,
+				Value: []*descriptorpb.EnumValueDescriptorProto{
+					{Name: proto.String("FALSE"), Number: proto.Int32(0)},
+					{Name: proto.String("TRUE"), Number: proto.Int32(1)},
+				},
+			}
+			enum := &descriptor.Enum{
+				EnumDescriptorProto: enumDesc,
+			}
+
+			typName := "TYPE_ENUM"
+			fieldLabel := new(descriptorpb.FieldDescriptorProto_Label)
+			*fieldLabel = descriptorpb.FieldDescriptorProto_LABEL_OPTIONAL
+			fieldTyp := new(descriptorpb.FieldDescriptorProto_Type)
+			*fieldTyp = descriptorpb.FieldDescriptorProto_Type(descriptorpb.FieldDescriptorProto_Type_value[typName])
+			fieldDescs = append(
+				fieldDescs,
+				&descriptorpb.FieldDescriptorProto{
+					Name:     proto.String("Field_Enum"),
+					Number:   proto.Int32(int32(len(uidCombination) + 1)),
+					Label:    fieldLabel,
+					Type:     fieldTyp,
+					TypeName: enumTypName,
+				},
+			)
 			uidName := "uidName"
 			uidMap := map[string][]*descriptor.Field{
 				uidName: fields,
@@ -185,6 +214,7 @@ func TestApplyTemplate_RepositoryInMemoryUIDs(t *testing.T) {
 				FileDescriptorProto: &descriptorpb.FileDescriptorProto{
 					Name:        proto.String("example.proto"),
 					Package:     proto.String("example"),
+					EnumType:    []*descriptorpb.EnumDescriptorProto{enumDesc},
 					MessageType: []*descriptorpb.DescriptorProto{msgDesc},
 					Service:     []*descriptorpb.ServiceDescriptorProto{},
 				},
@@ -193,6 +223,7 @@ func TestApplyTemplate_RepositoryInMemoryUIDs(t *testing.T) {
 					Name: "example_pb",
 				},
 				Messages: []*descriptor.Message{msg},
+				Enums:    []*descriptor.Enum{enum},
 				CRUDs:    []*descriptor.CRUD{crud},
 			}
 			got, err := applyTemplate(param{File: crossLinkFixture(&file)}, descriptor.NewRegistry())

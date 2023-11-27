@@ -88,7 +88,7 @@ type {{.CRUD.Name}}Repository interface {
 	// Read returns a set of {{.CRUD.Name}}s matching the provided criteria
 	// Read is incomplete and it should be considered unstable
 	// Use where clauses
-	Read() ([]*{{.CRUD.GoType .CRUD.File.GoPkg.Path}}, error)
+	Read(expr expressions.Expression) ([]*{{.CRUD.GoType .CRUD.File.GoPkg.Path}}, error)
 	{{end}}
 	{{if .CRUD.Update}}
 	// Update modifies existing {{.CRUD.Name}}s based on the defined unique identifiers.

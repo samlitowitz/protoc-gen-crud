@@ -25,7 +25,15 @@ message Author {
 }
 
 message Book {
-  string id = 1;
+  option (protoc_gen_crud.options.crud_message_options) = {
+    operations: [CREATE, READ, UPDATE, DELETE]
+    implementations: [IN_MEMORY]
+  };
+  string id = 1 [
+    (protoc_gen_crud.options.crud_field_options) = {
+      uids: ["id", "id-name"]
+    }
+  ];
   string name = 2;
   repeated Author authors = 3;
 }

@@ -11,7 +11,9 @@ package book_list
 
 import (
 	"crypto/sha256"
-	"encoding/binary"
+	"fmt"
+
+	"github.com/samlitowitz/protoc-gen-crud/expressions"
 )
 
 type AuthorRepository interface {
@@ -22,7 +24,7 @@ type AuthorRepository interface {
 	// Read returns a set of Authors matching the provided criteria
 	// Read is incomplete and it should be considered unstable
 	// Use where clauses
-	Read() ([]*Author, error)
+	Read(expr expressions.Expression) ([]*Author, error)
 
 	// Update modifies existing Authors based on the defined unique identifiers.
 	// Successfully modified Authors are returned along with any errors that may have occurred.
@@ -34,17 +36,32 @@ type AuthorRepository interface {
 	Delete([]*Author) error
 }
 
+const (
+	Author_Authored_Field expressions.FieldID = "404e6e95076664f81c8fb7bb08be4935ea6b2137ae404f39e4b4d388dd4fe375"
+	Author_Id_Field       expressions.FieldID = "177c5c70d1c39201a2125c2189fa52bb7fefd3d67eb010313558da667dc72401"
+	Author_Name_Field     expressions.FieldID = "983ecff588d50a36ad6fe6892da809214cb3e2548f361e2fdc7fb8aeffea1336"
+)
+
+var validAuthorFields = map[expressions.FieldID]struct{}{
+	Author_Authored_Field: struct{}{},
+	Author_Id_Field:       struct{}{},
+	Author_Name_Field:     struct{}{},
+}
+
 // InMemoryAuthorRepository is an in memory implementation of the AuthorRepository interface.
 type InMemoryAuthorRepository struct {
-	authorById     map[string]*Author
-	authorByIdName map[string]*Author
+	authorById     map[string]uint
+	authorByIdName map[string]uint
+	iTable         map[uint]*Author
+	next           uint
 }
 
 // NewInMemory creates a new InMemoryAuthorRepository to be used.
 func NewInMemoryAuthorRepository() *InMemoryAuthorRepository {
 	return &InMemoryAuthorRepository{
-		authorById:     make(map[string]*Author),
-		authorByIdName: make(map[string]*Author),
+		authorById:     make(map[string]uint),
+		authorByIdName: make(map[string]uint),
+		iTable:         make(map[uint]*Author),
 	}
 }
 
@@ -53,7 +70,7 @@ func NewInMemoryAuthorRepository() *InMemoryAuthorRepository {
 func (repo *InMemoryAuthorRepository) Create(toCreate []*Author) ([]*Author, error) {
 	indicesToCreate := make(map[int]*Author)
 
-	indexById, idByIndex, authorById, err := buildIdMap(toCreate)
+	indexById, idByIndex, authorById, err := buildAuthorIdMap(toCreate)
 	if err != nil {
 		return nil, err
 	}
@@ -78,7 +95,7 @@ func (repo *InMemoryAuthorRepository) Create(toCreate []*Author) ([]*Author, err
 		}
 	}
 
-	indexByIdName, idNameByIndex, authorByIdName, err := buildIdNameMap(toCreate)
+	indexByIdName, idNameByIndex, authorByIdName, err := buildAuthorIdNameMap(toCreate)
 	if err != nil {
 		return nil, err
 	}
@@ -105,9 +122,11 @@ func (repo *InMemoryAuthorRepository) Create(toCreate []*Author) ([]*Author, err
 
 	created := make([]*Author, 0, len(indicesToCreate))
 	for i, val := range indicesToCreate {
-		repo.authorById[idByIndex[i]] = val
-		repo.authorByIdName[idNameByIndex[i]] = val
+		repo.iTable[repo.next] = val
+		repo.authorById[idByIndex[i]] = repo.next
+		repo.authorByIdName[idNameByIndex[i]] = repo.next
 		created = append(created, val)
+		repo.next++
 	}
 	return created, nil
 }
@@ -115,19 +134,118 @@ func (repo *InMemoryAuthorRepository) Create(toCreate []*Author) ([]*Author, err
 // Read returns a set of Authors matching the provided criteria
 // Read is incomplete and it should be considered unstable
 // Use where clauses
-func (repo *InMemoryAuthorRepository) Read() ([]*Author, error) {
-	panic("not implemented")
+func (repo *InMemoryAuthorRepository) Read(expr expressions.Expression) ([]*Author, error) {
+	found := make([]*Author, 0, len(repo.iTable))
+
+	for _, author := range repo.iTable {
+		include, err := testExprOnAuthor(author, expr)
+		if err != nil {
+			return nil, err
+		}
+		if !include {
+			continue
+		}
+		found = append(found, author)
+	}
+	return found, nil
+}
+
+func testExprOnAuthor(author *Author, expr expressions.Expression) (bool, error) {
+	if author == nil {
+		return true, nil
+	}
+	switch expr := expr.(type) {
+	case expressions.And:
+		left, err := testExprOnAuthor(author, expr.Left())
+		if err != nil {
+			return true, err
+		}
+		right, err := testExprOnAuthor(author, expr.Right())
+		if err != nil {
+			return true, err
+		}
+		return left && right, nil
+
+	case expressions.Or:
+		left, err := testExprOnAuthor(author, expr.Left())
+		if err != nil {
+			return true, err
+		}
+		right, err := testExprOnAuthor(author, expr.Right())
+		if err != nil {
+			return true, err
+		}
+		return left || right, nil
+	case expressions.Not:
+		operand, err := testExprOnAuthor(author, expr.Operand())
+		if err != nil {
+			return true, err
+		}
+		return !operand, nil
+
+	case expressions.Equal:
+		result, err := testEqualExprOnAuthor(author, expr)
+		if err != nil {
+			return true, err
+		}
+		return result, nil
+
+	case expressions.Identifier:
+		return true, fmt.Errorf("identifiers and scalar values are only supported as operands of the equal expressions")
+	case expressions.Scalar:
+		return true, fmt.Errorf("identifiers and scalar values are only supported as operands of the equal expressions")
+	default:
+		return true, fmt.Errorf("unknown expression")
+	}
+}
+
+func testEqualExprOnAuthor(author *Author, expr expressions.Equal) (bool, error) {
+	var ident *expressions.Identifier
+	var scalar *expressions.Scalar
+
+	left := expr.Left()
+	switch left := left.(type) {
+	case expressions.Identifier:
+		if _, ok := validAuthorFields[left.ID()]; !ok {
+			return true, fmt.Errorf("invalid field id: %s", left.ID())
+		}
+		ident = &left
+	case expressions.Scalar:
+		scalar = &left
+	default:
+		return true, fmt.Errorf("left operand must an identifier or a scalar value")
+	}
+
+	right := expr.Right()
+	switch right := right.(type) {
+	case expressions.Identifier:
+		if ident != nil {
+			return true, fmt.Errorf("left operand is an identifier, right operand must be a scalar value")
+		}
+		ident = &right
+	case expressions.Scalar:
+		if scalar != nil {
+			return true, fmt.Errorf("left operand is an scalar value, right operand must be an identifier")
+		}
+		scalar = &right
+	default:
+		return true, fmt.Errorf("right operand must an scalar value or an identifier")
+	}
+	// Author_Authored_Field
+	// Author_Id_Field
+	// Author_Name_Field
+
 }
 
 // Update modifies existing Authors based on the defined unique identifiers.
 func (repo *InMemoryAuthorRepository) Update(toUpdate []*Author) ([]*Author, error) {
-	indicesToUpdate := make(map[int]*Author)
+	indicesToUpdate := make(map[int]uint)
 
-	indexById, idByIndex, authorById, err := buildIdMap(toUpdate)
+	indexById, idByIndex, authorById, err := buildAuthorIdMap(toUpdate)
 	if err != nil {
 		return nil, err
 	}
-	for key, val := range authorById {
+	for key, _ := range authorById {
 		if _, ok := indexById[key]; !ok {
 			// internal error, should never happen
 			continue
@@ -137,22 +255,23 @@ func (repo *InMemoryAuthorRepository) Update(toUpdate []*Author) ([]*Author, err
 			continue
 
 		}
-		if _, ok := repo.authorById[key]; ok {
-			// add error about duplicate
+		if _, ok := repo.authorById[key]; !ok {
+			// add error about missing
 			delete(indicesToUpdate, indexById[key])
 			continue
 		}
-		if _, ok := indicesToUpdate[indexById[key]]; !ok {
-			// mark index as to be created
-			indicesToUpdate[indexById[key]] = val
+		if _, ok := indicesToUpdate[indexById[key]]; ok {
+			continue
 		}
+		// mark index as to be created
+		indicesToUpdate[indexById[key]] = repo.authorById[idByIndex[indexById[key]]]
 	}
 
-	indexByIdName, idNameByIndex, authorByIdName, err := buildIdNameMap(toUpdate)
+	indexByIdName, idNameByIndex, authorByIdName, err := buildAuthorIdNameMap(toUpdate)
 	if err != nil {
 		return nil, err
 	}
-	for key, val := range authorByIdName {
+	for key, _ := range authorByIdName {
 		if _, ok := indexByIdName[key]; !ok {
 			// internal error, should never happen
 			continue
@@ -162,22 +281,22 @@ func (repo *InMemoryAuthorRepository) Update(toUpdate []*Author) ([]*Author, err
 			continue
 
 		}
-		if _, ok := repo.authorByIdName[key]; ok {
-			// add error about duplicate
+		if _, ok := repo.authorByIdName[key]; !ok {
+			// add error about missing
 			delete(indicesToUpdate, indexByIdName[key])
 			continue
 		}
-		if _, ok := indicesToUpdate[indexByIdName[key]]; !ok {
-			// mark index as to be created
-			indicesToUpdate[indexByIdName[key]] = val
+		if _, ok := indicesToUpdate[indexByIdName[key]]; ok {
+			continue
 		}
+		// mark index as to be created
+		indicesToUpdate[indexByIdName[key]] = repo.authorByIdName[idNameByIndex[indexByIdName[key]]]
 	}
 
 	updated := make([]*Author, 0, len(indicesToUpdate))
-	for i, val := range indicesToUpdate {
-		repo.authorById[idByIndex[i]] = val
-		repo.authorByIdName[idNameByIndex[i]] = val
-		updated = append(updated, val)
+	for i, j := range indicesToUpdate {
+		repo.iTable[j] = toUpdate[i]
+		updated = append(updated, toUpdate[i])
 	}
 	return updated, nil
 }
@@ -186,7 +305,7 @@ func (repo *InMemoryAuthorRepository) Update(toUpdate []*Author) ([]*Author, err
 func (repo *InMemoryAuthorRepository) Delete(toDelete []*Author) error {
 	indicesToDelete := make(map[int]struct{})
 
-	indexById, idByIndex, authorById, err := buildIdMap(toDelete)
+	indexById, idByIndex, authorById, err := buildAuthorIdMap(toDelete)
 	if err != nil {
 		return err
 	}
@@ -200,18 +319,19 @@ func (repo *InMemoryAuthorRepository) Delete(toDelete []*Author) error {
 			continue
 
 		}
-		if _, ok := repo.authorById[key]; ok {
-			// add error about duplicate
+		if _, ok := repo.authorById[key]; !ok {
+			// internal error, this occurs when an item is not added to every map
+			// this should only be caused by implementation failure of the create, update, or delete functionality
 			delete(indicesToDelete, indexById[key])
 			continue
 		}
 		if _, ok := indicesToDelete[indexById[key]]; !ok {
-			// mark index as to be created
+			// mark index as to be deleted
 			indicesToDelete[indexById[key]] = struct{}{}
 		}
 	}
 
-	indexByIdName, idNameByIndex, authorByIdName, err := buildIdNameMap(toDelete)
+	indexByIdName, idNameByIndex, authorByIdName, err := buildAuthorIdNameMap(toDelete)
 	if err != nil {
 		return err
 	}
@@ -225,25 +345,32 @@ func (repo *InMemoryAuthorRepository) Delete(toDelete []*Author) error {
 			continue
 
 		}
-		if _, ok := repo.authorByIdName[key]; ok {
-			// add error about duplicate
+		if _, ok := repo.authorByIdName[key]; !ok {
+			// internal error, this occurs when an item is not added to every map
+			// this should only be caused by implementation failure of the create, update, or delete functionality
 			delete(indicesToDelete, indexByIdName[key])
 			continue
 		}
 		if _, ok := indicesToDelete[indexByIdName[key]]; !ok {
-			// mark index as to be created
+			// mark index as to be deleted
 			indicesToDelete[indexByIdName[key]] = struct{}{}
 		}
 	}
 
 	for i, _ := range indicesToDelete {
+		// remove iTable entry indexed by authorById
+		delete(repo.iTable, repo.authorById[idByIndex[i]])
+		// remove {hash, iTable index} from authorById
 		delete(repo.authorById, idByIndex[i])
+		// remove iTable entry indexed by authorByIdName
+		delete(repo.iTable, repo.authorByIdName[idNameByIndex[i]])
+		// remove {hash, iTable index} from authorByIdName
 		delete(repo.authorByIdName, idNameByIndex[i])
 	}
 	return nil
 }
 
-func buildIdMap(authors []*Author) (
+func buildAuthorIdMap(authors []*Author) (
 	map[string]int,
 	map[int]string,
 	map[string]*Author,
@@ -262,7 +389,7 @@ func buildIdMap(authors []*Author) (
 	return indexById, idByIndex, authorById, nil
 }
 
-func buildIdNameMap(authors []*Author) (
+func buildAuthorIdNameMap(authors []*Author) (
 	map[string]int,
 	map[int]string,
 	map[string]*Author,
@@ -275,27 +402,11 @@ func buildIdNameMap(authors []*Author) (
 	var err error
 	h := sha256.New()
 	for i, def := range authors {
-		err = binary.Write(h, binary.LittleEndian, "{{")
+		_, err = h.Write([]byte("{{" + def.Id + "}}"))
 		if err != nil {
 			return nil, nil, nil, err
 		}
-		err = binary.Write(h, binary.LittleEndian, def.Id)
-		if err != nil {
-			return nil, nil, nil, err
-		}
-		err = binary.Write(h, binary.LittleEndian, "}}")
-		if err != nil {
-			return nil, nil, nil, err
-		}
-		err = binary.Write(h, binary.LittleEndian, "{{")
-		if err != nil {
-			return nil, nil, nil, err
-		}
-		err = binary.Write(h, binary.LittleEndian, def.Name)
-		if err != nil {
-			return nil, nil, nil, err
-		}
-		err = binary.Write(h, binary.LittleEndian, "}}")
+		_, err = h.Write([]byte("{{" + def.Name + "}}"))
 		if err != nil {
 			return nil, nil, nil, err
 		}
@@ -311,4 +422,393 @@ func buildIdNameMap(authors []*Author) (
 }
 
 type BookRepository interface {
+	// Create creates new Books.
+	// Successfully created Books are returned along with any errors that may have occurred.
+	Create([]*Book) ([]*Book, error)
+
+	// Read returns a set of Books matching the provided criteria
+	// Read is incomplete and it should be considered unstable
+	// Use where clauses
+	Read(expr expressions.Expression) ([]*Book, error)
+
+	// Update modifies existing Books based on the defined unique identifiers.
+	// Successfully modified Books are returned along with any errors that may have occurred.
+	Update([]*Book) ([]*Book, error)
+
+	// Delete deletes Books based on the defined unique identifiers
+	// Delete is incomplete and it should be considered unstable
+	// Use where clauses
+	Delete([]*Book) error
+}
+
+const (
+	Book_Authors_Field expressions.FieldID = "3b2c2e0ee9209dc34dd45e9ce155c38f3b8af7ebd55eab7242caa6a218b729d6"
+	Book_Id_Field      expressions.FieldID = "4d991f00ca11b8314b533935d8d30398b932d6c2791c948879dd9442ca2a1dc9"
+	Book_Name_Field    expressions.FieldID = "f3d8da63a14b653d7db7d1dc752f33338e8186be0d770515c864141ba027d35e"
+)
+
+var validBookFields = map[expressions.FieldID]struct{}{
+	Book_Authors_Field: struct{}{},
+	Book_Id_Field:      struct{}{},
+	Book_Name_Field:    struct{}{},
+}
+
+// InMemoryBookRepository is an in memory implementation of the BookRepository interface.
+type InMemoryBookRepository struct {
+	bookById     map[string]uint
+	bookByIdName map[string]uint
+	iTable       map[uint]*Book
+	next         uint
+}
+
+// NewInMemory creates a new InMemoryBookRepository to be used.
+func NewInMemoryBookRepository() *InMemoryBookRepository {
+	return &InMemoryBookRepository{
+		bookById:     make(map[string]uint),
+		bookByIdName: make(map[string]uint),
+		iTable:       make(map[uint]*Book),
+	}
+}
+
+// Create creates new Books.
+// Successfully created Books are returned along with any errors that may have occurred.
+func (repo *InMemoryBookRepository) Create(toCreate []*Book) ([]*Book, error) {
+	indicesToCreate := make(map[int]*Book)
+
+	indexById, idByIndex, bookById, err := buildBookIdMap(toCreate)
+	if err != nil {
+		return nil, err
+	}
+	for key, val := range bookById {
+		if _, ok := indexById[key]; !ok {
+			// internal error, should never happen
+			continue
+		}
+		if _, ok := idByIndex[indexById[key]]; !ok {
+			// internal error, should never happen
+			continue
+
+		}
+		if _, ok := repo.bookById[key]; ok {
+			// add error about duplicate
+			delete(indicesToCreate, indexById[key])
+			continue
+		}
+		if _, ok := indicesToCreate[indexById[key]]; !ok {
+			// mark index as to be created
+			indicesToCreate[indexById[key]] = val
+		}
+	}
+
+	indexByIdName, idNameByIndex, bookByIdName, err := buildBookIdNameMap(toCreate)
+	if err != nil {
+		return nil, err
+	}
+	for key, val := range bookByIdName {
+		if _, ok := indexByIdName[key]; !ok {
+			// internal error, should never happen
+			continue
+		}
+		if _, ok := idNameByIndex[indexByIdName[key]]; !ok {
+			// internal error, should never happen
+			continue
+
+		}
+		if _, ok := repo.bookByIdName[key]; ok {
+			// add error about duplicate
+			delete(indicesToCreate, indexByIdName[key])
+			continue
+		}
+		if _, ok := indicesToCreate[indexByIdName[key]]; !ok {
+			// mark index as to be created
+			indicesToCreate[indexByIdName[key]] = val
+		}
+	}
+
+	created := make([]*Book, 0, len(indicesToCreate))
+	for i, val := range indicesToCreate {
+		repo.iTable[repo.next] = val
+		repo.bookById[idByIndex[i]] = repo.next
+		repo.bookByIdName[idNameByIndex[i]] = repo.next
+		created = append(created, val)
+		repo.next++
+	}
+	return created, nil
+}
+
+// Read returns a set of Books matching the provided criteria
+// Read is incomplete and it should be considered unstable
+// Use where clauses
+func (repo *InMemoryBookRepository) Read(expr expressions.Expression) ([]*Book, error) {
+	found := make([]*Book, 0, len(repo.iTable))
+
+	for _, book := range repo.iTable {
+		include, err := testExprOnBook(book, expr)
+		if err != nil {
+			return nil, err
+		}
+		if !include {
+			continue
+		}
+		found = append(found, book)
+	}
+	return found, nil
+}
+
+func testExprOnBook(book *Book, expr expressions.Expression) (bool, error) {
+	if book == nil {
+		return true, nil
+	}
+	switch expr := expr.(type) {
+	case expressions.And:
+		left, err := testExprOnBook(book, expr.Left())
+		if err != nil {
+			return true, err
+		}
+		right, err := testExprOnBook(book, expr.Right())
+		if err != nil {
+			return true, err
+		}
+		return left && right, nil
+
+	case expressions.Or:
+		left, err := testExprOnBook(book, expr.Left())
+		if err != nil {
+			return true, err
+		}
+		right, err := testExprOnBook(book, expr.Right())
+		if err != nil {
+			return true, err
+		}
+		return left || right, nil
+	case expressions.Not:
+		operand, err := testExprOnBook(book, expr.Operand())
+		if err != nil {
+			return true, err
+		}
+		return !operand, nil
+
+	case expressions.Equal:
+		result, err := testEqualExprOnBook(book, expr)
+		if err != nil {
+			return true, err
+		}
+		return result, nil
+
+	case expressions.Identifier:
+		return true, fmt.Errorf("identifiers and scalar values are only supported as operands of the equal expressions")
+	case expressions.Scalar:
+		return true, fmt.Errorf("identifiers and scalar values are only supported as operands of the equal expressions")
+	default:
+		return true, fmt.Errorf("unknown expression")
+	}
+}
+
+func testEqualExprOnBook(book *Book, expr expressions.Equal) (bool, error) {
+	var ident *expressions.Identifier
+	var scalar *expressions.Scalar
+
+	left := expr.Left()
+	switch left := left.(type) {
+	case expressions.Identifier:
+		if _, ok := validBookFields[left.ID()]; !ok {
+			return true, fmt.Errorf("invalid field id: %s", left.ID())
+		}
+		ident = &left
+	case expressions.Scalar:
+		scalar = &left
+	default:
+		return true, fmt.Errorf("left operand must an identifier or a scalar value")
+	}
+
+	right := expr.Right()
+	switch right := right.(type) {
+	case expressions.Identifier:
+		if ident != nil {
+			return true, fmt.Errorf("left operand is an identifier, right operand must be a scalar value")
+		}
+		ident = &right
+	case expressions.Scalar:
+		if scalar != nil {
+			return true, fmt.Errorf("left operand is an scalar value, right operand must be an identifier")
+		}
+		scalar = &right
+	default:
+		return true, fmt.Errorf("right operand must an scalar value or an identifier")
+	}
+	// Book_Authors_Field
+	// Book_Id_Field
+	// Book_Name_Field
+
+}
+
+// Update modifies existing Books based on the defined unique identifiers.
+func (repo *InMemoryBookRepository) Update(toUpdate []*Book) ([]*Book, error) {
+	indicesToUpdate := make(map[int]uint)
+
+	indexById, idByIndex, bookById, err := buildBookIdMap(toUpdate)
+	if err != nil {
+		return nil, err
+	}
+	for key, _ := range bookById {
+		if _, ok := indexById[key]; !ok {
+			// internal error, should never happen
+			continue
+		}
+		if _, ok := idByIndex[indexById[key]]; !ok {
+			// internal error, should never happen
+			continue
+
+		}
+		if _, ok := repo.bookById[key]; !ok {
+			// add error about missing
+			delete(indicesToUpdate, indexById[key])
+			continue
+		}
+		if _, ok := indicesToUpdate[indexById[key]]; ok {
+			continue
+		}
+		// mark index as to be created
+		indicesToUpdate[indexById[key]] = repo.bookById[idByIndex[indexById[key]]]
+	}
+
+	indexByIdName, idNameByIndex, bookByIdName, err := buildBookIdNameMap(toUpdate)
+	if err != nil {
+		return nil, err
+	}
+	for key, _ := range bookByIdName {
+		if _, ok := indexByIdName[key]; !ok {
+			// internal error, should never happen
+			continue
+		}
+		if _, ok := idNameByIndex[indexByIdName[key]]; !ok {
+			// internal error, should never happen
+			continue
+
+		}
+		if _, ok := repo.bookByIdName[key]; !ok {
+			// add error about missing
+			delete(indicesToUpdate, indexByIdName[key])
+			continue
+		}
+		if _, ok := indicesToUpdate[indexByIdName[key]]; ok {
+			continue
+		}
+		// mark index as to be created
+		indicesToUpdate[indexByIdName[key]] = repo.bookByIdName[idNameByIndex[indexByIdName[key]]]
+	}
+
+	updated := make([]*Book, 0, len(indicesToUpdate))
+	for i, j := range indicesToUpdate {
+		repo.iTable[j] = toUpdate[i]
+		updated = append(updated, toUpdate[i])
+	}
+	return updated, nil
+}
+
+// Delete deletes Books based on the defined unique identifiers
+func (repo *InMemoryBookRepository) Delete(toDelete []*Book) error {
+	indicesToDelete := make(map[int]struct{})
+
+	indexById, idByIndex, bookById, err := buildBookIdMap(toDelete)
+	if err != nil {
+		return err
+	}
+	for key, _ := range bookById {
+		if _, ok := indexById[key]; !ok {
+			// internal error, should never happen
+			continue
+		}
+		if _, ok := idByIndex[indexById[key]]; !ok {
+			// internal error, should never happen
+			continue
+
+		}
+		if _, ok := repo.bookById[key]; !ok {
+			// internal error, this occurs when an item is not added to every map
+			// this should only be caused by implementation failure of the create, update, or delete functionality
+			delete(indicesToDelete, indexById[key])
+			continue
+		}
+		if _, ok := indicesToDelete[indexById[key]]; !ok {
+			// mark index as to be deleted
+			indicesToDelete[indexById[key]] = struct{}{}
+		}
+	}
+
+	indexByIdName, idNameByIndex, bookByIdName, err := buildBookIdNameMap(toDelete)
+	if err != nil {
+		return err
+	}
+	for key, _ := range bookByIdName {
+		if _, ok := indexByIdName[key]; !ok {
+			// internal error, should never happen
+			continue
+		}
+		if _, ok := idNameByIndex[indexByIdName[key]]; !ok {
+			// internal error, should never happen
+			continue
+
+		}
+		if _, ok := repo.bookByIdName[key]; !ok {
+			// internal error, this occurs when an item is not added to every map
+			// this should only be caused by implementation failure of the create, update, or delete functionality
+			delete(indicesToDelete, indexByIdName[key])
+			continue
+		}
+		if _, ok := indicesToDelete[indexByIdName[key]]; !ok {
+			// mark index as to be deleted
+			indicesToDelete[indexByIdName[key]] = struct{}{}
+		}
+	}
+
+	for i, _ := range indicesToDelete {
+		// remove iTable entry indexed by bookById
+		delete(repo.iTable, repo.bookById[idByIndex[i]])
+		// remove {hash, iTable index} from bookById
+		delete(repo.bookById, idByIndex[i])
+		// remove iTable entry indexed by bookByIdName
+		delete(repo.iTable, repo.bookByIdName[idNameByIndex[i]])
+		// remove {hash, iTable index} from bookByIdName
+		delete(repo.bookByIdName, idNameByIndex[i])
+	}
+	return nil
+}
+
+func buildBookIdMap(books []*Book) (
+	map[string]int,
+	map[int]string,
+	map[string]*Book,
+	error,
+) {
+	indexById := make(map[string]int)
+	idByIndex := make(map[int]string)
+	bookById := make(map[string]*Book)
+
+	for i, def := range books {
+		indexById[def.Id] = i
+		idByIndex[i] = def.Id
+		bookById[def.Id] = def
+	}
+
+	return indexById, idByIndex, bookById, nil
+}
+
+func buildBookIdNameMap(books []*Book) (
+	map[string]int,
+	map[int]string,
+	map[string]*Book,
+	error,
+) {
+	indexByIdName := make(map[string]int)
+	idNameByIndex := make(map[int]string)
+	bookByIdName := make(map[string]*Book)
+
+	for i, def := range books {
+		indexByIdName[def.Id] = i
+		idNameByIndex[i] = def.Id
+		bookByIdName[def.Id] = def
+	}
+
+	return indexByIdName, idNameByIndex, bookByIdName, nil
 }

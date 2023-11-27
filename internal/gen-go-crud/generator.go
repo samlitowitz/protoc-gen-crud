@@ -110,13 +110,19 @@ func (g *generator) addMessagePathParamImports(file *descriptor.File, m *descrip
 
 func (g *generator) addCrudPathParamImports(file *descriptor.File, crud *descriptor.CRUD, pkgSeen map[string]bool) []descriptor.GoPackage {
 	var imports []descriptor.GoPackage
+
+	if crud.Read() && !pkgSeen["github.com/samlitowitz/protoc-gen-crud/expressions"] {
+		pkgSeen["github.com/samlitowitz/protoc-gen-crud/expressions"] = true
+		imports = append(imports, descriptor.GoPackage{Path: "github.com/samlitowitz/protoc-gen-crud/expressions", Name: "expressions"})
+	}
+	if crud.Read() && !pkgSeen["fmt"] {
+		pkgSeen["fmt"] = true
+		imports = append(imports, descriptor.GoPackage{Path: "fmt", Name: "expressions"})
+	}
+
 	for _, fields := range crud.UniqueIdentifiers {
 		if len(fields) <= 1 {
 			continue
-		}
-		if !pkgSeen["encoding/binary"] {
-			pkgSeen["encoding/binary"] = true
-			imports = append(imports, descriptor.GoPackage{Path: "encoding/binary", Name: "binary"})
 		}
 		if !pkgSeen["crypto/sha256"] {
 			pkgSeen["crypto/sha256"] = true

@@ -1,0 +1,21 @@
+syntax = "proto3";
+
+package simple.options;
+
+option go_package = "github.com/samlitowitz/protoc-gen-crud/examples/simple";
+
+import "protoc-gen-crud/options/annotations.proto";
+
+message User {
+  option (protoc_gen_crud.options.crud_message_options) = {
+    operations: [CREATE, READ, UPDATE, DELETE]
+    implementations: [IN_MEMORY]
+  };
+  string id = 1 [
+    (protoc_gen_crud.options.crud_field_options) = {
+      uids: ["id"]
+    }
+  ];
+  string username = 2;
+  string password = 3;
+}

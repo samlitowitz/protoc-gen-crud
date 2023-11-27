@@ -215,6 +215,10 @@ func (f *Field) FQFN() string {
 	return strings.Join([]string{f.Message.FQMN(), f.GetName()}, ".")
 }
 
+func (f *Field) IsScalarGoType() bool {
+	return isScalarGoType(*f.FieldDescriptorProto.Type)
+}
+
 // FieldPath is a path to a field from a request message.
 type FieldPath []FieldPathComponent
 
@@ -346,4 +350,44 @@ func (c FieldPathComponent) ValueExpr() string {
 		return fmt.Sprintf("Get%s()", casing.Camel(c.Name))
 	}
 	return casing.Camel(c.Name)
+}
+
+func isScalarGoType(typ descriptorpb.FieldDescriptorProto_Type) bool {
+	switch typ {
+	case descriptorpb.FieldDescriptorProto_TYPE_DOUBLE:
+		fallthrough
+	case descriptorpb.FieldDescriptorProto_TYPE_FLOAT:
+		fallthrough
+	case descriptorpb.FieldDescriptorProto_TYPE_BOOL:
+		fallthrough
+	case descriptorpb.FieldDescriptorProto_TYPE_ENUM:
+		fallthrough
+	case descriptorpb.FieldDescriptorProto_TYPE_UINT32:
+		fallthrough
+	case descriptorpb.FieldDescriptorProto_TYPE_UINT64:
+		fallthrough
+	case descriptorpb.FieldDescriptorProto_TYPE_INT32:
+		fallthrough
+	case descriptorpb.FieldDescriptorProto_TYPE_FIXED32:
+		fallthrough
+	case descriptorpb.FieldDescriptorProto_TYPE_SINT32:
+		fallthrough
+	case descriptorpb.FieldDescriptorProto_TYPE_INT64:
+		fallthrough
+	case descriptorpb.FieldDescriptorProto_TYPE_FIXED64:
+		fallthrough
+	case descriptorpb.FieldDescriptorProto_TYPE_SINT64:
+		fallthrough
+	case descriptorpb.FieldDescriptorProto_TYPE_BYTES:
+		fallthrough
+	case descriptorpb.FieldDescriptorProto_TYPE_STRING:
+		return true
+
+	case descriptorpb.FieldDescriptorProto_TYPE_GROUP:
+		fallthrough
+	case descriptorpb.FieldDescriptorProto_TYPE_MESSAGE:
+		fallthrough
+	default:
+		return false
+	}
 }

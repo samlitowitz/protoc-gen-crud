@@ -101,6 +101,10 @@ Delete([]*<QUALIFIED_MESSAGE_TYPE>) error
 
 ## Clauses
 
+1. {field/column, value}
+    1. Ensure field/column is valid/real
+    2. Ensure value is of correct type (compile time error should be/hopefully)
+
 ### Accept expressions
 
 1. And
@@ -111,7 +115,7 @@ Delete([]*<QUALIFIED_MESSAGE_TYPE>) error
 
 1. Null
 
-### Accept field expressions
+### Accept value and/or field expressions
 
 1. Equal
 2. GreaterThanOrEqual
@@ -120,6 +124,10 @@ Delete([]*<QUALIFIED_MESSAGE_TYPE>) error
 5. LessThan
 6. Like
 7. In
+
+### Field expressions
+
+### Value expressions
 
 ```go
 package tmp
@@ -195,3 +203,4 @@ func LessThanInt(columnName string, value int) {
 3. https://commandcenter.blogspot.com/2014/01/self-referential-functions-and-design.html
 4. https://github.com/googleapis/googleapis/blob/master/google/api/http.proto
 5. https://github.com/grpc-ecosystem/grpc-gateway/tree/main/protoc-gen-openapiv2/options
+6. https://go.dev/blog/intro-generics
