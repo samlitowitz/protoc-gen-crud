@@ -10,30 +10,14 @@ It provides an interface to implement and some implementations of the interface.
 package simple
 
 import (
+	"context"
+	"database/sql"
 	"fmt"
+	"strings"
 
 	"github.com/samlitowitz/protoc-gen-crud/expressions"
+	"modernc.org/sqlite"
 )
-
-type UserRepository interface {
-	// Create creates new Users.
-	// Successfully created Users are returned along with any errors that may have occurred.
-	Create([]*User) ([]*User, error)
-
-	// Read returns a set of Users matching the provided criteria
-	// Read is incomplete and it should be considered unstable
-	// Use where clauses
-	Read(expr expressions.Expression) ([]*User, error)
-
-	// Update modifies existing Users based on the defined unique identifiers.
-	// Successfully modified Users are returned along with any errors that may have occurred.
-	Update([]*User) ([]*User, error)
-
-	// Delete deletes Users based on the defined unique identifiers
-	// Delete is incomplete and it should be considered unstable
-	// Use where clauses
-	Delete([]*User) error
-}
 
 const (
 	User_Id_Field       expressions.FieldID = "441df8206d64f0e4cf6ad874026ceab109b6b0d2262387c2273ed1d80973589f"
@@ -45,6 +29,24 @@ var validUserFields = map[expressions.FieldID]struct{}{
 	User_Id_Field:       struct{}{},
 	User_Password_Field: struct{}{},
 	User_Username_Field: struct{}{},
+}
+
+type UserRepository interface {
+	// Create creates new Users.
+	// Successfully created Users are returned along with any errors that may have occurred.
+	Create(context.Context, []*User) ([]*User, error)
+
+	// Read returns a set of Users matching the provided criteria
+	// Read is incomplete and it should be considered unstable
+	Read(context.Context, expressions.Expression) ([]*User, error)
+
+	// Update modifies existing Users based on the defined unique identifiers.
+	// Successfully modified Users are returned along with any errors that may have occurred.
+	Update(context.Context, []*User) ([]*User, error)
+
+	// Delete deletes Users matching the provided criteria
+	// Delete is incomplete and it should be considered unstable
+	Delete(context.Context, expressions.Expression) error
 }
 
 // InMemoryUserRepository is an in memory implementation of the UserRepository interface.
@@ -64,8 +66,8 @@ func NewInMemoryUserRepository() *InMemoryUserRepository {
 
 // Create creates new Users.
 // Successfully created Users are returned along with any errors that may have occurred.
-func (repo *InMemoryUserRepository) Create(toCreate []*User) ([]*User, error) {
-	indicesToCreate := make(map[int]*User)
+func (repo *InMemoryUserRepository) Create(ctx context.Context, toCreate []*User) ([]*User, error) {
+	indicesToCreate := make(map[uint]*User)
 
 	indexById, idByIndex, userById, err := buildUserIdMap(toCreate)
 	if err != nil {
@@ -104,7 +106,7 @@ func (repo *InMemoryUserRepository) Create(toCreate []*User) ([]*User, error) {
 
 // Read returns a set of Users matching the provided criteria
 // Read is incomplete and it should be considered unstable
-func (repo *InMemoryUserRepository) Read(expr expressions.Expression) ([]*User, error) {
+func (repo *InMemoryUserRepository) Read(ctx context.Context, expr expressions.Expression) ([]*User, error) {
 	found := make([]*User, 0, len(repo.iTable))
 
 	for _, user := range repo.iTable {
@@ -118,6 +120,116 @@ func (repo *InMemoryUserRepository) Read(expr expressions.Expression) ([]*User, 
 		found = append(found, user)
 	}
 	return found, nil
+}
+
+// Update modifies existing Users based on the defined unique identifiers.
+func (repo *InMemoryUserRepository) Update(ctx context.Context, toUpdate []*User) ([]*User, error) {
+	indicesToUpdate := make(map[uint]uint)
+
+	indexById, idByIndex, userById, err := buildUserIdMap(toUpdate)
+	if err != nil {
+		return nil, err
+	}
+	for key, _ := range userById {
+		if _, ok := indexById[key]; !ok {
+			// internal error, should never happen
+			continue
+		}
+		if _, ok := idByIndex[indexById[key]]; !ok {
+			// internal error, should never happen
+			continue
+
+		}
+		if _, ok := repo.userById[key]; !ok {
+			// add error about missing
+			delete(indicesToUpdate, indexById[key])
+			continue
+		}
+		if _, ok := indicesToUpdate[indexById[key]]; ok {
+			continue
+		}
+		// mark index as to be created
+		indicesToUpdate[indexById[key]] = repo.userById[idByIndex[indexById[key]]]
+	}
+
+	updated := make([]*User, 0, len(indicesToUpdate))
+	for i, j := range indicesToUpdate {
+		repo.iTable[j] = toUpdate[i]
+		updated = append(updated, toUpdate[i])
+	}
+	return updated, nil
+}
+
+// Delete deletes Users matching the provided criteria
+// Delete is incomplete and it should be considered unstable
+func (repo *InMemoryUserRepository) Delete(ctx context.Context, expr expressions.Expression) error {
+	indicesToDelete := make(map[uint]struct{})
+	toDelete := []*User{}
+
+	for i, user := range repo.iTable {
+		include, err := testExprOnUser(user, expr)
+		if err != nil {
+			return err
+		}
+		if !include {
+			continue
+		}
+		indicesToDelete[i] = struct{}{}
+		toDelete = append(toDelete, user)
+	}
+
+	_, idByIndex, _, err := buildUserIdMap(toDelete)
+	if err != nil {
+		return err
+	}
+
+	for i, _ := range indicesToDelete {
+		// remove iTable entry indexed by userById
+		delete(repo.iTable, repo.userById[idByIndex[i]])
+		// remove {hash, iTable index} from userById
+		delete(repo.userById, idByIndex[i])
+		delete(repo.iTable, i)
+	}
+	return nil
+}
+
+func (repo *InMemoryUserRepository) delete(ctx context.Context, toDelete []*User) error {
+	panic("remove after commit, never use")
+	indicesToDelete := make(map[uint]struct{})
+
+	indexById, idByIndex, userById, err := buildUserIdMap(toDelete)
+	if err != nil {
+		return err
+	}
+	for key, _ := range userById {
+		if _, ok := indexById[key]; !ok {
+			// internal error, should never happen
+			continue
+		}
+		if _, ok := idByIndex[indexById[key]]; !ok {
+			// internal error, should never happen
+			continue
+
+		}
+		if _, ok := repo.userById[key]; !ok {
+			// internal error, this occurs when an item is not added to every map
+			// this should only be caused by implementation failure of the create, update, or delete functionality
+			delete(indicesToDelete, indexById[key])
+			continue
+		}
+		if _, ok := indicesToDelete[indexById[key]]; !ok {
+			// mark index as to be deleted
+			indicesToDelete[indexById[key]] = struct{}{}
+		}
+	}
+
+	for i, _ := range indicesToDelete {
+		// remove iTable entry indexed by userById
+		delete(repo.iTable, repo.userById[idByIndex[i]])
+		// remove {hash, iTable index} from userById
+		delete(repo.userById, idByIndex[i])
+	}
+	return nil
 }
 
 func testExprOnUser(user *User, expr expressions.Expression) (bool, error) {
@@ -236,98 +348,103 @@ func testEqualExprOnUser(user *User, expr *expressions.Equal) (bool, error) {
 	return false, nil
 }
 
-// Update modifies existing Users based on the defined unique identifiers.
-func (repo *InMemoryUserRepository) Update(toUpdate []*User) ([]*User, error) {
-	indicesToUpdate := make(map[int]uint)
-
-	indexById, idByIndex, userById, err := buildUserIdMap(toUpdate)
-	if err != nil {
-		return nil, err
-	}
-	for key, _ := range userById {
-		if _, ok := indexById[key]; !ok {
-			// internal error, should never happen
-			continue
-		}
-		if _, ok := idByIndex[indexById[key]]; !ok {
-			// internal error, should never happen
-			continue
-
-		}
-		if _, ok := repo.userById[key]; !ok {
-			// add error about missing
-			delete(indicesToUpdate, indexById[key])
-			continue
-		}
-		if _, ok := indicesToUpdate[indexById[key]]; ok {
-			continue
-		}
-		// mark index as to be created
-		indicesToUpdate[indexById[key]] = repo.userById[idByIndex[indexById[key]]]
-	}
-
-	updated := make([]*User, 0, len(indicesToUpdate))
-	for i, j := range indicesToUpdate {
-		repo.iTable[j] = toUpdate[i]
-		updated = append(updated, toUpdate[i])
-	}
-	return updated, nil
-}
-
-// Delete deletes Users based on the defined unique identifiers
-func (repo *InMemoryUserRepository) Delete(toDelete []*User) error {
-	indicesToDelete := make(map[int]struct{})
-
-	indexById, idByIndex, userById, err := buildUserIdMap(toDelete)
-	if err != nil {
-		return err
-	}
-	for key, _ := range userById {
-		if _, ok := indexById[key]; !ok {
-			// internal error, should never happen
-			continue
-		}
-		if _, ok := idByIndex[indexById[key]]; !ok {
-			// internal error, should never happen
-			continue
-
-		}
-		if _, ok := repo.userById[key]; !ok {
-			// internal error, this occurs when an item is not added to every map
-			// this should only be caused by implementation failure of the create, update, or delete functionality
-			delete(indicesToDelete, indexById[key])
-			continue
-		}
-		if _, ok := indicesToDelete[indexById[key]]; !ok {
-			// mark index as to be deleted
-			indicesToDelete[indexById[key]] = struct{}{}
-		}
-	}
-
-	for i, _ := range indicesToDelete {
-		// remove iTable entry indexed by userById
-		delete(repo.iTable, repo.userById[idByIndex[i]])
-		// remove {hash, iTable index} from userById
-		delete(repo.userById, idByIndex[i])
-	}
-	return nil
-}
-
 func buildUserIdMap(users []*User) (
-	map[string]int,
-	map[int]string,
+	map[string]uint,
+	map[uint]string,
 	map[string]*User,
 	error,
 ) {
-	indexById := make(map[string]int)
-	idByIndex := make(map[int]string)
+	indexById := make(map[string]uint)
+	idByIndex := make(map[uint]string)
 	userById := make(map[string]*User)
 
 	for i, def := range users {
-		indexById[def.Id] = i
-		idByIndex[i] = def.Id
+		indexById[def.Id] = uint(i)
+		idByIndex[uint(i)] = def.Id
 		userById[def.Id] = def
 	}
 
 	return indexById, idByIndex, userById, nil
+}
+
+// InMemoryUserRepository is an in memory implementation of the UserRepository interface.
+type SQLiteUserRepository struct {
+	db *sql.DB
+}
+
+// NewInMemory creates a new InMemoryUserRepository to be used.
+func NewSQLiteUserRepository(db *sql.DB) (*SQLiteUserRepository, error) {
+	_, ok := db.Driver().(*sqlite.Driver)
+	if !ok {
+		return nil, fmt.Errorf("invalid driver, must be of type *modernc.org/sqlite.Driver")
+	}
+	return &SQLiteUserRepository{
+		db: db,
+	}, nil
+}
+
+// Create creates new Users.
+// Successfully created Users are returned along with any errors that may have occurred.
+func (repo *SQLiteUserRepository) Create(ctx context.Context, toCreate []*User) ([]*User, error) {
+	if len(toCreate) == 0 {
+		return nil, nil
+	}
+	binds := []any{}
+	bindsStrs := []string{}
+	for i, val := range toCreate {
+		binds = append(
+			binds,
+			sql.Named(
+				fmt.Sprintf(":user_id_field_%d", i),
+				val.Id,
+			),
+		)
+		bindsStrs = append(bindsStrs, fmt.Sprintf(":user_id_field_%d", i))
+		binds = append(
+			binds,
+			sql.Named(
+				fmt.Sprintf(":user_password_field_%d", i),
+				val.Password,
+			),
+		)
+		bindsStrs = append(bindsStrs, fmt.Sprintf(":user_password_field_%d", i))
+		binds = append(
+			binds,
+			sql.Named(
+				fmt.Sprintf(":user_username_field_%d", i),
+				val.Username,
+			),
+		)
+		bindsStrs = append(bindsStrs, fmt.Sprintf(":user_username_field_%d", i))
+	}
+	query := fmt.Sprintf(
+		"INSERT INTO `user` (`id`, `username`, `password`) VALUES\n%s",
+		strings.Join(bindsStrs, ",\n"),
+	)
+	stmt, err := repo.db.Prepare(query)
+	if err != nil {
+		return nil, err
+	}
+	_, err = stmt.Exec(binds...)
+	if err != nil {
+		return nil, err
+	}
+	// TODO: WIP
+	return nil, nil
+}
+
+// Read returns a set of Users matching the provided criteria
+// Read is incomplete and it should be considered unstable
+func (repo *SQLiteUserRepository) Read(ctx context.Context, expr expressions.Expression) ([]*User, error) {
+	panic("not implemented")
+}
+
+// Update modifies existing Users based on the defined unique identifiers.
+func (repo *SQLiteUserRepository) Update(ctx context.Context, toUpdate []*User) ([]*User, error) {
+	panic("not implemented")
+}
+
+// Delete deletes Users based on the defined unique identifiers
+func (repo *SQLiteUserRepository) Delete(ctx context.Context, toDelete []*User) error {
+	panic("not implemented")
 }

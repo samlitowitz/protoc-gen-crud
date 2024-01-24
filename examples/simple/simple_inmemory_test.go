@@ -1,6 +1,7 @@
 package simple_test
 
 import (
+	"context"
 	"fmt"
 	"strings"
 	"testing"
@@ -33,7 +34,7 @@ func TestInMemoryUserRepository_Create(t *testing.T) {
 
 	repo := simple.NewInMemoryUserRepository()
 
-	users, err := repo.Read(nil)
+	users, err := repo.Read(context.Background(), nil)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -51,7 +52,7 @@ func TestInMemoryUserRepository_Create(t *testing.T) {
 		})
 	}
 
-	actualUsers, err := repo.Create(expectedUsers)
+	actualUsers, err := repo.Create(context.Background(), expectedUsers)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -214,7 +215,7 @@ func TestInMemoryUserRepository_Read(t *testing.T) {
 	for testCase, testData := range tests {
 		repo := simple.NewInMemoryUserRepository()
 
-		users, err := repo.Read(nil)
+		users, err := repo.Read(context.Background(), nil)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -244,7 +245,7 @@ func TestInMemoryUserRepository_Read(t *testing.T) {
 			toCreate = append(toCreate, user)
 		}
 
-		actualUsers, err := repo.Create(toCreate)
+		actualUsers, err := repo.Create(context.Background(), toCreate)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -257,7 +258,7 @@ func TestInMemoryUserRepository_Read(t *testing.T) {
 			)
 		}
 
-		actualUsers, err = repo.Read(testData.expr)
+		actualUsers, err = repo.Read(context.Background(), testData.expr)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -312,19 +313,93 @@ func TestInMemoryUserRepository_Update(t *testing.T) {
 			},
 			[]*simple.User{
 				{
-					Id:       uuid.NewString(),
+					Id:       "",
 					Username: "username-1-1",
+					Password: "",
+				},
+				{
+					Id:       "",
+					Username: "username-2-1",
+					Password: "",
+				},
+				{
+					Id:       "",
+					Username: "username-3-1",
+					Password: "",
+				},
+			},
+			nil,
+		},
+		"update password": {
+			[]*simple.User{
+				{
+					Id:       uuid.NewString(),
+					Username: "username-1",
 					Password: "password-1",
 				},
 				{
 					Id:       uuid.NewString(),
-					Username: "username-2-1",
+					Username: "username-2",
 					Password: "password-2",
 				},
 				{
 					Id:       uuid.NewString(),
-					Username: "username-3-1",
+					Username: "username-3",
 					Password: "password-3",
+				},
+			},
+			[]*simple.User{
+				{
+					Id:       "",
+					Username: "",
+					Password: "password-1-1",
+				},
+				{
+					Id:       "",
+					Username: "",
+					Password: "password-2-1",
+				},
+				{
+					Id:       "",
+					Username: "",
+					Password: "password-3-1",
+				},
+			},
+			nil,
+		},
+		"update username and password": {
+			[]*simple.User{
+				{
+					Id:       uuid.NewString(),
+					Username: "username-1",
+					Password: "password-1",
+				},
+				{
+					Id:       uuid.NewString(),
+					Username: "username-2",
+					Password: "password-2",
+				},
+				{
+					Id:       uuid.NewString(),
+					Username: "username-3",
+					Password: "password-3",
+				},
+			},
+			[]*simple.User{
+				{
+					Id:       "",
+					Username: "username-1-1",
+					Password: "password-1-1",
+				},
+				{
+					Id:       "",
+					Username: "username-2-1",
+					Password: "password-2-1",
+				},
+				{
+					Id:       "",
+					Username: "username-3-1",
+					Password: "password-3-1",
 				},
 			},
 			nil,
@@ -334,7 +409,7 @@ func TestInMemoryUserRepository_Update(t *testing.T) {
 	for testCase, testData := range tests {
 		repo := simple.NewInMemoryUserRepository()
 
-		users, err := repo.Read(nil)
+		users, err := repo.Read(context.Background(), nil)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -346,17 +421,7 @@ func TestInMemoryUserRepository_Update(t *testing.T) {
 			)
 		}
 
-		expectedUserCount := 3
-		expectedUsers := make([]*simple.User, 0, expectedUserCount)
-		for i := 0; i < expectedUserCount; i++ {
-			expectedUsers = append(expectedUsers, &simple.User{
-				Id:       uuid.NewString(),
-				Username: fmt.Sprintf("username-%d", i),
-				Password: fmt.Sprintf("password-%d", i),
-			})
-		}
-
-		actualUsers, err := repo.Create(testData.createUsers)
+		actualUsers, err := repo.Create(context.Background(), testData.createUsers)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -369,7 +434,7 @@ func TestInMemoryUserRepository_Update(t *testing.T) {
 			)
 		}
 
-		actualUsers, err = repo.Read(testData.expr)
+		actualUsers, err = repo.Read(context.Background(), testData.expr)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -381,7 +446,19 @@ func TestInMemoryUserRepository_Update(t *testing.T) {
 			)
 		}
 
-		actualUsers, err = repo.Update(testData.expectedUsers)
+		for i, user := range testData.createUsers {
+			if testData.expectedUsers[i].Id == "" {
+				testData.expectedUsers[i].Id = user.Id
+			}
+			if testData.expectedUsers[i].Username == "" {
+				testData.expectedUsers[i].Username = user.Username
+			}
+			if testData.expectedUsers[i].Password == "" {
+				testData.expectedUsers[i].Password = user.Password
+			}
+		}
+
+		actualUsers, err = repo.Update(context.Background(), testData.expectedUsers)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -394,7 +471,7 @@ func TestInMemoryUserRepository_Update(t *testing.T) {
 			)
 		}
 
-		actualUsers, err = repo.Read(testData.expr)
+		actualUsers, err = repo.Read(context.Background(), testData.expr)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -426,7 +503,7 @@ func TestInMemoryUserRepository_Delete(t *testing.T) {
 
 	repo := simple.NewInMemoryUserRepository()
 
-	users, err := repo.Read(nil)
+	users, err := repo.Read(context.Background(), nil)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -444,7 +521,7 @@ func TestInMemoryUserRepository_Delete(t *testing.T) {
 		})
 	}
 
-	actualUsers, err := repo.Create(expectedUsers)
+	actualUsers, err := repo.Create(context.Background(), expectedUsers)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -453,13 +530,17 @@ func TestInMemoryUserRepository_Delete(t *testing.T) {
 		t.Fatalf("Create() mismatch (-want +got):\n%s", diff)
 	}
 
-	err = repo.Delete([]*simple.User{expectedUsers[0]})
+	expr := expressions.NewEqual(
+		expressions.NewIdentifier(simple.User_Id_Field),
+		expressions.NewScalar(expectedUsers[0].Id),
+	)
+	err = repo.Delete(context.Background(), expr)
 	if err != nil {
 		t.Fatal(err)
 	}
 
 	expectedUsers = expectedUsers[1:]
-	actualUsers, err = repo.Read(nil)
+	actualUsers, err = repo.Read(context.Background(), nil)
 	if err != nil {
 		t.Fatal(err)
 	}

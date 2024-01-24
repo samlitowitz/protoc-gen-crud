@@ -120,6 +120,11 @@ func (def *CRUD) InMemoryImplementation() bool {
 	return ok
 }
 
+func (def *CRUD) SQLiteImplementation() bool {
+	_, ok := def.Implementations[options.Implementation_SQLITE]
+	return ok
+}
+
 // Message describes a protocol buffer message types.
 type Message struct {
 	*descriptorpb.DescriptorProto
@@ -217,6 +222,51 @@ func (f *Field) FQFN() string {
 
 func (f *Field) IsScalarGoType() bool {
 	return isScalarGoType(*f.FieldDescriptorProto.Type)
+}
+
+func (f *Field) GoType() string {
+	switch *f.Type {
+	case descriptorpb.FieldDescriptorProto_TYPE_DOUBLE:
+		return "float64"
+	case descriptorpb.FieldDescriptorProto_TYPE_FLOAT:
+		return "float32"
+	case descriptorpb.FieldDescriptorProto_TYPE_BOOL:
+		return "bool"
+	case descriptorpb.FieldDescriptorProto_TYPE_ENUM:
+		return ""
+
+	case descriptorpb.FieldDescriptorProto_TYPE_UINT32:
+		return "uint32"
+	case descriptorpb.FieldDescriptorProto_TYPE_UINT64:
+		return "uint64"
+
+	case descriptorpb.FieldDescriptorProto_TYPE_INT32:
+		fallthrough
+	case descriptorpb.FieldDescriptorProto_TYPE_FIXED32:
+		fallthrough
+	case descriptorpb.FieldDescriptorProto_TYPE_SINT32:
+		return "int32"
+
+	case descriptorpb.FieldDescriptorProto_TYPE_INT64:
+		fallthrough
+	case descriptorpb.FieldDescriptorProto_TYPE_FIXED64:
+		fallthrough
+	case descriptorpb.FieldDescriptorProto_TYPE_SINT64:
+		return "int64"
+
+	case descriptorpb.FieldDescriptorProto_TYPE_BYTES:
+		return "string"
+
+	case descriptorpb.FieldDescriptorProto_TYPE_STRING:
+		return "string"
+
+	case descriptorpb.FieldDescriptorProto_TYPE_GROUP:
+		fallthrough
+	case descriptorpb.FieldDescriptorProto_TYPE_MESSAGE:
+		fallthrough
+	default:
+		panic(fmt.Errorf("non-scalar type on field %s", f.GetName()))
+	}
 }
 
 // FieldPath is a path to a field from a request message.

@@ -63,6 +63,7 @@ func (g *generator) Generate(targets []*descriptor.File) ([]*descriptor.Response
 			},
 			GoPkg: file.GoPkg,
 		})
+		// TODO: Add support for generating SQLite table files here, raw SQL? code?
 	}
 	return files, nil
 }
@@ -110,6 +111,28 @@ func (g *generator) addMessagePathParamImports(file *descriptor.File, m *descrip
 
 func (g *generator) addCrudPathParamImports(file *descriptor.File, crud *descriptor.CRUD, pkgSeen map[string]bool) []descriptor.GoPackage {
 	var imports []descriptor.GoPackage
+
+	hasAnyCRUDOperations := len(crud.Operations) > 0
+
+	if hasAnyCRUDOperations && !pkgSeen["context"] {
+		pkgSeen["context"] = true
+		imports = append(imports, descriptor.GoPackage{Path: "context", Name: "context"})
+	}
+
+	if crud.SQLiteImplementation() && !pkgSeen["database/sql"] {
+		pkgSeen["database/sql"] = true
+		imports = append(imports, descriptor.GoPackage{Path: "database/sql", Name: "sql"})
+	}
+
+	if crud.SQLiteImplementation() && !pkgSeen["modernc.org/sqlite"] {
+		pkgSeen["modernc.org/sqlite"] = true
+		imports = append(imports, descriptor.GoPackage{Path: "modernc.org/sqlite", Name: "sqlite"})
+	}
+
+	if crud.SQLiteImplementation() && hasAnyCRUDOperations && !pkgSeen["strings"] {
+		pkgSeen["strings"] = true
+		imports = append(imports, descriptor.GoPackage{Path: "strings", Name: "strings"})
+	}
 
 	if crud.Read() && !pkgSeen["github.com/samlitowitz/protoc-gen-crud/expressions"] {
 		pkgSeen["github.com/samlitowitz/protoc-gen-crud/expressions"] = true

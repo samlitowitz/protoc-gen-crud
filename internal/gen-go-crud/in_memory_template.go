@@ -2,8 +2,6 @@ package gen_go_crud
 
 import (
 	"bytes"
-	"crypto/sha256"
-	"encoding/hex"
 	"fmt"
 	"text/template"
 
@@ -55,59 +53,8 @@ func (uidData *inMemoryUIDData) CompositeKeyGenerationCode(
 	return fmt.Sprintf(uidData.keyGenerationCode, hashVarName, fieldDefVarName)
 }
 
-type inMemoryFieldData struct {
-	Def  *descriptor.Field
-	Hash string
-}
-
-func (fd *inMemoryFieldData) GoType() string {
-	switch *fd.Def.Type {
-	case descriptorpb.FieldDescriptorProto_TYPE_DOUBLE:
-		return "float64"
-	case descriptorpb.FieldDescriptorProto_TYPE_FLOAT:
-		return "float32"
-	case descriptorpb.FieldDescriptorProto_TYPE_BOOL:
-		return "bool"
-	case descriptorpb.FieldDescriptorProto_TYPE_ENUM:
-		return ""
-
-	case descriptorpb.FieldDescriptorProto_TYPE_UINT32:
-		return "uint32"
-	case descriptorpb.FieldDescriptorProto_TYPE_UINT64:
-		return "uint64"
-
-	case descriptorpb.FieldDescriptorProto_TYPE_INT32:
-		fallthrough
-	case descriptorpb.FieldDescriptorProto_TYPE_FIXED32:
-		fallthrough
-	case descriptorpb.FieldDescriptorProto_TYPE_SINT32:
-		return "int32"
-
-	case descriptorpb.FieldDescriptorProto_TYPE_INT64:
-		fallthrough
-	case descriptorpb.FieldDescriptorProto_TYPE_FIXED64:
-		fallthrough
-	case descriptorpb.FieldDescriptorProto_TYPE_SINT64:
-		return "int64"
-
-	case descriptorpb.FieldDescriptorProto_TYPE_BYTES:
-		return "string"
-
-	case descriptorpb.FieldDescriptorProto_TYPE_STRING:
-		return "string"
-
-	case descriptorpb.FieldDescriptorProto_TYPE_GROUP:
-		fallthrough
-	case descriptorpb.FieldDescriptorProto_TYPE_MESSAGE:
-		fallthrough
-	default:
-		panic(fmt.Errorf("non-scalar type on field %s", fd.Def.GetName()))
-	}
-}
-
 type inMemory struct {
-	uidDataByUIDNames           map[string]*inMemoryUIDData
-	fieldDataByFieldIDConstants map[string]*inMemoryFieldData
+	uidDataByUIDNames map[string]*inMemoryUIDData
 }
 
 // For each uid we'll need a function to take an input of []*{{$.CRUD.GoType $.CRUD.File.GoPkg.Path}} and return a map[{{$typ}}]*{{$.CRUD.GoType $.CRUD.File.GoPkg.Path}}
@@ -274,50 +221,8 @@ func (im inMemory) uidKeyTypeByFieldDefs(defs []*descriptor.Field) (string, erro
 	return "string", nil
 }
 
-func (im *inMemory) FieldDataByFieldIDConstants(crud *descriptor.CRUD) map[string]*inMemoryFieldData {
-	if im.fieldDataByFieldIDConstants != nil {
-		return im.fieldDataByFieldIDConstants
-	}
-
-	im.fieldDataByFieldIDConstants = make(map[string]*inMemoryFieldData)
-	for _, fieldDef := range crud.Fields {
-		name := fmt.Sprintf(
-			"%s_%s_Field",
-			strcase.ToCamel(crud.GetName()),
-			strcase.ToCamel(fieldDef.GetName()),
-		)
-		h := sha256.New()
-		_, err := h.Write([]byte(name))
-		if err != nil {
-			panic(err)
-		}
-		fieldDef.GetTypeName()
-		im.fieldDataByFieldIDConstants[name] = &inMemoryFieldData{
-			Def:  fieldDef,
-			Hash: hex.EncodeToString(h.Sum(nil)),
-		}
-	}
-	return im.fieldDataByFieldIDConstants
-}
-
 var (
 	_ = template.Must(repositoryTemplate.New("repository-in-memory").Funcs(funcMap).Parse(`
-
-{{if .CRUD.Read}}
-{{if .InMemory.FieldDataByFieldIDConstants .CRUD}}
-const (
-{{- range $name, $data := .InMemory.FieldDataByFieldIDConstants .CRUD}}
-	{{$name}} expressions.FieldID = "{{$data.Hash}}"
-{{- end}}
-)
-{{end}}
-var valid{{.CRUD.Name}}Fields = map[expressions.FieldID]struct{}{
-{{- range $name, $data := .InMemory.FieldDataByFieldIDConstants .CRUD}}
-	{{$name}}: struct{}{},
-{{- end}}
-}
-{{end}}
-
 // InMemory{{.CRUD.Name}}Repository is an in memory implementation of the {{.CRUD.Name}}Repository interface.
 type InMemory{{.CRUD.Name}}Repository struct {
 	{{- range $name, $data := .InMemory.UIDDataByUIDNames .CRUD}}
@@ -340,8 +245,8 @@ func NewInMemory{{.CRUD.Name}}Repository() *InMemory{{.CRUD.Name}}Repository {
 {{if .CRUD.Create}}
 // Create creates new {{.CRUD.Name}}s.
 // Successfully created {{.CRUD.Name}}s are returned along with any errors that may have occurred.
-func (repo *InMemory{{.CRUD.Name}}Repository) Create(toCreate []*{{.CRUD.GoType .CRUD.File.GoPkg.Path}}) ([]*{{.CRUD.GoType .CRUD.File.GoPkg.Path}}, error) {
-	indicesToCreate := make(map[int]*{{.CRUD.GoType .CRUD.File.GoPkg.Path}})
+func (repo *InMemory{{.CRUD.Name}}Repository) Create(ctx context.Context, toCreate []*{{.CRUD.GoType .CRUD.File.GoPkg.Path}}) ([]*{{.CRUD.GoType .CRUD.File.GoPkg.Path}}, error) {
+	indicesToCreate := make(map[uint]*{{.CRUD.GoType .CRUD.File.GoPkg.Path}})
 	{{range $name, $data := .InMemory.UIDDataByUIDNames .CRUD}}
 	{{$data.IndexByKeyMapName}}, {{$data.KeyByIndexMapName}}, {{$name}}, err := {{$data.BuildMapFnName}}(toCreate)
 	if err != nil {
@@ -385,7 +290,7 @@ func (repo *InMemory{{.CRUD.Name}}Repository) Create(toCreate []*{{.CRUD.GoType 
 {{if .CRUD.Read}}
 // Read returns a set of {{.CRUD.Name}}s matching the provided criteria
 // Read is incomplete and it should be considered unstable
-func (repo *InMemory{{.CRUD.Name}}Repository) Read(expr expressions.Expression) ([]*{{.CRUD.GoType .CRUD.File.GoPkg.Path}}, error) {
+func (repo *InMemory{{.CRUD.Name}}Repository) Read(ctx context.Context, expr expressions.Expression) ([]*{{.CRUD.GoType .CRUD.File.GoPkg.Path}}, error) {
 	found := make([]*{{.CRUD.GoType .CRUD.File.GoPkg.Path}}, 0, len(repo.iTable))
 
 	for _, {{.CRUD.CamelCaseName}} := range repo.iTable {
@@ -400,7 +305,130 @@ func (repo *InMemory{{.CRUD.Name}}Repository) Read(expr expressions.Expression) 
 	}
 	return found, nil
 }
+{{end}}
 
+{{if .CRUD.Update}}
+// Update modifies existing {{.CRUD.Name}}s based on the defined unique identifiers.
+func (repo *InMemory{{.CRUD.Name}}Repository) Update(ctx context.Context, toUpdate []*{{.CRUD.GoType .CRUD.File.GoPkg.Path}}) ([]*{{.CRUD.GoType .CRUD.File.GoPkg.Path}}, error) {
+	indicesToUpdate := make(map[uint]uint)
+	{{range $name, $data := .InMemory.UIDDataByUIDNames .CRUD}}
+	{{$data.IndexByKeyMapName}}, {{$data.KeyByIndexMapName}}, {{$name}}, err := {{$data.BuildMapFnName}}(toUpdate)
+	if err != nil {
+		return nil, err
+	}
+	for key, _ := range {{$name}} {
+		if _, ok := {{$data.IndexByKeyMapName}}[key]; !ok {
+			// internal error, should never happen
+			continue
+		}
+		if _, ok := {{$data.KeyByIndexMapName}}[{{$data.IndexByKeyMapName}}[key]]; !ok {
+			// internal error, should never happen
+			continue
+
+		}
+		if _, ok := repo.{{$name}}[key]; !ok {
+			// add error about missing
+			delete(indicesToUpdate, {{$data.IndexByKeyMapName}}[key])
+			continue
+		}
+		if _, ok := indicesToUpdate[{{$data.IndexByKeyMapName}}[key]]; ok {
+			continue
+		}
+		// mark index as to be created
+		indicesToUpdate[{{$data.IndexByKeyMapName}}[key]] = repo.{{$name}}[{{$data.KeyByIndexMapName}}[{{$data.IndexByKeyMapName}}[key]]]
+	}
+	{{end}}
+
+	updated := make([]*{{.CRUD.GoType .CRUD.File.GoPkg.Path}}, 0, len(indicesToUpdate))
+	for i, j := range indicesToUpdate {
+		repo.iTable[j] = toUpdate[i]
+		updated = append(updated, toUpdate[i])
+	}
+	return updated, nil
+}
+{{end}}
+
+{{if .CRUD.Delete}}
+// Delete deletes {{.CRUD.Name}}s matching the provided criteria
+// Delete is incomplete and it should be considered unstable
+func (repo *InMemory{{.CRUD.Name}}Repository) Delete(ctx context.Context, expr expressions.Expression) error {
+	indicesToDelete := make(map[uint]struct{})
+	toDelete := []*{{.CRUD.GoType .CRUD.File.GoPkg.Path}}{}
+
+	for i, {{.CRUD.CamelCaseName}} := range repo.iTable {
+		include, err := testExprOn{{.CRUD.Name}}({{.CRUD.CamelCaseName}}, expr)
+		if err != nil {
+			return err
+		}
+		if !include {
+			continue
+		}
+		indicesToDelete[i] = struct{}{}
+		toDelete = append(toDelete, {{.CRUD.CamelCaseName}})
+	}
+
+	{{range $name, $data := .InMemory.UIDDataByUIDNames .CRUD}}
+	_, {{$data.KeyByIndexMapName}}, _, err := {{$data.BuildMapFnName}}(toDelete)
+	if err != nil {
+		return err
+	}
+	{{end}}
+
+	for i, _ := range indicesToDelete {
+		{{- range $name, $data := .InMemory.UIDDataByUIDNames .CRUD}}
+		// remove iTable entry indexed by {{$name}}
+		delete(repo.iTable, repo.{{$name}}[{{$data.KeyByIndexMapName}}[i]])
+		// remove {hash, iTable index} from {{$name}}
+		delete(repo.{{$name}}, {{$data.KeyByIndexMapName}}[i])
+		{{- end}}
+		delete(repo.iTable, i)
+	}
+	return nil
+}
+
+func (repo *InMemory{{.CRUD.Name}}Repository) delete(ctx context.Context, toDelete []*{{.CRUD.GoType .CRUD.File.GoPkg.Path}}) error {
+	panic("remove after commit, never use")
+	indicesToDelete := make(map[uint]struct{})
+	{{range $name, $data := .InMemory.UIDDataByUIDNames .CRUD}}
+	{{$data.IndexByKeyMapName}}, {{$data.KeyByIndexMapName}}, {{$name}}, err := {{$data.BuildMapFnName}}(toDelete)
+	if err != nil {
+		return err
+	}
+	for key, _ := range {{$name}} {
+		if _, ok := {{$data.IndexByKeyMapName}}[key]; !ok {
+			// internal error, should never happen
+			continue
+		}
+		if _, ok := {{$data.KeyByIndexMapName}}[{{$data.IndexByKeyMapName}}[key]]; !ok {
+			// internal error, should never happen
+			continue
+
+		}
+		if _, ok := repo.{{$name}}[key]; !ok {
+			// internal error, this occurs when an item is not added to every map
+			// this should only be caused by implementation failure of the create, update, or delete functionality
+			delete(indicesToDelete, {{$data.IndexByKeyMapName}}[key])
+			continue
+		}
+		if _, ok := indicesToDelete[{{$data.IndexByKeyMapName}}[key]]; !ok {
+			// mark index as to be deleted
+			indicesToDelete[{{$data.IndexByKeyMapName}}[key]] = struct{}{}
+		}
+	}
+	{{end}}
+
+	for i, _ := range indicesToDelete {
+		{{- range $name, $data := .InMemory.UIDDataByUIDNames .CRUD}}
+		// remove iTable entry indexed by {{$name}}
+		delete(repo.iTable, repo.{{$name}}[{{$data.KeyByIndexMapName}}[i]])
+		// remove {hash, iTable index} from {{$name}}
+		delete(repo.{{$name}}, {{$data.KeyByIndexMapName}}[i])
+		{{- end}}
+	}
+	return nil
+}
+{{end}}
+{{if or .CRUD.Read .CRUD.Delete}}
 func testExprOn{{.CRUD.Name}}({{.CRUD.CamelCaseName}} *{{.CRUD.GoType .CRUD.File.GoPkg.Path}}, expr expressions.Expression) (bool, error) {
 	if {{.CRUD.CamelCaseName}} == nil {
 		return false, nil
@@ -454,7 +482,7 @@ func testExprOn{{.CRUD.Name}}({{.CRUD.CamelCaseName}} *{{.CRUD.GoType .CRUD.File
 }
 
 func testEqualExprOn{{.CRUD.Name}}({{.CRUD.CamelCaseName}} *{{.CRUD.GoType .CRUD.File.GoPkg.Path}}, expr *expressions.Equal) (bool, error) {
-	{{if .InMemory.FieldDataByFieldIDConstants .CRUD}}var ident *expressions.Identifier
+	{{if .FieldByFieldConstants}}var ident *expressions.Identifier
 	var scalar *expressions.Scalar
 
 	left := expr.Left()
@@ -486,12 +514,12 @@ func testEqualExprOn{{.CRUD.Name}}({{.CRUD.CamelCaseName}} *{{.CRUD.GoType .CRUD
 		return true, fmt.Errorf("right operand must an scalar value or an identifier")
 	}
 	switch ident.ID() {
-	{{- range $name, $data := .InMemory.FieldDataByFieldIDConstants .CRUD}}
+	{{- range $name, $data := .FieldByFieldConstants}}
 	case {{$name}}:
-		typedVal, ok := any(scalar.Value()).({{ .GoType }})
+		typedVal, ok := any(scalar.Value()).({{ .Def.GoType }})
 		if !ok {
 			return true, fmt.Errorf(
-				"invalid type on field {{$.CRUD.CamelCaseName}}.{{camelIdentifier .Def.GetName }}: expected type {{ .GoType }}: got value %#v",
+				"invalid type on field {{$.CRUD.CamelCaseName}}.{{camelIdentifier .Def.GetName }}: expected type {{ .Def.GoType }}: got value %#v",
 				scalar.Value(),
 			)
 		}
@@ -502,100 +530,16 @@ func testEqualExprOn{{.CRUD.Name}}({{.CRUD.CamelCaseName}} *{{.CRUD.GoType .CRUD
 }
 {{end}}
 
-{{if .CRUD.Update}}
-// Update modifies existing {{.CRUD.Name}}s based on the defined unique identifiers.
-func (repo *InMemory{{.CRUD.Name}}Repository) Update(toUpdate []*{{.CRUD.GoType .CRUD.File.GoPkg.Path}}) ([]*{{.CRUD.GoType .CRUD.File.GoPkg.Path}}, error) {
-	indicesToUpdate := make(map[int]uint)
-	{{range $name, $data := .InMemory.UIDDataByUIDNames .CRUD}}
-	{{$data.IndexByKeyMapName}}, {{$data.KeyByIndexMapName}}, {{$name}}, err := {{$data.BuildMapFnName}}(toUpdate)
-	if err != nil {
-		return nil, err
-	}
-	for key, _ := range {{$name}} {
-		if _, ok := {{$data.IndexByKeyMapName}}[key]; !ok {
-			// internal error, should never happen
-			continue
-		}
-		if _, ok := {{$data.KeyByIndexMapName}}[{{$data.IndexByKeyMapName}}[key]]; !ok {
-			// internal error, should never happen
-			continue
-
-		}
-		if _, ok := repo.{{$name}}[key]; !ok {
-			// add error about missing
-			delete(indicesToUpdate, {{$data.IndexByKeyMapName}}[key])
-			continue
-		}
-		if _, ok := indicesToUpdate[{{$data.IndexByKeyMapName}}[key]]; ok {
-			continue
-		}
-		// mark index as to be created
-		indicesToUpdate[{{$data.IndexByKeyMapName}}[key]] = repo.{{$name}}[{{$data.KeyByIndexMapName}}[{{$data.IndexByKeyMapName}}[key]]]
-	}
-	{{end}}
-
-	updated := make([]*{{.CRUD.GoType .CRUD.File.GoPkg.Path}}, 0, len(indicesToUpdate))
-	for i, j := range indicesToUpdate {
-		repo.iTable[j] = toUpdate[i]
-		updated = append(updated, toUpdate[i])
-	}
-	return updated, nil
-}
-{{end}}
-
-{{if .CRUD.Delete}}
-// Delete deletes {{.CRUD.Name}}s based on the defined unique identifiers
-func (repo *InMemory{{.CRUD.Name}}Repository) Delete(toDelete []*{{.CRUD.GoType .CRUD.File.GoPkg.Path}}) error {
-	indicesToDelete := make(map[int]struct{})
-	{{range $name, $data := .InMemory.UIDDataByUIDNames .CRUD}}
-	{{$data.IndexByKeyMapName}}, {{$data.KeyByIndexMapName}}, {{$name}}, err := {{$data.BuildMapFnName}}(toDelete)
-	if err != nil {
-		return err
-	}
-	for key, _ := range {{$name}} {
-		if _, ok := {{$data.IndexByKeyMapName}}[key]; !ok {
-			// internal error, should never happen
-			continue
-		}
-		if _, ok := {{$data.KeyByIndexMapName}}[{{$data.IndexByKeyMapName}}[key]]; !ok {
-			// internal error, should never happen
-			continue
-
-		}
-		if _, ok := repo.{{$name}}[key]; !ok {
-			// internal error, this occurs when an item is not added to every map
-			// this should only be caused by implementation failure of the create, update, or delete functionality
-			delete(indicesToDelete, {{$data.IndexByKeyMapName}}[key])
-			continue
-		}
-		if _, ok := indicesToDelete[{{$data.IndexByKeyMapName}}[key]]; !ok {
-			// mark index as to be deleted
-			indicesToDelete[{{$data.IndexByKeyMapName}}[key]] = struct{}{}
-		}
-	}
-	{{end}}
-
-	for i, _ := range indicesToDelete {
-		{{- range $name, $data := .InMemory.UIDDataByUIDNames .CRUD}}
-		// remove iTable entry indexed by {{$name}}
-		delete(repo.iTable, repo.{{$name}}[{{$data.KeyByIndexMapName}}[i]])
-		// remove {hash, iTable index} from {{$name}}
-		delete(repo.{{$name}}, {{$data.KeyByIndexMapName}}[i])
-		{{- end}}
-	}
-	return nil
-}
-{{end}}
 {{if or .CRUD.Create .CRUD.Update .CRUD.Delete}}
 {{range $name, $data := .InMemory.UIDDataByUIDNames .CRUD}}
 func {{$data.BuildMapFnName}}({{$.CRUD.CamelCaseName}}s []*{{$.CRUD.GoType $.CRUD.File.GoPkg.Path}}) (
-	map[{{.KeyType}}]int,
-	map[int]{{.KeyType}},
+	map[{{.KeyType}}]uint,
+	map[uint]{{.KeyType}},
 	map[{{.KeyType}}]*{{$.CRUD.GoType $.CRUD.File.GoPkg.Path}},
 	error,
 ) {
-	{{$data.IndexByKeyMapName}} := make(map[{{.KeyType}}]int)
-	{{$data.KeyByIndexMapName}} := make(map[int]{{.KeyType}})
+	{{$data.IndexByKeyMapName}} := make(map[{{.KeyType}}]uint)
+	{{$data.KeyByIndexMapName}} := make(map[uint]{{.KeyType}})
 	{{$name}} := make(map[{{.KeyType}}]*{{$.CRUD.GoType $.CRUD.File.GoPkg.Path}})
 	{{if $data.KeyIsComposite}}
 	{{- template "repository-in-memory-build-map-for-complex-keys" (inMemoryBuildMapWrap $.CRUD $name $data) -}}
@@ -610,8 +554,8 @@ func {{$data.BuildMapFnName}}({{$.CRUD.CamelCaseName}}s []*{{$.CRUD.GoType $.CRU
 
 	_ = template.Must(repositoryTemplate.New("repository-in-memory-build-map-for-simple-keys").Funcs(funcMap).Parse(`
 	for i, def := range {{.CRUD.CamelCaseName}}s {
-		{{.Data.IndexByKeyMapName}}[{{.Data.SimpleKeyGenerationCode "def"}}] = i
-		{{.Data.KeyByIndexMapName}}[i] = {{.Data.SimpleKeyGenerationCode "def"}}
+		{{.Data.IndexByKeyMapName}}[{{.Data.SimpleKeyGenerationCode "def"}}] = uint(i)
+		{{.Data.KeyByIndexMapName}}[uint(i)] = {{.Data.SimpleKeyGenerationCode "def"}}
 		{{.Name}}[{{.Data.SimpleKeyGenerationCode "def"}}] = def
 	}
 `))
@@ -621,8 +565,8 @@ func {{$data.BuildMapFnName}}({{$.CRUD.CamelCaseName}}s []*{{$.CRUD.GoType $.CRU
 	for i, def := range {{$.CRUD.CamelCaseName}}s {
 		{{.Data.CompositeKeyGenerationCode "def" "h"}}
 		key := string(h.Sum(nil))
-		{{.Data.IndexByKeyMapName}}[key] = i
-		{{.Data.KeyByIndexMapName}}[i] = key
+		{{.Data.IndexByKeyMapName}}[key] = uint(i)
+		{{.Data.KeyByIndexMapName}}[uint(i)] = key
 		{{.Name}}[key] = def
 		h.Reset()
 	}

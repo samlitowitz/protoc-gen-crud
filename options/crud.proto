@@ -7,6 +7,7 @@ option go_package = "github.com/samlitowitz/protoc-gen-crud/options";
 enum Implementation {
   NONE = 0;
   IN_MEMORY = 1;
+  SQLITE = 2;
 }
 
 enum Operation {

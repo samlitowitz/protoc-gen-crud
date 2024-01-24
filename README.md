@@ -196,6 +196,22 @@ func LessThanInt(columnName string, value int) {
 }
 ```
 
+# Feature Support
+
+## Message
+
+| Implementation | CRUD |
+|:---------------|:-----|
+| In Memory      | CRUD |
+| SQLite | -    |
+
+## Field
+
+| Implementation | Unique Identifiers   |
+|:---------------|:---------------------|
+| In Memory      | Simple and composite |
+| SQLite | - |
+
 # References
 
 1. https://go.dev/blog/protobuf-apiv2
@@ -204,3 +220,4 @@ func LessThanInt(columnName string, value int) {
 4. https://github.com/googleapis/googleapis/blob/master/google/api/http.proto
 5. https://github.com/grpc-ecosystem/grpc-gateway/tree/main/protoc-gen-openapiv2/options
 6. https://go.dev/blog/intro-generics
+7. https://pkg.go.dev/modernc.org/sqlite

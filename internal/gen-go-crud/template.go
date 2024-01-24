@@ -3,21 +3,64 @@ package gen_go_crud
 
 import (
 	"bytes"
+	"crypto/sha256"
+	"encoding/hex"
+	"fmt"
+	"strings"
 	"text/template"
+
+	"github.com/iancoleman/strcase"
 
 	"github.com/samlitowitz/protoc-gen-crud/internal/casing"
 	"github.com/samlitowitz/protoc-gen-crud/internal/descriptor"
 )
+
+func init() {
+	strcase.ConfigureAcronym("UID", "uid")
+}
 
 type param struct {
 	*descriptor.File
 	Imports []descriptor.GoPackage
 }
 
+type field struct {
+	Def  *descriptor.Field
+	Hash string
+}
+
 type crud struct {
 	*descriptor.CRUD
 	Registry *descriptor.Registry
 	InMemory *inMemory
+	SQLite   *sqlite
+
+	fieldByFieldConstants map[string]*field
+}
+
+func (crud *crud) FieldByFieldConstants() map[string]*field {
+	if crud.fieldByFieldConstants != nil {
+		return crud.fieldByFieldConstants
+	}
+
+	crud.fieldByFieldConstants = make(map[string]*field)
+	for _, fieldDef := range crud.CRUD.Fields {
+		name := fmt.Sprintf(
+			"%s_%s_Field",
+			strcase.ToCamel(crud.CRUD.GetName()),
+			strcase.ToCamel(fieldDef.GetName()),
+		)
+		h := sha256.New()
+		_, err := h.Write([]byte(name))
+		if err != nil {
+			panic(err)
+		}
+		crud.fieldByFieldConstants[name] = &field{
+			Def:  fieldDef,
+			Hash: hex.EncodeToString(h.Sum(nil)),
+		}
+	}
+	return crud.fieldByFieldConstants
 }
 
 func applyTemplate(p param, reg *descriptor.Registry) (string, error) {
@@ -35,6 +78,7 @@ func applyTemplate(p param, reg *descriptor.Registry) (string, error) {
 			CRUD:     def,
 			Registry: reg,
 			InMemory: &inMemory{},
+			SQLite:   &sqlite{},
 		}
 		if err := repositoryTemplate.Execute(w, inject); err != nil {
 			return "", nil
@@ -66,14 +110,32 @@ import (
 `))
 
 	repositoryTemplate = template.Must(template.New("repository").Parse(`
+{{if .CRUD.Read}}
+{{if .FieldByFieldConstants}}
+const (
+{{- range $name, $data := .FieldByFieldConstants}}
+	{{$name}} expressions.FieldID = "{{$data.Hash}}"
+{{- end}}
+)
+{{end}}
+var valid{{.CRUD.Name}}Fields = map[expressions.FieldID]struct{}{
+{{- range $name, $data := .FieldByFieldConstants}}
+	{{$name}}: struct{}{},
+{{- end}}
+}
+{{end}}
 {{template "repository-interface" .}}
 {{if .CRUD.InMemoryImplementation}}
 	{{template "repository-in-memory" .}}
+{{end}}
+{{if .CRUD.SQLiteImplementation}}
+	{{template "repository-sqlite" .}}
 {{end}}
 `))
 
 	funcMap template.FuncMap = map[string]interface{}{
 		"camelIdentifier":      casing.CamelIdentifier,
+		"toLower":              strings.ToLower,
 		"inMemoryBuildMapWrap": inMemoryBuildMapWrap,
 	}
 
@@ -82,24 +144,22 @@ import (
 type {{.CRUD.Name}}Repository interface {
 	{{if .CRUD.Create}}// Create creates new {{.CRUD.Name}}s.
 	// Successfully created {{.CRUD.Name}}s are returned along with any errors that may have occurred.
-	Create([]*{{.CRUD.GoType .CRUD.File.GoPkg.Path}}) ([]*{{.CRUD.GoType .CRUD.File.GoPkg.Path}}, error)
+	Create(context.Context, []*{{.CRUD.GoType .CRUD.File.GoPkg.Path}}) ([]*{{.CRUD.GoType .CRUD.File.GoPkg.Path}}, error)
 	{{end}}
 	{{if .CRUD.Read}}
 	// Read returns a set of {{.CRUD.Name}}s matching the provided criteria
 	// Read is incomplete and it should be considered unstable
-	// Use where clauses
-	Read(expr expressions.Expression) ([]*{{.CRUD.GoType .CRUD.File.GoPkg.Path}}, error)
+	Read(context.Context, expressions.Expression) ([]*{{.CRUD.GoType .CRUD.File.GoPkg.Path}}, error)
 	{{end}}
 	{{if .CRUD.Update}}
 	// Update modifies existing {{.CRUD.Name}}s based on the defined unique identifiers.
 	// Successfully modified {{.CRUD.Name}}s are returned along with any errors that may have occurred.
-	Update([]*{{.CRUD.GoType .CRUD.File.GoPkg.Path}}) ([]*{{.CRUD.GoType .CRUD.File.GoPkg.Path}}, error)
+	Update(context.Context, []*{{.CRUD.GoType .CRUD.File.GoPkg.Path}}) ([]*{{.CRUD.GoType .CRUD.File.GoPkg.Path}}, error)
 	{{end}}
 	{{if .CRUD.Delete}}
-	// Delete deletes {{.CRUD.Name}}s based on the defined unique identifiers
+	// Delete deletes {{.CRUD.Name}}s matching the provided criteria
 	// Delete is incomplete and it should be considered unstable
-	// Use where clauses
-	Delete([]*{{.CRUD.GoType .CRUD.File.GoPkg.Path}}) error
+	Delete(context.Context,  expressions.Expression) error
 	{{end}}
 }
 `))
