@@ -3,7 +3,10 @@ package main
 import (
 	"flag"
 	"fmt"
+	gen_sqlite "github.com/samlitowitz/protoc-gen-crud/internal/gen-sqlite"
 	"os"
+
+	gen_gen "github.com/samlitowitz/protoc-gen-crud/internal/gen-gen"
 
 	gen_go_crud "github.com/samlitowitz/protoc-gen-crud/internal/gen-go-crud"
 
@@ -35,7 +38,10 @@ func main() {
 	}.Run(func(gen *protogen.Plugin) error {
 		reg := descriptor.NewRegistry()
 
-		generator := gen_go_crud.New(reg)
+		crudGen := gen_go_crud.New(reg)
+		sqliteGen := gen_sqlite.New(reg)
+
+		genGen := gen_gen.New(crudGen, sqliteGen)
 
 		if err := reg.LoadFromPlugin(gen); err != nil {
 			return err
@@ -50,7 +56,7 @@ func main() {
 			targets = append(targets, f)
 		}
 
-		files, err := generator.Generate(targets)
+		files, err := genGen.Generate(targets)
 		for _, f := range files {
 			genFile := gen.NewGeneratedFile(f.GetName(), protogen.GoImportPath(f.GoPkg.Path))
 			if _, err := genFile.Write([]byte(f.GetContent())); err != nil {

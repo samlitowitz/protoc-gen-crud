@@ -63,7 +63,6 @@ func (g *generator) Generate(targets []*descriptor.File) ([]*descriptor.Response
 			},
 			GoPkg: file.GoPkg,
 		})
-		// TODO: Add support for generating SQLite table files here, raw SQL? code?
 	}
 	return files, nil
 }

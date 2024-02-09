@@ -193,45 +193,6 @@ func (repo *InMemoryUserRepository) Delete(ctx context.Context, expr expressions
 	return nil
 }
 
-func (repo *InMemoryUserRepository) delete(ctx context.Context, toDelete []*User) error {
-	panic("remove after commit, never use")
-	indicesToDelete := make(map[uint]struct{})
-
-	indexById, idByIndex, userById, err := buildUserIdMap(toDelete)
-	if err != nil {
-		return err
-	}
-	for key, _ := range userById {
-		if _, ok := indexById[key]; !ok {
-			// internal error, should never happen
-			continue
-		}
-		if _, ok := idByIndex[indexById[key]]; !ok {
-			// internal error, should never happen
-			continue
-
-		}
-		if _, ok := repo.userById[key]; !ok {
-			// internal error, this occurs when an item is not added to every map
-			// this should only be caused by implementation failure of the create, update, or delete functionality
-			delete(indicesToDelete, indexById[key])
-			continue
-		}
-		if _, ok := indicesToDelete[indexById[key]]; !ok {
-			// mark index as to be deleted
-			indicesToDelete[indexById[key]] = struct{}{}
-		}
-	}
-
-	for i, _ := range indicesToDelete {
-		// remove iTable entry indexed by userById
-		delete(repo.iTable, repo.userById[idByIndex[i]])
-		// remove {hash, iTable index} from userById
-		delete(repo.userById, idByIndex[i])
-	}
-	return nil
-}
-
 func testExprOnUser(user *User, expr expressions.Expression) (bool, error) {
 	if user == nil {
 		return false, nil

@@ -1,6 +1,7 @@
 package simple_test
 
 import (
+	"context"
 	"fmt"
 	"strings"
 	"testing"
@@ -33,7 +34,7 @@ func TestSQLiteUserRepository_Create(t *testing.T) {
 
 	repo := simple.NewSQLiteUserRepository()
 
-	users, err := repo.Read(nil)
+	users, err := repo.Read(context.Background(), nil)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -214,7 +215,7 @@ func TestSQLiteUserRepository_Read(t *testing.T) {
 	for testCase, testData := range tests {
 		repo := simple.NewSQLiteUserRepository()
 
-		users, err := repo.Read(nil)
+		users, err := repo.Read(context.Background(), nil)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -408,7 +409,7 @@ func TestSQLiteUserRepository_Update(t *testing.T) {
 	for testCase, testData := range tests {
 		repo := simple.NewSQLiteUserRepository()
 
-		users, err := repo.Read(nil)
+		users, err := repo.Read(context.Background(), nil)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -502,7 +503,7 @@ func TestSQLiteUserRepository_Delete(t *testing.T) {
 
 	repo := simple.NewSQLiteUserRepository()
 
-	users, err := repo.Read(nil)
+	users, err := repo.Read(context.Background(), nil)
 	if err != nil {
 		t.Fatal(err)
 	}
