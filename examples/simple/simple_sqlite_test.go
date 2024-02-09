@@ -2,7 +2,11 @@ package simple_test
 
 import (
 	"context"
+	"database/sql"
 	"fmt"
+	"os"
+	"path"
+	"runtime"
 	"strings"
 	"testing"
 
@@ -17,6 +21,36 @@ import (
 )
 
 func TestSQLiteUserRepository_Create(t *testing.T) {
+	// REFURL: https://github.com/golang/go/blob/988b718f4130ab5b3ce5a5774e1a58e83c92a163/src/path/filepath/path_test.go#L600
+	// -- START -- //
+	if runtime.GOOS == "ios" {
+		restore := chtmpdir(t)
+		defer restore()
+	}
+
+	tmpDir := t.TempDir()
+
+	origDir, err := os.Getwd()
+	if err != nil {
+		t.Fatal("finding working dir:", err)
+	}
+	if err = os.Chdir(tmpDir); err != nil {
+		t.Fatal("entering temp dir:", err)
+	}
+	defer os.Chdir(origDir)
+	// -- END -- //
+
+	db, err := sql.Open("sqlite", path.Join(tmpDir, ":memory:"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer db.Close()
+
+	err = createTable(db, origDir)
+	if err != nil {
+		t.Fatal(err)
+	}
+
 	opts := cmp.Options{
 		cmpopts.IgnoreUnexported(simple.User{}),
 		cmpopts.SortSlices(func(x, y *simple.User) bool {
@@ -32,7 +66,10 @@ func TestSQLiteUserRepository_Create(t *testing.T) {
 		}),
 	}
 
-	repo := simple.NewSQLiteUserRepository()
+	repo, err := simple.NewSQLiteUserRepository(db)
+	if err != nil {
+		t.Fatal(err)
+	}
 
 	users, err := repo.Read(context.Background(), nil)
 	if err != nil {
@@ -52,7 +89,7 @@ func TestSQLiteUserRepository_Create(t *testing.T) {
 		})
 	}
 
-	actualUsers, err := repo.Create(expectedUsers)
+	actualUsers, err := repo.Create(context.Background(), expectedUsers)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -63,6 +100,42 @@ func TestSQLiteUserRepository_Create(t *testing.T) {
 }
 
 func TestSQLiteUserRepository_Read(t *testing.T) {
+	// REFURL: https://github.com/golang/go/blob/988b718f4130ab5b3ce5a5774e1a58e83c92a163/src/path/filepath/path_test.go#L600
+	// -- START -- //
+	if runtime.GOOS == "ios" {
+		restore := chtmpdir(t)
+		defer restore()
+	}
+
+	tmpDir := t.TempDir()
+
+	origDir, err := os.Getwd()
+	if err != nil {
+		t.Fatal("finding working dir:", err)
+	}
+	if err = os.Chdir(tmpDir); err != nil {
+		t.Fatal("entering temp dir:", err)
+	}
+	defer os.Chdir(origDir)
+	// -- END -- //
+
+	f, err := os.CreateTemp(tmpDir, "test.*.sqlite")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer os.Remove(f.Name())
+	f.Close()
+	db, err := sql.Open("sqlite", tmpDir+string(os.PathSeparator)+f.Name())
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer db.Close()
+
+	err = createTable(db, origDir)
+	if err != nil {
+		t.Fatal(err)
+	}
+
 	opts := cmp.Options{
 		cmpopts.IgnoreUnexported(simple.User{}),
 		cmpopts.SortSlices(func(x, y *simple.User) bool {
@@ -213,7 +286,10 @@ func TestSQLiteUserRepository_Read(t *testing.T) {
 	}
 
 	for testCase, testData := range tests {
-		repo := simple.NewSQLiteUserRepository()
+		repo, err := simple.NewSQLiteUserRepository(db)
+		if err != nil {
+			t.Fatal(err)
+		}
 
 		users, err := repo.Read(context.Background(), nil)
 		if err != nil {
@@ -245,7 +321,7 @@ func TestSQLiteUserRepository_Read(t *testing.T) {
 			toCreate = append(toCreate, user)
 		}
 
-		actualUsers, err := repo.Create(toCreate)
+		actualUsers, err := repo.Create(context.Background(), toCreate)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -258,7 +334,7 @@ func TestSQLiteUserRepository_Read(t *testing.T) {
 			)
 		}
 
-		actualUsers, err = repo.Read(testData.expr)
+		actualUsers, err = repo.Read(context.Background(), testData.expr)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -273,6 +349,42 @@ func TestSQLiteUserRepository_Read(t *testing.T) {
 }
 
 func TestSQLiteUserRepository_Update(t *testing.T) {
+	// REFURL: https://github.com/golang/go/blob/988b718f4130ab5b3ce5a5774e1a58e83c92a163/src/path/filepath/path_test.go#L600
+	// -- START -- //
+	if runtime.GOOS == "ios" {
+		restore := chtmpdir(t)
+		defer restore()
+	}
+
+	tmpDir := t.TempDir()
+
+	origDir, err := os.Getwd()
+	if err != nil {
+		t.Fatal("finding working dir:", err)
+	}
+	if err = os.Chdir(tmpDir); err != nil {
+		t.Fatal("entering temp dir:", err)
+	}
+	defer os.Chdir(origDir)
+	// -- END -- //
+
+	f, err := os.CreateTemp(tmpDir, "test.*.sqlite")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer os.Remove(f.Name())
+	f.Close()
+	db, err := sql.Open("sqlite", tmpDir+string(os.PathSeparator)+f.Name())
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer db.Close()
+
+	err = createTable(db, origDir)
+	if err != nil {
+		t.Fatal(err)
+	}
+
 	opts := cmp.Options{
 		cmpopts.IgnoreUnexported(simple.User{}),
 		cmpopts.SortSlices(func(x, y *simple.User) bool {
@@ -407,7 +519,10 @@ func TestSQLiteUserRepository_Update(t *testing.T) {
 	}
 
 	for testCase, testData := range tests {
-		repo := simple.NewSQLiteUserRepository()
+		repo, err := simple.NewSQLiteUserRepository(db)
+		if err != nil {
+			t.Fatal(err)
+		}
 
 		users, err := repo.Read(context.Background(), nil)
 		if err != nil {
@@ -421,7 +536,7 @@ func TestSQLiteUserRepository_Update(t *testing.T) {
 			)
 		}
 
-		actualUsers, err := repo.Create(testData.createUsers)
+		actualUsers, err := repo.Create(context.Background(), testData.createUsers)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -434,7 +549,7 @@ func TestSQLiteUserRepository_Update(t *testing.T) {
 			)
 		}
 
-		actualUsers, err = repo.Read(testData.expr)
+		actualUsers, err = repo.Read(context.Background(), testData.expr)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -458,7 +573,7 @@ func TestSQLiteUserRepository_Update(t *testing.T) {
 			}
 		}
 
-		actualUsers, err = repo.Update(testData.expectedUsers)
+		actualUsers, err = repo.Update(context.Background(), testData.expectedUsers)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -471,7 +586,7 @@ func TestSQLiteUserRepository_Update(t *testing.T) {
 			)
 		}
 
-		actualUsers, err = repo.Read(testData.expr)
+		actualUsers, err = repo.Read(context.Background(), testData.expr)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -486,6 +601,36 @@ func TestSQLiteUserRepository_Update(t *testing.T) {
 }
 
 func TestSQLiteUserRepository_Delete(t *testing.T) {
+	// REFURL: https://github.com/golang/go/blob/988b718f4130ab5b3ce5a5774e1a58e83c92a163/src/path/filepath/path_test.go#L600
+	// -- START -- //
+	if runtime.GOOS == "ios" {
+		restore := chtmpdir(t)
+		defer restore()
+	}
+
+	tmpDir := t.TempDir()
+
+	origDir, err := os.Getwd()
+	if err != nil {
+		t.Fatal("finding working dir:", err)
+	}
+	if err = os.Chdir(tmpDir); err != nil {
+		t.Fatal("entering temp dir:", err)
+	}
+	defer os.Chdir(origDir)
+	// -- END -- //
+
+	db, err := sql.Open("sqlite", path.Join(tmpDir, ":memory:"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer db.Close()
+
+	err = createTable(db, origDir)
+	if err != nil {
+		t.Fatal(err)
+	}
+
 	opts := cmp.Options{
 		cmpopts.IgnoreUnexported(simple.User{}),
 		cmpopts.SortSlices(func(x, y *simple.User) bool {
@@ -501,7 +646,10 @@ func TestSQLiteUserRepository_Delete(t *testing.T) {
 		}),
 	}
 
-	repo := simple.NewSQLiteUserRepository()
+	repo, err := simple.NewSQLiteUserRepository(db)
+	if err != nil {
+		t.Fatal(err)
+	}
 
 	users, err := repo.Read(context.Background(), nil)
 	if err != nil {
@@ -521,7 +669,7 @@ func TestSQLiteUserRepository_Delete(t *testing.T) {
 		})
 	}
 
-	actualUsers, err := repo.Create(expectedUsers)
+	actualUsers, err := repo.Create(context.Background(), expectedUsers)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -530,18 +678,59 @@ func TestSQLiteUserRepository_Delete(t *testing.T) {
 		t.Fatalf("Create() mismatch (-want +got):\n%s", diff)
 	}
 
-	err = repo.Delete([]*simple.User{expectedUsers[0]})
+	expr := expressions.NewEqual(
+		expressions.NewIdentifier(simple.User_Id_Field),
+		expressions.NewScalar(expectedUsers[0].Id),
+	)
+	err = repo.Delete(context.Background(), expr)
 	if err != nil {
 		t.Fatal(err)
 	}
 
 	expectedUsers = expectedUsers[1:]
-	actualUsers, err = repo.Read(nil)
+	actualUsers, err = repo.Read(context.Background(), nil)
 	if err != nil {
 		t.Fatal(err)
 	}
 
 	if diff := cmp.Diff(expectedUsers, actualUsers, opts); diff != "" {
 		t.Fatalf("Create() mismatch (-want +got):\n%s", diff)
+	}
+}
+
+func createTable(db *sql.DB, dir string) error {
+	code, err := os.ReadFile(dir + string(os.PathSeparator) + "simple.sqlite.sql")
+	if err != nil {
+		return err
+	}
+	stmt, err := db.Prepare(string(code))
+	if err != nil {
+		return err
+	}
+	_, err = stmt.Exec()
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+// REFURL: https://github.com/golang/go/blob/988b718f4130ab5b3ce5a5774e1a58e83c92a163/src/path/filepath/path_test.go#L553
+func chtmpdir(t *testing.T) (restore func()) {
+	oldwd, err := os.Getwd()
+	if err != nil {
+		t.Fatalf("chtmpdir: %v", err)
+	}
+	d, err := os.MkdirTemp("", "test")
+	if err != nil {
+		t.Fatalf("chtmpdir: %v", err)
+	}
+	if err := os.Chdir(d); err != nil {
+		t.Fatalf("chtmpdir: %v", err)
+	}
+	return func() {
+		if err := os.Chdir(oldwd); err != nil {
+			t.Fatalf("chtmpdir: %v", err)
+		}
+		os.RemoveAll(d)
 	}
 }

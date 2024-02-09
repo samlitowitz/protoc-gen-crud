@@ -2,6 +2,7 @@ package gen_go_crud
 
 import (
 	"fmt"
+	"strconv"
 	"strings"
 	"text/template"
 
@@ -14,6 +15,10 @@ func init() {
 	strcase.ConfigureAcronym("UID", "uid")
 }
 
+func SQLiteIdent(s string) string {
+	return "\"" + s + "\""
+}
+
 func SQLiteTableName(s string) string {
 	return strcase.ToSnake(s)
 }
@@ -23,7 +28,7 @@ func SQLiteColumnName(s string) string {
 }
 
 func SQLiteColumnIdentifier(s string) string {
-	return "`" + SQLiteColumnName(s) + "`"
+	return SQLiteIdent(SQLiteColumnName(s))
 }
 
 type sqlite struct{}
@@ -32,16 +37,17 @@ func (sqlite *sqlite) CreateQuery(crud *descriptor.CRUD) string {
 	if len(crud.Fields) == 0 {
 		return ""
 	}
-	query := "INSERT INTO `%s` (%s) VALUES\\n%%s"
+	query := `INSERT INTO %s (%s) VALUES%s%%s`
 	cols := make([]string, 0, len(crud.Fields))
 	for _, def := range crud.Fields {
 		cols = append(cols, SQLiteColumnIdentifier(def.GetName()))
 	}
-	return fmt.Sprintf(
+	return strconv.Quote(fmt.Sprintf(
 		query,
-		SQLiteTableName(crud.GetName()),
+		SQLiteIdent(SQLiteTableName(crud.GetName())),
 		strings.Join(cols, ", "),
-	)
+		"\n",
+	))
 }
 
 var (
@@ -84,7 +90,7 @@ func (repo *SQLite{{.CRUD.Name}}Repository) Create(ctx context.Context, toCreate
 		{{- end}}
 	}
 	query := fmt.Sprintf(
-		"{{ .SQLite.CreateQuery .CRUD }}",
+		{{ .SQLite.CreateQuery .CRUD }},
 		strings.Join(bindsStrs, ",\n"),
 	)
 	stmt, err := repo.db.Prepare(query)
@@ -95,8 +101,7 @@ func (repo *SQLite{{.CRUD.Name}}Repository) Create(ctx context.Context, toCreate
 	if err != nil {
 		return nil, err
 	}
-	// TODO: WIP
-	return nil, nil
+	return toCreate, nil
 }
 {{end}}
 
@@ -117,7 +122,7 @@ func (repo *SQLite{{.CRUD.Name}}Repository) Update(ctx context.Context, toUpdate
 
 {{if .CRUD.Delete}}
 // Delete deletes {{.CRUD.Name}}s based on the defined unique identifiers
-func (repo *SQLite{{.CRUD.Name}}Repository) Delete(ctx context.Context, toDelete []*{{.CRUD.GoType .CRUD.File.GoPkg.Path}}) error {
+func (repo *SQLite{{.CRUD.Name}}Repository) Delete(ctx context.Context, expr expressions.Expression) error {
 	panic("not implemented")
 }
 {{end}}

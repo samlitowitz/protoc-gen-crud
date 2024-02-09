@@ -36,5 +36,8 @@ func (g *generator) Generate(targets []*descriptor.File) ([]*descriptor.Response
 }
 
 func (g *generator) generate(file *descriptor.File) (string, error) {
-	return "", nil
+	param := param{
+		File: file,
+	}
+	return applyTemplate(param, g.reg)
 }

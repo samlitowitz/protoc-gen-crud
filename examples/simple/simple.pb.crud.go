@@ -379,7 +379,7 @@ func (repo *SQLiteUserRepository) Create(ctx context.Context, toCreate []*User) 
 		bindsStrs = append(bindsStrs, fmt.Sprintf(":user_username_field_%d", i))
 	}
 	query := fmt.Sprintf(
-		"INSERT INTO `user` (`id`, `username`, `password`) VALUES\n%s",
+		"INSERT INTO \"user\" (\"id\", \"username\", \"password\") VALUES\n%s",
 		strings.Join(bindsStrs, ",\n"),
 	)
 	stmt, err := repo.db.Prepare(query)
@@ -390,8 +390,7 @@ func (repo *SQLiteUserRepository) Create(ctx context.Context, toCreate []*User) 
 	if err != nil {
 		return nil, err
 	}
-	// TODO: WIP
-	return nil, nil
+	return toCreate, nil
 }
 
 // Read returns a set of Users matching the provided criteria
@@ -406,6 +405,6 @@ func (repo *SQLiteUserRepository) Update(ctx context.Context, toUpdate []*User) 
 }
 
 // Delete deletes Users based on the defined unique identifiers
-func (repo *SQLiteUserRepository) Delete(ctx context.Context, toDelete []*User) error {
+func (repo *SQLiteUserRepository) Delete(ctx context.Context, expr expressions.Expression) error {
 	panic("not implemented")
 }
