@@ -385,48 +385,6 @@ func (repo *InMemory{{.CRUD.Name}}Repository) Delete(ctx context.Context, expr e
 	}
 	return nil
 }
-
-func (repo *InMemory{{.CRUD.Name}}Repository) delete(ctx context.Context, toDelete []*{{.CRUD.GoType .CRUD.File.GoPkg.Path}}) error {
-	panic("remove after commit, never use")
-	indicesToDelete := make(map[uint]struct{})
-	{{range $name, $data := .InMemory.UIDDataByUIDNames .CRUD}}
-	{{$data.IndexByKeyMapName}}, {{$data.KeyByIndexMapName}}, {{$name}}, err := {{$data.BuildMapFnName}}(toDelete)
-	if err != nil {
-		return err
-	}
-	for key, _ := range {{$name}} {
-		if _, ok := {{$data.IndexByKeyMapName}}[key]; !ok {
-			// internal error, should never happen
-			continue
-		}
-		if _, ok := {{$data.KeyByIndexMapName}}[{{$data.IndexByKeyMapName}}[key]]; !ok {
-			// internal error, should never happen
-			continue
-
-		}
-		if _, ok := repo.{{$name}}[key]; !ok {
-			// internal error, this occurs when an item is not added to every map
-			// this should only be caused by implementation failure of the create, update, or delete functionality
-			delete(indicesToDelete, {{$data.IndexByKeyMapName}}[key])
-			continue
-		}
-		if _, ok := indicesToDelete[{{$data.IndexByKeyMapName}}[key]]; !ok {
-			// mark index as to be deleted
-			indicesToDelete[{{$data.IndexByKeyMapName}}[key]] = struct{}{}
-		}
-	}
-	{{end}}
-
-	for i, _ := range indicesToDelete {
-		{{- range $name, $data := .InMemory.UIDDataByUIDNames .CRUD}}
-		// remove iTable entry indexed by {{$name}}
-		delete(repo.iTable, repo.{{$name}}[{{$data.KeyByIndexMapName}}[i]])
-		// remove {hash, iTable index} from {{$name}}
-		delete(repo.{{$name}}, {{$data.KeyByIndexMapName}}[i])
-		{{- end}}
-	}
-	return nil
-}
 {{end}}
 {{if or .CRUD.Read .CRUD.Delete}}
 func testExprOn{{.CRUD.Name}}({{.CRUD.CamelCaseName}} *{{.CRUD.GoType .CRUD.File.GoPkg.Path}}, expr expressions.Expression) (bool, error) {
