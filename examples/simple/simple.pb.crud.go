@@ -414,7 +414,23 @@ func (repo *SQLiteUserRepository) Update(ctx context.Context, toUpdate []*User) 
 
 // Delete deletes Users based on the defined unique identifiers
 func (repo *SQLiteUserRepository) Delete(ctx context.Context, expr expressions.Expression) error {
-	panic("not implemented")
+	query := "DELETE FROM \"user\""
+	clauses, binds, err := whereClauseFromExpressionForUser(expr)
+	if err != nil {
+		return err
+	}
+	if clauses != "" {
+		query += "\nWHERE\n" + clauses
+	}
+	stmt, err := repo.db.Prepare(query)
+	if err != nil {
+		return err
+	}
+	_, err = stmt.ExecContext(ctx, binds...)
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 var sqliteUserFieldMetaData = map[expressions.FieldID]struct {

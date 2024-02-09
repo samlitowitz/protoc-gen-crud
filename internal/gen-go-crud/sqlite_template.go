@@ -91,6 +91,13 @@ func (sqlite *sqlite) ReadScan(crud *descriptor.CRUD) string {
 	return strings.Join(scan, ", ")
 }
 
+func (sqlite *sqlite) DeleteQuery(crud *descriptor.CRUD) string {
+	return strconv.Quote(fmt.Sprintf(
+		`DELETE FROM %s`,
+		SQLiteIdent(SQLiteTableName(crud.GetName())),
+	))
+}
+
 func (sqlite *sqlite) TableName(crud *descriptor.CRUD) string {
 	return SQLiteTableName(crud.GetName())
 }
@@ -198,7 +205,23 @@ func (repo *SQLite{{.CRUD.Name}}Repository) Update(ctx context.Context, toUpdate
 {{if .CRUD.Delete}}
 // Delete deletes {{.CRUD.Name}}s based on the defined unique identifiers
 func (repo *SQLite{{.CRUD.Name}}Repository) Delete(ctx context.Context, expr expressions.Expression) error {
-	panic("not implemented")
+	query := {{.SQLite.DeleteQuery .CRUD}}
+	clauses, binds, err := whereClauseFromExpressionFor{{.CRUD.Name}}(expr)
+	if err != nil {
+		return err
+	}
+	if clauses != "" {
+		query += "\nWHERE\n" + clauses
+	}
+	stmt, err := repo.db.Prepare(query)
+	if err != nil {
+		return err
+	}
+	_, err = stmt.ExecContext(ctx, binds...)
+	if err != nil {
+		return err
+	}
+	return nil
 }
 {{end}}
 

@@ -530,6 +530,18 @@ func TestInMemoryUserRepository_Delete(t *testing.T) {
 		t.Fatalf("Create() mismatch (-want +got):\n%s", diff)
 	}
 
+	actualUsers, err = repo.Read(context.Background(), nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(actualUsers) != 3 {
+		t.Fatalf("expected 3 users, got %d", len(users))
+	}
+
+	if diff := cmp.Diff(expectedUsers, actualUsers, opts); diff != "" {
+		t.Fatalf("Create() mismatch (-want +got):\n%s", diff)
+	}
+
 	expr := expressions.NewEqual(
 		expressions.NewIdentifier(simple.User_Id_Field),
 		expressions.NewScalar(expectedUsers[0].Id),
@@ -546,6 +558,6 @@ func TestInMemoryUserRepository_Delete(t *testing.T) {
 	}
 
 	if diff := cmp.Diff(expectedUsers, actualUsers, opts); diff != "" {
-		t.Fatalf("Create() mismatch (-want +got):\n%s", diff)
+		t.Fatalf("Read() mismatch (-want +got):\n%s", diff)
 	}
 }
