@@ -114,6 +114,7 @@ var (
 
 	// https://www.sqlite.org/lang_createtable.html
 	createTableTemplate = template.Must(template.New("create-table").Funcs(funcMap).Parse(`
+DROP TABLE IF EXISTS "{{tableName .CRUD.GetName}}";
 CREATE TABLE IF NOT EXISTS "{{tableName .CRUD.GetName}}" (
 	{{colDefs .CRUD}}
 	-- TODO: column definitions with constraints

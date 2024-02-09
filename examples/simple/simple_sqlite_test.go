@@ -5,7 +5,6 @@ import (
 	"database/sql"
 	"fmt"
 	"os"
-	"path"
 	"runtime"
 	"strings"
 	"testing"
@@ -40,7 +39,7 @@ func TestSQLiteUserRepository_Create(t *testing.T) {
 	defer os.Chdir(origDir)
 	// -- END -- //
 
-	db, err := sql.Open("sqlite", path.Join(tmpDir, ":memory:"))
+	db, err := sql.Open("sqlite", ":memory:")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -119,22 +118,11 @@ func TestSQLiteUserRepository_Read(t *testing.T) {
 	defer os.Chdir(origDir)
 	// -- END -- //
 
-	f, err := os.CreateTemp(tmpDir, "test.*.sqlite")
-	if err != nil {
-		t.Fatal(err)
-	}
-	defer os.Remove(f.Name())
-	f.Close()
-	db, err := sql.Open("sqlite", tmpDir+string(os.PathSeparator)+f.Name())
+	db, err := sql.Open("sqlite", ":memory:")
 	if err != nil {
 		t.Fatal(err)
 	}
 	defer db.Close()
-
-	err = createTable(db, origDir)
-	if err != nil {
-		t.Fatal(err)
-	}
 
 	opts := cmp.Options{
 		cmpopts.IgnoreUnexported(simple.User{}),
@@ -286,6 +274,11 @@ func TestSQLiteUserRepository_Read(t *testing.T) {
 	}
 
 	for testCase, testData := range tests {
+		err = createTable(db, origDir)
+		if err != nil {
+			t.Fatal(err)
+		}
+
 		repo, err := simple.NewSQLiteUserRepository(db)
 		if err != nil {
 			t.Fatal(err)
@@ -368,13 +361,7 @@ func TestSQLiteUserRepository_Update(t *testing.T) {
 	defer os.Chdir(origDir)
 	// -- END -- //
 
-	f, err := os.CreateTemp(tmpDir, "test.*.sqlite")
-	if err != nil {
-		t.Fatal(err)
-	}
-	defer os.Remove(f.Name())
-	f.Close()
-	db, err := sql.Open("sqlite", tmpDir+string(os.PathSeparator)+f.Name())
+	db, err := sql.Open("sqlite", ":memory:")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -620,7 +607,7 @@ func TestSQLiteUserRepository_Delete(t *testing.T) {
 	defer os.Chdir(origDir)
 	// -- END -- //
 
-	db, err := sql.Open("sqlite", path.Join(tmpDir, ":memory:"))
+	db, err := sql.Open("sqlite", ":memory:")
 	if err != nil {
 		t.Fatal(err)
 	}

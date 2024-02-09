@@ -352,31 +352,11 @@ func (repo *SQLiteUserRepository) Create(ctx context.Context, toCreate []*User) 
 	}
 	binds := []any{}
 	bindsStrs := []string{}
-	for i, val := range toCreate {
-		binds = append(
-			binds,
-			sql.Named(
-				fmt.Sprintf(":user_id_field_%d", i),
-				val.Id,
-			),
-		)
-		bindsStrs = append(bindsStrs, fmt.Sprintf(":user_id_field_%d", i))
-		binds = append(
-			binds,
-			sql.Named(
-				fmt.Sprintf(":user_password_field_%d", i),
-				val.Password,
-			),
-		)
-		bindsStrs = append(bindsStrs, fmt.Sprintf(":user_password_field_%d", i))
-		binds = append(
-			binds,
-			sql.Named(
-				fmt.Sprintf(":user_username_field_%d", i),
-				val.Username,
-			),
-		)
-		bindsStrs = append(bindsStrs, fmt.Sprintf(":user_username_field_%d", i))
+	for _, val := range toCreate {
+		binds = append(binds, val.Id)
+		binds = append(binds, val.Username)
+		binds = append(binds, val.Password)
+		bindsStrs = append(bindsStrs, "(?, ?, ?)")
 	}
 	query := fmt.Sprintf(
 		"INSERT INTO \"user\" (\"id\", \"username\", \"password\") VALUES\n%s",
@@ -386,7 +366,7 @@ func (repo *SQLiteUserRepository) Create(ctx context.Context, toCreate []*User) 
 	if err != nil {
 		return nil, err
 	}
-	_, err = stmt.Exec(binds...)
+	_, err = stmt.ExecContext(ctx, binds...)
 	if err != nil {
 		return nil, err
 	}
@@ -396,7 +376,35 @@ func (repo *SQLiteUserRepository) Create(ctx context.Context, toCreate []*User) 
 // Read returns a set of Users matching the provided criteria
 // Read is incomplete and it should be considered unstable
 func (repo *SQLiteUserRepository) Read(ctx context.Context, expr expressions.Expression) ([]*User, error) {
-	panic("not implemented")
+	query := "SELECT \"id\", \"username\", \"password\"\nFROM \"user\""
+	clauses, binds, err := whereClauseFromExpressionForUser(expr)
+	if err != nil {
+		return nil, err
+	}
+	if clauses != "" {
+		query += "\nWHERE\n" + clauses
+	}
+	stmt, err := repo.db.Prepare(query)
+	if err != nil {
+		return nil, err
+	}
+	rows, err := stmt.QueryContext(ctx, binds...)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var found []*User
+	for rows.Next() {
+		user := &User{}
+		if err = rows.Scan(&user.Id, &user.Username, &user.Password); err != nil {
+			return nil, err
+		}
+		found = append(found, user)
+	}
+	if err = rows.Err(); err != nil {
+		return nil, err
+	}
+	return found, nil
 }
 
 // Update modifies existing Users based on the defined unique identifiers.
@@ -407,4 +415,87 @@ func (repo *SQLiteUserRepository) Update(ctx context.Context, toUpdate []*User) 
 // Delete deletes Users based on the defined unique identifiers
 func (repo *SQLiteUserRepository) Delete(ctx context.Context, expr expressions.Expression) error {
 	panic("not implemented")
+}
+
+var sqliteUserFieldMetaData = map[expressions.FieldID]struct {
+	tableName  string
+	columnName string
+}{
+	User_Id_Field: {
+		tableName:  "user",
+		columnName: "id",
+	},
+	User_Password_Field: {
+		tableName:  "user",
+		columnName: "password",
+	},
+	User_Username_Field: {
+		tableName:  "user",
+		columnName: "username",
+	},
+}
+
+func whereClauseFromExpressionForUser(expr expressions.Expression) (string, []any, error) {
+	if expr == nil {
+		return "", nil, nil
+	}
+	switch expr := expr.(type) {
+	case *expressions.And:
+		left, leftBinds, err := whereClauseFromExpressionForUser(expr.Left())
+		if err != nil {
+			return "", nil, err
+		}
+		right, rightBinds, err := whereClauseFromExpressionForUser(expr.Right())
+		if err != nil {
+			return "", nil, err
+		}
+		return fmt.Sprintf("%s AND %s", left, right), append(leftBinds, rightBinds...), nil
+
+	case *expressions.Or:
+		left, leftBinds, err := whereClauseFromExpressionForUser(expr.Left())
+		if err != nil {
+			return "", nil, err
+		}
+		right, rightBinds, err := whereClauseFromExpressionForUser(expr.Right())
+		if err != nil {
+			return "", nil, err
+		}
+		return fmt.Sprintf("%s OR %s", left, right), append(leftBinds, rightBinds...), nil
+	case *expressions.Not:
+		operand, binds, err := whereClauseFromExpressionForUser(expr.Operand())
+		if err != nil {
+			return "", nil, err
+		}
+		return fmt.Sprintf("NOT %s", operand), binds, nil
+
+	case *expressions.Equal:
+		left, leftBinds, err := whereClauseFromExpressionForUser(expr.Left())
+		if err != nil {
+			return "", nil, err
+		}
+		right, rightBinds, err := whereClauseFromExpressionForUser(expr.Right())
+		if err != nil {
+			return "", nil, err
+		}
+		return fmt.Sprintf("%s = %s", left, right), append(leftBinds, rightBinds...), nil
+
+	case *expressions.Identifier:
+		if _, ok := validUserFields[expr.ID()]; !ok {
+			return "", nil, fmt.Errorf("invalid field id: %s", expr.ID())
+		}
+		metaData, ok := sqliteUserFieldMetaData[expr.ID()]
+		if !ok {
+			return "", nil, fmt.Errorf("missing meta-data: field id: %s", expr.ID())
+		}
+		return fmt.Sprintf(
+			"\"%s\".\"%s\"",
+			metaData.tableName,
+			metaData.columnName,
+		), nil, nil
+
+	case *expressions.Scalar:
+		return "?", []any{expr.Value()}, nil
+	default:
+		return "", nil, fmt.Errorf("unknown expression")
+	}
 }
