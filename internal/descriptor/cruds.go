@@ -35,6 +35,8 @@ func (r *Registry) loadCRUDs(file *File) error {
 				return err
 			}
 		}
+		processFieldMaskField(def)
+
 		file.CRUDs = append(file.CRUDs, def)
 		r.cruds[msg.FQMN()] = def
 	}
@@ -58,6 +60,8 @@ func assignMessageOptions(def *CRUD, msgOpts *options.MessageOptions) {
 	for _, implementation := range msgOpts.Implementations {
 		def.Implementations[implementation] = struct{}{}
 	}
+
+	def.FieldMaskFieldName = msgOpts.FieldMaskField
 }
 
 func assignUniqueIdentifiers(def *CRUD, field *Field, fieldOpts *options.FieldOptions) error {
@@ -94,6 +98,21 @@ func assignUniqueIdentifiers(def *CRUD, field *Field, fieldOpts *options.FieldOp
 	}
 
 	return nil
+}
+
+func processFieldMaskField(def *CRUD) {
+	if def.FieldMaskFieldName == "" {
+		return
+	}
+	for _, field := range def.Fields {
+		if field.GetName() != def.FieldMaskFieldName {
+			continue
+		}
+		def.FieldMaskField = field
+		field.IsFieldMaskField = true
+		return
+	}
+	panic(fmt.Sprintf("unable to find specified `fieldMaskField`: %s", def.FieldMaskFieldName))
 }
 
 func extractMessageOptions(msg *descriptorpb.DescriptorProto) (*options.MessageOptions, error) {

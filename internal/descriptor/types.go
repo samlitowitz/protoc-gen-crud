@@ -86,6 +86,10 @@ type CRUD struct {
 	Operations map[options.Operation]struct{}
 	// Implementations is a set of implementations generate for CRUD operations
 	Implementations map[options.Implementation]struct{}
+	// FieldMaskFieldName is the name of the field to use as the field mask for creates and updates
+	FieldMaskFieldName string
+	// FieldMaskField is the field definition of the field mask
+	FieldMaskField *Field
 
 	// Field Options
 	UniqueIdentifiers map[string][]*Field
@@ -208,6 +212,8 @@ type Field struct {
 	FieldMessage *Message
 	// ForcePrefixedName when set to true, prefixes a type with a package prefix.
 	ForcePrefixedName bool
+	// IsFieldMaskField when set to true, indicates this field is the field mask field for the message it belongs to
+	IsFieldMaskField bool
 }
 
 // FQFN returns a fully qualified field name of this field.

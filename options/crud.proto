@@ -23,6 +23,7 @@ message MethodOptions {}
 message MessageOptions {
   repeated Operation operations = 1;
   repeated Implementation implementations = 2;
+  string fieldMaskField = 3;
 }
 
 message ServiceOptions {}

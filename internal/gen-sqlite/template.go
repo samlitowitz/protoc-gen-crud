@@ -26,6 +26,9 @@ func colDefs(crud *descriptor.CRUD) string {
 	var colDefs []string
 
 	for _, field := range crud.Fields {
+		if field.IsFieldMaskField {
+			continue
+		}
 		colDefs = append(
 			colDefs,
 			fmt.Sprintf(
