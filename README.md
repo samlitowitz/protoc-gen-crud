@@ -6,7 +6,7 @@
     1. [Message](#message)
         1. [Operations](#operations)
         2. [Delete Strategy](#delete-strategy)
-        3. [Partial Updates/Creates](#partial-updatescreates)
+        3. [Partial Creates/Updates](#partial-createsupdates)
         4. [Meta-Data](#meta-data)
         5. [Audit Logging](#audit-logging)
     2. [Field](#field)
@@ -32,7 +32,7 @@
 |:---------------|:-------------------|:-----|
 | SQLite         | :white_check_mark: |      |
 
-### Partial Updates/Creates
+### Partial Creates/Updates
 
 | Implementation | Field Mask |
 |:---------------|:-----------|
