@@ -200,9 +200,11 @@ func LessThanInt(columnName string, value int) {
 
 ## Message
 
-| Implementation | CRUD |
-|:---------------|:-----|
-| SQLite | CRUD |
+### Operations
+
+| Implementation | Create             | Read               | Update             | Delete             |
+|:---------------|:-------------------|:-------------------|:-------------------|:-------------------|
+| SQLite         | :white_check_mark: | :white_check_mark: | :white_check_mark: | :white_check_mark: |
 
 ## Field
 
