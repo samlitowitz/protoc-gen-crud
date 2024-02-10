@@ -9,7 +9,7 @@ import "protoc-gen-crud/options/annotations.proto";
 message User {
   option (protoc_gen_crud.options.crud_message_options) = {
     operations: [CREATE, READ, UPDATE, DELETE]
-    implementations: [IN_MEMORY, SQLITE]
+    implementations: [SQLITE]
   };
   string id = 1 [
     (protoc_gen_crud.options.crud_field_options) = {

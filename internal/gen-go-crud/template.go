@@ -32,7 +32,6 @@ type field struct {
 type crud struct {
 	*descriptor.CRUD
 	Registry *descriptor.Registry
-	InMemory *inMemory
 	SQLite   *sqlite
 
 	fieldByFieldConstants map[string]*field
@@ -77,7 +76,6 @@ func applyTemplate(p param, reg *descriptor.Registry) (string, error) {
 		inject := &crud{
 			CRUD:     def,
 			Registry: reg,
-			InMemory: &inMemory{},
 			SQLite:   &sqlite{},
 		}
 		if err := repositoryTemplate.Execute(w, inject); err != nil {
@@ -124,19 +122,14 @@ var valid{{.CRUD.Name}}Fields = map[expressions.FieldID]struct{}{
 {{- end}}
 }
 {{end}}
-{{template "repository-interface" .}}
-{{if .CRUD.InMemoryImplementation}}
-	{{template "repository-in-memory" .}}
-{{end}}
 {{if .CRUD.SQLiteImplementation}}
 	{{template "repository-sqlite" .}}
 {{end}}
 `))
 
 	funcMap template.FuncMap = map[string]interface{}{
-		"camelIdentifier":      casing.CamelIdentifier,
-		"toLower":              strings.ToLower,
-		"inMemoryBuildMapWrap": inMemoryBuildMapWrap,
+		"camelIdentifier": casing.CamelIdentifier,
+		"toLower":         strings.ToLower,
 	}
 
 	_ = template.Must(repositoryTemplate.New("repository-interface").Funcs(funcMap).Parse(`

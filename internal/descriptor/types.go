@@ -115,11 +115,6 @@ func (def *CRUD) Delete() bool {
 	return ok
 }
 
-func (def *CRUD) InMemoryImplementation() bool {
-	_, ok := def.Implementations[options.Implementation_IN_MEMORY]
-	return ok
-}
-
 func (def *CRUD) SQLiteImplementation() bool {
 	_, ok := def.Implementations[options.Implementation_SQLITE]
 	return ok

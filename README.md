@@ -202,15 +202,13 @@ func LessThanInt(columnName string, value int) {
 
 | Implementation | CRUD |
 |:---------------|:-----|
-| In Memory      | CRUD |
-| SQLite | -    |
+| SQLite | CRUD |
 
 ## Field
 
-| Implementation | Unique Identifiers   |
-|:---------------|:---------------------|
-| In Memory      | Simple and composite |
-| SQLite | - |
+| Implementation | Unique Identifiers |
+|:---------------|:-------------------|
+| SQLite | Simple             |
 
 # References
 
