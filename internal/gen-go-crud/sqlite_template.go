@@ -36,9 +36,6 @@ func SQLiteColumnIdentifier(s string) string {
 type sqlite struct{}
 
 func (sqlite *sqlite) CreateRecordBinds(crud *descriptor.CRUD) string {
-	if len(crud.Fields) == 0 {
-		return ""
-	}
 	binds := []string{}
 	for range crud.Fields {
 		binds = append(binds, "?")
@@ -91,11 +88,82 @@ func (sqlite *sqlite) ReadScan(crud *descriptor.CRUD) string {
 	return strings.Join(scan, ", ")
 }
 
+func (sqlite *sqlite) UpdateQuery(crud *descriptor.CRUD) string {
+	setStmts := make([]string, 0, len(crud.Fields))
+	for _, def := range crud.Fields {
+		setStmts = append(
+			setStmts,
+			fmt.Sprintf("%s = ?", SQLiteColumnIdentifier(def.GetName())),
+		)
+	}
+	_, uidFields := getMinimalUID(crud)
+	whereClauses := make([]string, 0, len(uidFields))
+	for _, def := range uidFields {
+		whereClauses = append(
+			whereClauses,
+			fmt.Sprintf("%s = ?", SQLiteColumnIdentifier(def.GetName())),
+		)
+	}
+
+	return strconv.Quote(fmt.Sprintf(
+		`UPDATE %s
+SET %s
+WHERE %s`,
+		SQLiteIdent(SQLiteTableName(crud.GetName())),
+		strings.Join(setStmts, ", "),
+		strings.Join(whereClauses, " AND "),
+	))
+}
+
+func (sqlite *sqlite) UpdateBinds(crud *descriptor.CRUD) string {
+	bindsStrs := make([]string, 0, len(crud.Fields))
+	for _, def := range crud.Fields {
+		bindsStrs = append(
+			bindsStrs,
+			fmt.Sprintf(
+				"%s.%s",
+				crud.CamelCaseName(),
+				casing.CamelIdentifier(def.GetName()),
+			),
+		)
+	}
+	_, uidFields := getMinimalUID(crud)
+	for _, def := range uidFields {
+		bindsStrs = append(
+			bindsStrs,
+			fmt.Sprintf(
+				"%s.%s",
+				crud.CamelCaseName(),
+				casing.CamelIdentifier(def.GetName()),
+			),
+		)
+	}
+	return strings.Join(bindsStrs, ", ")
+}
+
 func (sqlite *sqlite) DeleteQuery(crud *descriptor.CRUD) string {
 	return strconv.Quote(fmt.Sprintf(
 		`DELETE FROM %s`,
 		SQLiteIdent(SQLiteTableName(crud.GetName())),
 	))
+}
+
+func getMinimalUID(crud *descriptor.CRUD) (string, []*descriptor.Field) {
+	var minUIDName string
+	var minUIDFields []*descriptor.Field
+
+	for name, fields := range crud.UniqueIdentifiers {
+		if minUIDFields == nil {
+			minUIDName = name
+			minUIDFields = fields
+			continue
+		}
+		if len(minUIDFields) > len(fields) {
+			minUIDName = name
+			minUIDFields = fields
+		}
+	}
+	return minUIDName, minUIDFields
 }
 
 func (sqlite *sqlite) TableName(crud *descriptor.CRUD) string {
@@ -132,7 +200,7 @@ func NewSQLite{{.CRUD.Name}}Repository(db *sql.DB) (*SQLite{{.CRUD.Name}}Reposit
 // Create creates new {{.CRUD.Name}}s.
 // Successfully created {{.CRUD.Name}}s are returned along with any errors that may have occurred.
 func (repo *SQLite{{.CRUD.Name}}Repository) Create(ctx context.Context, toCreate []*{{.CRUD.GoType .CRUD.File.GoPkg.Path}}) ([]*{{.CRUD.GoType .CRUD.File.GoPkg.Path}}, error) {
-	if len(toCreate) == 0 {
+	{{if ne (len .CRUD.UniqueIdentifiers) 0}}if len(toCreate) == 0 {
 		return nil, nil
 	}
 	binds := []any{}
@@ -156,6 +224,9 @@ func (repo *SQLite{{.CRUD.Name}}Repository) Create(ctx context.Context, toCreate
 		return nil, err
 	}
 	return toCreate, nil
+	{{else}}
+	panic("cannot create: no fields defined")
+	{{end}}
 }
 {{end}}
 
@@ -198,7 +269,33 @@ func (repo *SQLite{{.CRUD.Name}}Repository) Read(ctx context.Context, expr expre
 {{if .CRUD.Update}}
 // Update modifies existing {{.CRUD.Name}}s based on the defined unique identifiers.
 func (repo *SQLite{{.CRUD.Name}}Repository) Update(ctx context.Context, toUpdate []*{{.CRUD.GoType .CRUD.File.GoPkg.Path}}) ([]*{{.CRUD.GoType .CRUD.File.GoPkg.Path}}, error) {
-	panic("not implemented")
+	{{if ne (len .CRUD.UniqueIdentifiers) 0}}if len(toUpdate) == 0 {
+		return nil, nil
+	}
+	tx, err := repo.db.BeginTx(ctx, &sql.TxOptions{Isolation: sql.LevelSerializable})
+	if err != nil {
+		return nil, err
+	}
+	defer tx.Rollback()
+	stmt, err := tx.Prepare({{.SQLite.UpdateQuery .CRUD}})
+	if err != nil {
+		return nil, err
+	}
+	defer stmt.Close()
+	for _, {{$.CRUD.CamelCaseName}} := range toUpdate {
+		_, err = stmt.ExecContext(ctx, {{.SQLite.UpdateBinds .CRUD}})
+		if err != nil {
+			return nil, err
+		}
+	}
+	err = tx.Commit()
+	if err != nil {
+		return nil, err
+	}
+	return toUpdate, nil
+	{{else}}
+	panic("cannot update: no unique identifiers defined")
+	{{end}}
 }
 {{end}}
 

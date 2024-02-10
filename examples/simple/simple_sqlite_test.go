@@ -367,11 +367,6 @@ func TestSQLiteUserRepository_Update(t *testing.T) {
 	}
 	defer db.Close()
 
-	err = createTable(db, origDir)
-	if err != nil {
-		t.Fatal(err)
-	}
-
 	opts := cmp.Options{
 		cmpopts.IgnoreUnexported(simple.User{}),
 		cmpopts.SortSlices(func(x, y *simple.User) bool {
@@ -506,6 +501,11 @@ func TestSQLiteUserRepository_Update(t *testing.T) {
 	}
 
 	for testCase, testData := range tests {
+		err = createTable(db, origDir)
+		if err != nil {
+			t.Fatal(err)
+		}
+
 		repo, err := simple.NewSQLiteUserRepository(db)
 		if err != nil {
 			t.Fatal(err)

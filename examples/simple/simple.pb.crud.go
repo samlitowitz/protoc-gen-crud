@@ -371,6 +371,7 @@ func (repo *SQLiteUserRepository) Create(ctx context.Context, toCreate []*User) 
 		return nil, err
 	}
 	return toCreate, nil
+
 }
 
 // Read returns a set of Users matching the provided criteria
@@ -409,7 +410,31 @@ func (repo *SQLiteUserRepository) Read(ctx context.Context, expr expressions.Exp
 
 // Update modifies existing Users based on the defined unique identifiers.
 func (repo *SQLiteUserRepository) Update(ctx context.Context, toUpdate []*User) ([]*User, error) {
-	panic("not implemented")
+	if len(toUpdate) == 0 {
+		return nil, nil
+	}
+	tx, err := repo.db.BeginTx(ctx, &sql.TxOptions{Isolation: sql.LevelSerializable})
+	if err != nil {
+		return nil, err
+	}
+	defer tx.Rollback()
+	stmt, err := tx.Prepare("UPDATE \"user\"\nSET \"id\" = ?, \"username\" = ?, \"password\" = ?\nWHERE \"id\" = ?")
+	if err != nil {
+		return nil, err
+	}
+	defer stmt.Close()
+	for _, user := range toUpdate {
+		_, err = stmt.ExecContext(ctx, user.Id, user.Username, user.Password, user.Id)
+		if err != nil {
+			return nil, err
+		}
+	}
+	err = tx.Commit()
+	if err != nil {
+		return nil, err
+	}
+	return toUpdate, nil
+
 }
 
 // Delete deletes Users based on the defined unique identifiers
