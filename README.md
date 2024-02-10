@@ -206,11 +206,55 @@ func LessThanInt(columnName string, value int) {
 |:---------------|:-------------------|:-------------------|:-------------------|:-------------------|
 | SQLite         | :white_check_mark: | :white_check_mark: | :white_check_mark: | :white_check_mark: |
 
+### Delete Strategy
+
+| Implementation | Hard               | Soft |
+|:---------------|:-------------------|:-----|
+| SQLite         | :white_check_mark: |      |
+
+### Partial Updates/Creates
+
+| Implementation | Field Mask |
+|:---------------|:-----------|
+| SQLite         |            |
+
+### Meta-Data
+
+| Implementation | Created At | Updated At | Deleted At |
+|:---------------|:-----------|:-----------|:-----------|
+| SQLite         |            |            |            |
+
+### Audit Logging
+
+| Implementation |
+|:---------------|
+| SQLite         |
+
 ## Field
 
-| Implementation | Unique Identifiers |
-|:---------------|:-------------------|
-| SQLite | Simple             |
+### Unique Identifiers
+
+| Implementation | Single             | Composite |
+|:---------------|:-------------------|:----------|
+| SQLite         | :white_check_mark: |           |:white_check_mark:
+
+### Auto-generate Strategy
+
+| Implementation | None | UUID | Sequential Integer |
+|:---------------|:-----|:-----|:-------------------|
+| SQLite         |      |      |                    |
+
+### Nullable
+
+| Implementation | Nullable | Not-Nullable |
+|:---------------|:---------|:-------------|
+| SQLite         |          |              |
+
+### Non-scalar Field Relationship Strategy
+
+| Implementation | Inline | Link via Unique ID | Skip |
+|:---------------|:-------|:-------------------|:-----|
+| SQLite         |        |                    |      |
 
 # References
 
