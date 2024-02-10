@@ -686,7 +686,7 @@ func TestSQLiteUserRepository_Delete(t *testing.T) {
 }
 
 func createTable(db *sql.DB, dir string) error {
-	code, err := os.ReadFile(dir + string(os.PathSeparator) + "simple.sqlite.sql")
+	code, err := os.ReadFile(dir + string(os.PathSeparator) + "user.sqlite.sql")
 	if err != nil {
 		return err
 	}
