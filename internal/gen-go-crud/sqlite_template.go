@@ -1,14 +1,7 @@
 package gen_go_crud
 
 import (
-	"fmt"
-	"strconv"
-	"strings"
 	"text/template"
-
-	"github.com/samlitowitz/protoc-gen-crud/internal/casing"
-
-	"github.com/samlitowitz/protoc-gen-crud/internal/descriptor"
 
 	"github.com/iancoleman/strcase"
 )
@@ -38,62 +31,6 @@ func SQLiteColumnIdentifier(s string) string {
 }
 
 type sqlite struct{}
-
-func (sqlite *sqlite) UpdateBinds(crud *descriptor.CRUD) string {
-	bindsStrs := make([]string, 0, len(crud.Fields))
-	for _, def := range crud.Fields {
-		bindsStrs = append(
-			bindsStrs,
-			fmt.Sprintf(
-				"%s.%s",
-				crud.CamelCaseName(),
-				casing.CamelIdentifier(def.GetName()),
-			),
-		)
-	}
-	_, uidFields := getMinimalUID(crud)
-	for _, def := range uidFields {
-		bindsStrs = append(
-			bindsStrs,
-			fmt.Sprintf(
-				"%s.%s",
-				crud.CamelCaseName(),
-				casing.CamelIdentifier(def.GetName()),
-			),
-		)
-	}
-	return strings.Join(bindsStrs, ", ")
-}
-
-func getMinimalUID(crud *descriptor.CRUD) (string, []*descriptor.Field) {
-	var minUIDName string
-	var minUIDFields []*descriptor.Field
-
-	for name, fields := range crud.UniqueIdentifiers {
-		if minUIDFields == nil {
-			minUIDName = name
-			minUIDFields = fields
-			continue
-		}
-		if len(minUIDFields) > len(fields) {
-			minUIDName = name
-			minUIDFields = fields
-		}
-	}
-	return minUIDName, minUIDFields
-}
-
-func (sqlite *sqlite) TableName(crud *descriptor.CRUD) string {
-	return SQLiteTableName(crud.GetName())
-}
-
-func (sqlite *sqlite) TableIdentifierName(crud *descriptor.CRUD) string {
-	return strconv.Quote(SQLiteIdent(SQLiteTableName(crud.GetName())))
-}
-
-func (sqlite *sqlite) ColumnName(field *descriptor.Field) string {
-	return SQLiteColumnName(field.GetName())
-}
 
 var (
 	sqliteFuncMap template.FuncMap = map[string]interface{}{
@@ -278,8 +215,8 @@ var sqlite{{.CRUD.Name}}FieldMetaData = map[expressions.FieldID]struct{
 }{
 {{- range $name, $data := .FieldByFieldConstants}}
 	{{$name}}: {
-		tableName: "{{$.SQLite.TableName $.CRUD}}",
-		columnName: "{{$.SQLite.ColumnName $data.Def}}",
+		tableName: "{{sqliteTableName $.CRUD.GetName}}",
+		columnName: "{{sqliteColumnName $data.Def.GetName}}",
 	},
 {{- end}}
 }
