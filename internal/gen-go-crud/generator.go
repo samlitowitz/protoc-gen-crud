@@ -133,6 +133,11 @@ func (g *generator) addCrudPathParamImports(file *descriptor.File, crud *descrip
 		imports = append(imports, descriptor.GoPackage{Path: "strings", Name: "strings"})
 	}
 
+	if crud.SQLiteImplementation() && crud.FieldMaskFieldName != "" && (crud.Create() || crud.Update()) && !pkgSeen["github.com/mennanov/fmutils"] {
+		pkgSeen["github.com/mennanov/fmutils"] = true
+		imports = append(imports, descriptor.GoPackage{Path: "github.com/mennanov/fmutils", Name: "fmutils"})
+	}
+
 	if crud.Read() && !pkgSeen["github.com/samlitowitz/protoc-gen-crud/expressions"] {
 		pkgSeen["github.com/samlitowitz/protoc-gen-crud/expressions"] = true
 		imports = append(imports, descriptor.GoPackage{Path: "github.com/samlitowitz/protoc-gen-crud/expressions", Name: "expressions"})

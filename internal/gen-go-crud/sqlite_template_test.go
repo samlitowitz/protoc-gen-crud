@@ -111,7 +111,7 @@ func TestApplyTemplate_RepositorySQLite(t *testing.T) {
 
 func TestApplyTemplate_RepositorySQLiteUIDs(t *testing.T) {
 	//allOperations := []options.Operation{options.Operation_CREATE, options.Operation_READ, options.Operation_UPDATE, options.Operation_DELETE}
-	allOperations := []options.Operation{options.Operation_READ}
+	allOperations := []options.Operation{options.Operation_CREATE}
 	operationCombinations := allOperationCombinations(allOperations)
 
 	supportedScalarTypes := []string{
@@ -201,10 +201,11 @@ func TestApplyTemplate_RepositorySQLiteUIDs(t *testing.T) {
 				def.Message = msg
 			}
 			crud := &descriptor.CRUD{
-				Message:           msg,
-				Operations:        make(map[options.Operation]struct{}),
-				Implementations:   map[options.Implementation]struct{}{implementation: {}},
-				UniqueIdentifiers: uidMap,
+				Message:            msg,
+				Operations:         make(map[options.Operation]struct{}),
+				Implementations:    map[options.Implementation]struct{}{implementation: {}},
+				UniqueIdentifiers:  uidMap,
+				FieldMaskFieldName: "test",
 			}
 			for _, operation := range operations {
 				crud.Operations[operation] = struct{}{}

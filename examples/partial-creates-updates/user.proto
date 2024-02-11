@@ -1,0 +1,24 @@
+syntax = "proto3";
+
+package simple.options;
+
+option go_package = "github.com/samlitowitz/protoc-gen-crud/examples/partial-creates-updates";
+
+import "google/protobuf/field_mask.proto";
+import "protoc-gen-crud/options/annotations.proto";
+
+message User {
+  option (protoc_gen_crud.options.crud_message_options) = {
+    operations: [CREATE, READ, UPDATE, DELETE]
+    implementations: [SQLITE]
+    fieldMaskField: "fieldMask"
+  };
+  google.protobuf.FieldMask fieldMask = 1;
+  string id = 2 [
+    (protoc_gen_crud.options.crud_field_options) = {
+      uids: ["id"]
+    }
+  ];
+  string username = 3;
+  string password = 4;
+}

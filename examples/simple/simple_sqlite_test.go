@@ -45,11 +45,6 @@ func TestSQLiteUserRepository_Create(t *testing.T) {
 	}
 	defer db.Close()
 
-	err = createTable(db, origDir)
-	if err != nil {
-		t.Fatal(err)
-	}
-
 	opts := cmp.Options{
 		cmpopts.IgnoreUnexported(simple.User{}),
 		cmpopts.SortSlices(func(x, y *simple.User) bool {
@@ -65,36 +60,86 @@ func TestSQLiteUserRepository_Create(t *testing.T) {
 		}),
 	}
 
-	repo, err := simple.NewSQLiteUserRepository(db)
-	if err != nil {
-		t.Fatal(err)
+	tests := map[string]struct {
+		expectedUsers []*simple.User
+		expr          expressions.Expression
+	}{
+		"sets all fields": {
+			[]*simple.User{
+				{
+					Id:       uuid.NewString(),
+					Username: "username-1",
+					Password: "password-1",
+				},
+				{
+					Id:       uuid.NewString(),
+					Username: "username-2",
+					Password: "password-2",
+				},
+				{
+					Id:       uuid.NewString(),
+					Username: "username-3",
+					Password: "password-3",
+				},
+			},
+			nil,
+		},
 	}
 
-	users, err := repo.Read(context.Background(), nil)
-	if err != nil {
-		t.Fatal(err)
-	}
-	if len(users) != 0 {
-		t.Fatalf("expected 0 users, got %d", len(users))
-	}
+	for testCase, testData := range tests {
+		err = createTable(db, origDir)
+		if err != nil {
+			t.Fatal(err)
+		}
 
-	expectedUserCount := 3
-	expectedUsers := make([]*simple.User, 0, expectedUserCount)
-	for i := 0; i < expectedUserCount; i++ {
-		expectedUsers = append(expectedUsers, &simple.User{
-			Id:       uuid.NewString(),
-			Username: fmt.Sprintf("username-%d", i),
-			Password: fmt.Sprintf("password-%d", i),
-		})
-	}
+		repo, err := simple.NewSQLiteUserRepository(db)
+		if err != nil {
+			t.Fatal(err)
+		}
 
-	actualUsers, err := repo.Create(context.Background(), expectedUsers)
-	if err != nil {
-		t.Fatal(err)
-	}
+		users, err := repo.Read(context.Background(), nil)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if len(users) != 0 {
+			t.Fatalf(
+				"%s: expected 0 users, got %d",
+				testCase,
+				len(users),
+			)
+		}
 
-	if diff := cmp.Diff(expectedUsers, actualUsers, opts); diff != "" {
-		t.Fatalf("Create() mismatch (-want +got):\n%s", diff)
+		toCreate := make([]*simple.User, 0, len(testData.expectedUsers))
+		for _, user := range testData.expectedUsers {
+			toCreate = append(toCreate, user)
+		}
+
+		// Check create response
+		actualUsers, err := repo.Create(context.Background(), toCreate)
+		if err != nil {
+			t.Fatalf("%s: %s", testCase, err)
+		}
+
+		if diff := cmp.Diff(toCreate, actualUsers, opts); diff != "" {
+			t.Fatalf(
+				"%s: Create() mismatch (-want +got):\n%s",
+				testCase,
+				diff,
+			)
+		}
+
+		// Check stored data
+		actualUsers, err = repo.Read(context.Background(), testData.expr)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if diff := cmp.Diff(testData.expectedUsers, actualUsers, opts); diff != "" {
+			t.Fatalf(
+				"%s: Read() mismatch (-want +got):\n%s",
+				testCase,
+				diff,
+			)
+		}
 	}
 }
 

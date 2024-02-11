@@ -144,6 +144,7 @@ func (def *CRUD) DataFields() []*Field {
 	return fields
 }
 
+// TODO: replace all uses of this function in templates with funcMap
 func (def *CRUD) CamelCaseName() string {
 	return strcase.ToLowerCamel(*def.Name)
 }

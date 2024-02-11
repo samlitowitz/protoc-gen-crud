@@ -26,10 +26,6 @@ func SQLiteColumnName(s string) string {
 	return strcase.ToSnake(s)
 }
 
-func SQLiteColumnIdentifier(s string) string {
-	return SQLiteIdent(SQLiteColumnName(s))
-}
-
 type sqlite struct{}
 
 var (
@@ -60,21 +56,32 @@ func NewSQLite{{.CRUD.Name}}Repository(db *sql.DB) (*SQLite{{.CRUD.Name}}Reposit
 // Create creates new {{.CRUD.Name}}s.
 // Successfully created {{.CRUD.Name}}s are returned along with any errors that may have occurred.
 func (repo *SQLite{{.CRUD.Name}}Repository) Create(ctx context.Context, toCreate []*{{.CRUD.GoType .CRUD.File.GoPkg.Path}}) ([]*{{.CRUD.GoType .CRUD.File.GoPkg.Path}}, error) {
-	{{if ne (len .CRUD.UniqueIdentifiers) 0}}if len(toCreate) == 0 {
+	{{if eq (len .CRUD.UniqueIdentifiers) 0 -}}
+	panic("cannot create: no fields defined")
+	{{else -}}
+	if len(toCreate) == 0 {
 		return nil, nil
 	}
+	tx, err := repo.db.BeginTx(ctx, &sql.TxOptions{Isolation: sql.LevelSerializable})
+	if err != nil {
+		return nil, err
+	}
+	defer tx.Rollback()
+
+	{{if eq .CRUD.FieldMaskFieldName "" -}}
 	binds := []any{}
 	bindsStrs := []string{}
-	for _, val := range toCreate {
+	for _, {{$.CRUD.CamelCaseName}} := range toCreate {
 		{{- range $field := .CRUD.DataFields}}
-		binds = append(binds, val.{{ camelIdentifier $field.GetName }})
+		binds = append(binds, {{$.CRUD.CamelCaseName}}.Get{{camelIdentifier $field.GetName}}())
 		{{- end}}
 		bindsStrs = append(bindsStrs, "(
 			{{- range $i, $field := .CRUD.DataFields -}}
 			{{if $i}},{{end}}?
 			{{- end -}})")
 	}
-	stmt, err := repo.db.Prepare(
+	_, err = tx.ExecContext(
+		ctx,
 		fmt.Sprintf(
 			"INSERT INTO {{sqliteIdent (sqliteTableName .CRUD.GetName)}} (
 			{{- range $i, $field := .CRUD.DataFields -}}
@@ -82,18 +89,76 @@ func (repo *SQLite{{.CRUD.Name}}Repository) Create(ctx context.Context, toCreate
 			{{- end -}}) VALUES \n %s",
 			strings.Join(bindsStrs, ",\n"),
 		),
+		binds...
 	)
 	if err != nil {
 		return nil, err
 	}
-	_, err = stmt.ExecContext(ctx, binds...)
+	{{- else -}}
+	noMaskBinds := []any{}
+	noMaskBindsStrs := []string{}
+	for _, {{$.CRUD.CamelCaseName}} := range toCreate {
+		if {{$.CRUD.CamelCaseName}}.{{camelIdentifier $.CRUD.FieldMaskFieldName}} == nil {
+			{{- range $field := .CRUD.DataFields}}
+			noMaskBinds = append(noMaskBinds, {{$.CRUD.CamelCaseName}}.Get{{camelIdentifier $field.GetName}}())
+			{{- end}}
+			noMaskBindsStrs = append(noMaskBindsStrs, "(
+			{{- range $i, $field := .CRUD.DataFields -}}
+			{{if $i}},{{end}}?
+			{{- end -}})")
+			continue
+		}
+		valuesByColName, err := sqlite{{.CRUD.Name}}GetCreateValuesByColumnName({{$.CRUD.CamelCaseName}}, {{$.CRUD.CamelCaseName}}.{{camelIdentifier $.CRUD.FieldMaskFieldName}})
+		if err != nil {
+			return nil, err
+		}
+		if len(valuesByColName) == 0 {
+			continue
+		}
+		var binds []any
+		var cols []string
+		var params []string
+		for colName, value := range valuesByColName {
+			cols = append(cols, "\"" + colName + "\"")
+			params = append(params, "?")
+			binds = append(binds, value)
+		}
+		_, err = tx.ExecContext(
+			ctx,
+			fmt.Sprintf(
+				"INSERT INTO {{sqliteIdent (sqliteTableName .CRUD.GetName)}} (%s) VALUES \n (%s)",
+				strings.Join(cols, ", "),
+				strings.Join(params, ", "),
+			),
+			binds...
+		)
+		if err != nil {
+			return nil, err
+		}
+	}
+	if len(noMaskBinds) > 0 {
+		_, err = tx.ExecContext(
+			ctx,
+			fmt.Sprintf(
+				"INSERT INTO {{sqliteIdent (sqliteTableName .CRUD.GetName)}} (
+				{{- range $i, $field := .CRUD.DataFields -}}
+				{{if $i}},{{end}}{{sqliteIdent (sqliteColumnName $field.GetName)}}
+				{{- end -}}) VALUES \n %s",
+				strings.Join(noMaskBindsStrs, ",\n"),
+			),
+			noMaskBinds...
+		)
+		if err != nil {
+			return nil, err
+		}
+	}
+	{{ end }}
+	err = tx.Commit()
 	if err != nil {
 		return nil, err
 	}
 	return toCreate, nil
-	{{else}}
-	panic("cannot create: no fields defined")
-	{{end}}
+	{{- end }}
 }
 {{end}}
 
@@ -142,9 +207,9 @@ func (repo *SQLite{{.CRUD.Name}}Repository) Read(ctx context.Context, expr expre
 {{if .CRUD.Update}}
 // Update modifies existing {{.CRUD.Name}}s based on the defined unique identifiers.
 func (repo *SQLite{{.CRUD.Name}}Repository) Update(ctx context.Context, toUpdate []*{{.CRUD.GoType .CRUD.File.GoPkg.Path}}) ([]*{{.CRUD.GoType .CRUD.File.GoPkg.Path}}, error) {
-	{{if eq (len .CRUD.MinimalUIDFields) 0}}
+	{{if eq (len .CRUD.MinimalUIDFields) 0 -}}
 	panic("cannot update: no unique identifiers defined")
-	{{else if eq (len .CRUD.NonMinimalUIDDataFields) 0}}
+	{{else if eq (len .CRUD.NonMinimalUIDDataFields) 0 -}}
 	panic("cannot update: all fields are part of the minimal unique identifier: use create and delete instead")
 	{{else}}
 	if len(toUpdate) == 0 {
@@ -155,8 +220,9 @@ func (repo *SQLite{{.CRUD.Name}}Repository) Update(ctx context.Context, toUpdate
 		return nil, err
 	}
 	defer tx.Rollback()
+
 	stmt, err := tx.Prepare(
-		"UPDATE {{sqliteIdent (sqliteTableName .CRUD.GetName)}} SET {{ range $i, $field := .CRUD.NonMinimalUIDDataFields -}}
+		"UPDATE {{sqliteIdent (sqliteTableName .CRUD.GetName)}} SET {{range $i, $field := .CRUD.NonMinimalUIDDataFields -}}
 		{{if $i}},{{end}}{{sqliteIdent (sqliteColumnName $field.GetName)}} = ?
 		{{- end }} WHERE {{ range $i, $field := .CRUD.MinimalUIDFields -}}
 		{{if $i}},{{end}}{{sqliteIdent (sqliteColumnName $field.GetName)}} = ?
@@ -166,16 +232,64 @@ func (repo *SQLite{{.CRUD.Name}}Repository) Update(ctx context.Context, toUpdate
 		return nil, err
 	}
 	defer stmt.Close()
+	{{ if eq .CRUD.FieldMaskFieldName ""}}
 	for _, {{$.CRUD.CamelCaseName}} := range toUpdate {
 		_, err = stmt.ExecContext(ctx, {{ range $i, $field := .CRUD.NonMinimalUIDDataFields -}}
-		{{if $i}},{{end}}{{$.CRUD.CamelCaseName}}.{{camelIdentifier $field.GetName}}
+		{{if $i}},{{end}}{{$.CRUD.CamelCaseName}}.Get{{camelIdentifier $field.GetName}}()
 		{{- end }},{{ range $i, $field := .CRUD.MinimalUIDFields -}}
-		{{if $i}},{{end}}{{$.CRUD.CamelCaseName}}.{{camelIdentifier $field.GetName}}
+		{{if $i}},{{end}}{{$.CRUD.CamelCaseName}}.Get{{camelIdentifier $field.GetName}}()
 		{{- end }})
 		if err != nil {
 			return nil, err
 		}
 	}
+	{{else}}
+	for _, {{$.CRUD.CamelCaseName}} := range toUpdate {
+		if {{$.CRUD.CamelCaseName}}.{{camelIdentifier $.CRUD.FieldMaskFieldName}} == nil {
+			_, err = stmt.ExecContext(ctx, {{ range $i, $field := .CRUD.NonMinimalUIDDataFields -}}
+			{{if $i}},{{end}}{{$.CRUD.CamelCaseName}}.Get{{camelIdentifier $field.GetName}}()
+			{{- end }},{{ range $i, $field := .CRUD.MinimalUIDFields -}}
+			{{if $i}},{{end}}{{$.CRUD.CamelCaseName}}.Get{{camelIdentifier $field.GetName}}()
+			{{- end }})
+			if err != nil {
+				return nil, err
+			}
+			continue
+		}
+		valuesByColName, err := sqlite{{.CRUD.Name}}GetUpdateValuesByColumnName({{$.CRUD.CamelCaseName}}, {{$.CRUD.CamelCaseName}}.{{camelIdentifier $.CRUD.FieldMaskFieldName}})
+		if err != nil {
+			return nil, err
+		}
+		if len(valuesByColName) == 0 {
+			continue
+		}
+		var binds []any
+		var setStmts []string
+		for colName, value := range valuesByColName {
+			setStmts = append(setStmts, fmt.Sprintf("\"%s\" = ?", colName))
+			binds = append(binds, value)
+		}
+		_, err = tx.ExecContext(
+			ctx,
+			fmt.Sprintf(
+				"UPDATE {{sqliteIdent (sqliteTableName .CRUD.GetName)}} SET %s WHERE {{ range $i, $field := .CRUD.MinimalUIDFields -}}
+				{{if $i}},{{end}}{{sqliteIdent (sqliteColumnName $field.GetName)}} = ?
+				{{- end }}",
+				strings.Join(setStmts, ", "),
+			),
+			append(
+				binds,
+				{{ range $i, $field := .CRUD.MinimalUIDFields -}}
+				{{if $i}},{{end}}{{$.CRUD.CamelCaseName}}.Get{{camelIdentifier $field.GetName}}()
+				{{- end }},
+			)...
+		)
+		if err != nil {
+			return nil, err
+		}
+	}
+	{{ end }}
+
 	err = tx.Commit()
 	if err != nil {
 		return nil, err
@@ -209,15 +323,9 @@ func (repo *SQLite{{.CRUD.Name}}Repository) Delete(ctx context.Context, expr exp
 {{end}}
 
 {{if or .CRUD.Read .CRUD.Delete}}
-var sqlite{{.CRUD.Name}}FieldMetaData = map[expressions.FieldID]struct{
-	tableName string
-	columnName string
-}{
+var sqlite{{.CRUD.Name}}ColumnNameByFieldID = map[expressions.FieldID]string{
 {{- range $name, $data := .FieldByFieldConstants}}
-	{{$name}}: {
-		tableName: "{{sqliteTableName $.CRUD.GetName}}",
-		columnName: "{{sqliteColumnName $data.Def.GetName}}",
-	},
+	{{$name}}: "{{sqliteColumnName $data.Def.GetName}}",
 {{- end}}
 }
 
@@ -269,15 +377,11 @@ func whereClauseFromExpressionFor{{.CRUD.Name}}(expr expressions.Expression) (st
 			{{if .FieldByFieldConstants}}if _, ok := valid{{.CRUD.Name}}Fields[expr.ID()]; !ok {
 				return "", nil, fmt.Errorf("invalid field id: %s", expr.ID())
 			}
-			metaData, ok := sqlite{{.CRUD.Name}}FieldMetaData[expr.ID()]
+			colName, ok := sqlite{{.CRUD.Name}}ColumnNameByFieldID[expr.ID()]
 			if !ok {
 				return "", nil, fmt.Errorf("missing meta-data: field id: %s", expr.ID())
 			}
-			return fmt.Sprintf(
-				"\"%s\".\"%s\"",
-				metaData.tableName,
-				metaData.columnName,
-			), nil, nil
+			return fmt.Sprintf("{{sqliteIdent (sqliteTableName .CRUD.GetName)}}.\"%s\"",colName), nil, nil
 			{{else}}
 			return "", nil, fmt.Errorf("identifiers not supported")
 			{{end}}
@@ -286,6 +390,37 @@ func whereClauseFromExpressionFor{{.CRUD.Name}}(expr expressions.Expression) (st
 		default:
 			return "", nil, fmt.Errorf("unknown expression")
 	}
+}
+{{end}}
+{{if and (or .CRUD.Update .CRUD.Create) (ne .CRUD.FieldMaskFieldName "")}}
+func sqlite{{.CRUD.Name}}GetCreateValuesByColumnName(def *{{.CRUD.GoType .CRUD.File.GoPkg.Path}}, fieldMask *fieldmaskpb.FieldMask) (map[string]any, error) {
+	if fieldMask == nil {
+		return nil, fmt.Errorf("no field mask provided")
+	}
+	{{$.CRUD.CamelCaseName}} := &{{.CRUD.GoType .CRUD.File.GoPkg.Path}}{}
+	valuesByColumnName := make(map[string]any, 0)
+	nestedMask := fmutils.NestedMaskFromPaths(fieldMask.Paths)
+	{{ range $i, $field := .CRUD.DataFields -}}
+	if _, ok := nestedMask["{{$field.GetName}}"]; ok {
+		valuesByColumnName["{{$field.GetName}}"] = def.Get{{camelIdentifier $field.GetName}}()
+	} else {
+		valuesByColumnName["{{$field.GetName}}"] = {{$.CRUD.CamelCaseName}}.Get{{camelIdentifier $field.GetName}}()
+	}
+	{{end -}}
+	return valuesByColumnName, nil
+}
+func sqlite{{.CRUD.Name}}GetUpdateValuesByColumnName(def *{{.CRUD.GoType .CRUD.File.GoPkg.Path}}, fieldMask *fieldmaskpb.FieldMask) (map[string]any, error) {
+	if fieldMask == nil {
+		return nil, fmt.Errorf("no field mask provided")
+	}
+	valuesByColumnName := make(map[string]any, 0)
+	nestedMask := fmutils.NestedMaskFromPaths(fieldMask.Paths)
+	{{ range $i, $field := .CRUD.DataFields -}}
+	if _, ok := nestedMask["{{$field.GetName}}"]; ok {
+		valuesByColumnName["{{$field.GetName}}"] = def.Get{{camelIdentifier $field.GetName}}()
+	}
+	{{end -}}
+	return valuesByColumnName, nil
 }
 {{end}}
 `))
