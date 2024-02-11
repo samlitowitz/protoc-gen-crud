@@ -3,7 +3,6 @@ package gen_sqlite
 import (
 	"bytes"
 	"fmt"
-	"strings"
 	"text/template"
 
 	"google.golang.org/protobuf/types/descriptorpb"
@@ -20,26 +19,6 @@ type param struct {
 
 type crud struct {
 	*descriptor.CRUD
-}
-
-func colDefs(crud *descriptor.CRUD) string {
-	var colDefs []string
-
-	for _, field := range crud.Fields {
-		if field.IsFieldMaskField {
-			continue
-		}
-		colDefs = append(
-			colDefs,
-			fmt.Sprintf(
-				"%s %s",
-				gen_go_crud.SQLiteColumnIdentifier(field.GetName()),
-				sqliteType(field),
-			),
-		)
-	}
-
-	return strings.Join(colDefs, ",\n\t")
 }
 
 func sqliteType(f *descriptor.Field) string {
@@ -111,15 +90,19 @@ func applyTemplate(p param, reg *descriptor.Registry) (string, error) {
 
 var (
 	funcMap template.FuncMap = map[string]interface{}{
-		"tableName": gen_go_crud.SQLiteTableName,
-		"colDefs":   colDefs,
+		"sqliteIdent":      gen_go_crud.SQLiteIdent,
+		"sqliteTableName":  gen_go_crud.SQLiteTableName,
+		"sqliteColumnName": gen_go_crud.SQLiteColumnName,
+		"sqliteType":       sqliteType,
 	}
 
 	// https://www.sqlite.org/lang_createtable.html
 	createTableTemplate = template.Must(template.New("create-table").Funcs(funcMap).Parse(`
-DROP TABLE IF EXISTS "{{tableName .CRUD.GetName}}";
-CREATE TABLE IF NOT EXISTS "{{tableName .CRUD.GetName}}" (
-	{{colDefs .CRUD}}
+DROP TABLE IF EXISTS {{sqliteIdent (sqliteTableName .CRUD.GetName)}};
+CREATE TABLE IF NOT EXISTS {{sqliteIdent (sqliteTableName .CRUD.GetName)}} (
+	{{ range $i, $field := .CRUD.DataFields -}}
+	{{if $i}},{{end}}{{sqliteIdent (sqliteColumnName $field.GetName)}} {{sqliteType $field}}
+	{{- end }}
 	-- TODO: column definitions with constraints
 );
 -- TODO: table constraints, unique and pkey
