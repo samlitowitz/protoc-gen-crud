@@ -39,33 +39,6 @@ func SQLiteColumnIdentifier(s string) string {
 
 type sqlite struct{}
 
-func (sqlite *sqlite) UpdateQuery(crud *descriptor.CRUD) string {
-	setStmts := make([]string, 0, len(crud.Fields))
-	for _, def := range crud.Fields {
-		setStmts = append(
-			setStmts,
-			fmt.Sprintf("%s = ?", SQLiteColumnIdentifier(def.GetName())),
-		)
-	}
-	_, uidFields := getMinimalUID(crud)
-	whereClauses := make([]string, 0, len(uidFields))
-	for _, def := range uidFields {
-		whereClauses = append(
-			whereClauses,
-			fmt.Sprintf("%s = ?", SQLiteColumnIdentifier(def.GetName())),
-		)
-	}
-
-	return strconv.Quote(fmt.Sprintf(
-		`UPDATE %s
-SET %s
-WHERE %s`,
-		SQLiteIdent(SQLiteTableName(crud.GetName())),
-		strings.Join(setStmts, ", "),
-		strings.Join(whereClauses, " AND "),
-	))
-}
-
 func (sqlite *sqlite) UpdateBinds(crud *descriptor.CRUD) string {
 	bindsStrs := make([]string, 0, len(crud.Fields))
 	for _, def := range crud.Fields {
@@ -156,18 +129,18 @@ func (repo *SQLite{{.CRUD.Name}}Repository) Create(ctx context.Context, toCreate
 	binds := []any{}
 	bindsStrs := []string{}
 	for _, val := range toCreate {
-		{{- range $field :=  .CRUD.DataFields}}
+		{{- range $field := .CRUD.DataFields}}
 		binds = append(binds, val.{{ camelIdentifier $field.GetName }})
 		{{- end}}
 		bindsStrs = append(bindsStrs, "(
-			{{- range $i, $field :=  .CRUD.DataFields -}}
+			{{- range $i, $field := .CRUD.DataFields -}}
 			{{if $i}},{{end}}?
 			{{- end -}})")
 	}
 	stmt, err := repo.db.Prepare(
 		fmt.Sprintf(
 			"INSERT INTO {{sqliteIdent (sqliteTableName .CRUD.GetName)}} (
-			{{- range $i, $field :=  .CRUD.DataFields -}}
+			{{- range $i, $field := .CRUD.DataFields -}}
 			{{if $i}},{{end}}{{sqliteIdent (sqliteColumnName $field.GetName)}}
 			{{- end -}}) VALUES \n %s",
 			strings.Join(bindsStrs, ",\n"),
@@ -191,7 +164,7 @@ func (repo *SQLite{{.CRUD.Name}}Repository) Create(ctx context.Context, toCreate
 // Read returns a set of {{.CRUD.Name}}s matching the provided criteria
 // Read is incomplete and it should be considered unstable
 func (repo *SQLite{{.CRUD.Name}}Repository) Read(ctx context.Context, expr expressions.Expression) ([]*{{.CRUD.GoType .CRUD.File.GoPkg.Path}}, error) {
-	query := "SELECT {{ range $i, $field :=  .CRUD.DataFields -}}
+	query := "SELECT {{ range $i, $field := .CRUD.DataFields -}}
 		{{if $i}},{{end}}{{sqliteIdent (sqliteColumnName $field.GetName)}}
 		{{- end }} FROM {{sqliteIdent (sqliteTableName .CRUD.GetName)}}"
 	clauses, binds, err := whereClauseFromExpressionFor{{.CRUD.Name}}(expr)
@@ -214,7 +187,7 @@ func (repo *SQLite{{.CRUD.Name}}Repository) Read(ctx context.Context, expr expre
 	for rows.Next() {
 		{{$.CRUD.CamelCaseName}} := &{{.CRUD.GoType .CRUD.File.GoPkg.Path}}{}
 		if err = rows.Scan(
-		{{- range $i, $field :=  .CRUD.DataFields -}}
+		{{- range $i, $field := .CRUD.DataFields -}}
 		{{if $i}},{{end}} &{{$.CRUD.CamelCaseName}}.{{camelIdentifier $field.GetName}}
 		{{- end -}}
 		); err != nil {
@@ -232,7 +205,12 @@ func (repo *SQLite{{.CRUD.Name}}Repository) Read(ctx context.Context, expr expre
 {{if .CRUD.Update}}
 // Update modifies existing {{.CRUD.Name}}s based on the defined unique identifiers.
 func (repo *SQLite{{.CRUD.Name}}Repository) Update(ctx context.Context, toUpdate []*{{.CRUD.GoType .CRUD.File.GoPkg.Path}}) ([]*{{.CRUD.GoType .CRUD.File.GoPkg.Path}}, error) {
-	{{if ne (len .CRUD.UniqueIdentifiers) 0}}if len(toUpdate) == 0 {
+	{{if eq (len .CRUD.MinimalUIDFields) 0}}
+	panic("cannot update: no unique identifiers defined")
+	{{else if eq (len .CRUD.NonMinimalUIDDataFields) 0}}
+	panic("cannot update: all fields are part of the minimal unique identifier: use create and delete instead")
+	{{else}}
+	if len(toUpdate) == 0 {
 		return nil, nil
 	}
 	tx, err := repo.db.BeginTx(ctx, &sql.TxOptions{Isolation: sql.LevelSerializable})
@@ -240,13 +218,23 @@ func (repo *SQLite{{.CRUD.Name}}Repository) Update(ctx context.Context, toUpdate
 		return nil, err
 	}
 	defer tx.Rollback()
-	stmt, err := tx.Prepare({{.SQLite.UpdateQuery .CRUD}})
+	stmt, err := tx.Prepare(
+		"UPDATE {{sqliteIdent (sqliteTableName .CRUD.GetName)}} SET {{ range $i, $field := .CRUD.NonMinimalUIDDataFields -}}
+		{{if $i}},{{end}}{{sqliteIdent (sqliteColumnName $field.GetName)}} = ?
+		{{- end }} WHERE {{ range $i, $field := .CRUD.MinimalUIDFields -}}
+		{{if $i}},{{end}}{{sqliteIdent (sqliteColumnName $field.GetName)}} = ?
+		{{- end }}",
+	)
 	if err != nil {
 		return nil, err
 	}
 	defer stmt.Close()
 	for _, {{$.CRUD.CamelCaseName}} := range toUpdate {
-		_, err = stmt.ExecContext(ctx, {{.SQLite.UpdateBinds .CRUD}})
+		_, err = stmt.ExecContext(ctx, {{ range $i, $field := .CRUD.NonMinimalUIDDataFields -}}
+		{{if $i}},{{end}}{{$.CRUD.CamelCaseName}}.{{camelIdentifier $field.GetName}}
+		{{- end }},{{ range $i, $field := .CRUD.MinimalUIDFields -}}
+		{{if $i}},{{end}}{{$.CRUD.CamelCaseName}}.{{camelIdentifier $field.GetName}}
+		{{- end }})
 		if err != nil {
 			return nil, err
 		}
@@ -256,8 +244,6 @@ func (repo *SQLite{{.CRUD.Name}}Repository) Update(ctx context.Context, toUpdate
 		return nil, err
 	}
 	return toUpdate, nil
-	{{else}}
-	panic("cannot update: no unique identifiers defined")
 	{{end}}
 }
 {{end}}

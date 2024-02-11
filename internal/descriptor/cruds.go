@@ -95,6 +95,22 @@ func assignUniqueIdentifiers(def *CRUD, field *Field, fieldOpts *options.FieldOp
 			def.UniqueIdentifiers[uid] = make([]*Field, 0, 1)
 		}
 		def.UniqueIdentifiers[uid] = append(def.UniqueIdentifiers[uid], field)
+		if len(def.UniqueIdentifiers[uid]) > 1 {
+			panic(
+				fmt.Errorf(
+					"unique identifiers must have exactly one field: %d given",
+					len(def.UniqueIdentifiers[uid]),
+				),
+			)
+		}
+	}
+	if len(def.UniqueIdentifiers) > 1 {
+		panic(
+			fmt.Errorf(
+				"at most one unique identifier per message: %d given",
+				len(def.UniqueIdentifiers),
+			),
+		)
 	}
 
 	return nil

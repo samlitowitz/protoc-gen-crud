@@ -114,6 +114,7 @@ func (repo *SQLiteUserRepository) Read(ctx context.Context, expr expressions.Exp
 
 // Update modifies existing Users based on the defined unique identifiers.
 func (repo *SQLiteUserRepository) Update(ctx context.Context, toUpdate []*User) ([]*User, error) {
+
 	if len(toUpdate) == 0 {
 		return nil, nil
 	}
@@ -122,13 +123,15 @@ func (repo *SQLiteUserRepository) Update(ctx context.Context, toUpdate []*User) 
 		return nil, err
 	}
 	defer tx.Rollback()
-	stmt, err := tx.Prepare("UPDATE \"user\"\nSET \"id\" = ?, \"username\" = ?, \"password\" = ?\nWHERE \"id\" = ?")
+	stmt, err := tx.Prepare(
+		"UPDATE \"user\" SET \"username\" = ?,\"password\" = ? WHERE \"id\" = ?",
+	)
 	if err != nil {
 		return nil, err
 	}
 	defer stmt.Close()
 	for _, user := range toUpdate {
-		_, err = stmt.ExecContext(ctx, user.Id, user.Username, user.Password, user.Id)
+		_, err = stmt.ExecContext(ctx, user.Username, user.Password, user.Id)
 		if err != nil {
 			return nil, err
 		}

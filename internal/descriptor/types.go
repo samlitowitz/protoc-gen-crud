@@ -95,6 +95,43 @@ type CRUD struct {
 	UniqueIdentifiers map[string][]*Field
 }
 
+// MinimalUIDFields returns the unique identifier with the least number of fields
+func (def *CRUD) MinimalUIDFields() []*Field {
+	var minUIDFields []*Field
+	for _, fields := range def.UniqueIdentifiers {
+		if minUIDFields == nil {
+			minUIDFields = fields
+			continue
+		}
+		if len(minUIDFields) > len(fields) {
+			minUIDFields = fields
+		}
+	}
+	return minUIDFields
+}
+
+// NonMinimalUIDDataFields returns all fields which do not contain meta-data and which are not part of the minimal UID
+func (def *CRUD) NonMinimalUIDDataFields() []*Field {
+	minUIDFields := def.MinimalUIDFields()
+
+	minUIDFieldNames := make(map[string]struct{}, 0)
+	for _, field := range minUIDFields {
+		minUIDFieldNames[field.GetName()] = struct{}{}
+	}
+
+	var fields []*Field
+	for _, field := range def.Fields {
+		if field.IsMetaData() {
+			continue
+		}
+		if _, ok := minUIDFieldNames[field.GetName()]; ok {
+			continue
+		}
+		fields = append(fields, field)
+	}
+	return fields
+}
+
 // DataFields returns all fields which do not contain meta-data
 func (def *CRUD) DataFields() []*Field {
 	var fields []*Field
