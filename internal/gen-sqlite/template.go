@@ -100,11 +100,17 @@ var (
 	createTableTemplate = template.Must(template.New("create-table").Funcs(funcMap).Parse(`
 DROP TABLE IF EXISTS {{sqliteIdent (sqliteTableName .CRUD.GetName)}};
 CREATE TABLE IF NOT EXISTS {{sqliteIdent (sqliteTableName .CRUD.GetName)}} (
-	{{ range $i, $field := .CRUD.DataFields -}}
-	{{if $i}},{{end}}{{sqliteIdent (sqliteColumnName $field.GetName)}} {{sqliteType $field}}
-	{{- end }}
-	-- TODO: column definitions with constraints
+    {{ range $i, $field := .CRUD.DataFields -}}
+    {{if $i}},
+    {{end}}{{sqliteIdent (sqliteColumnName $field.GetName)}} {{sqliteType $field}}
+    {{- end }}
+    {{- if gt (len .CRUD.MinimalUIDFields) 0 -}}
+        ,
+
+    PRIMARY KEY ({{ range $i, $field := .CRUD.MinimalUIDFields -}}
+        {{if $i}},{{end}}{{sqliteIdent (sqliteColumnName $field.GetName)}}
+        {{- end }})
+    {{- end}}
 );
--- TODO: table constraints, unique and pkey
 `))
 )
