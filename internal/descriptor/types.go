@@ -95,6 +95,18 @@ type CRUD struct {
 	UniqueIdentifiers map[string][]*Field
 }
 
+// DataFields returns all fields which do not contain meta-data
+func (def *CRUD) DataFields() []*Field {
+	var fields []*Field
+	for _, field := range def.Fields {
+		if field.IsMetaData() {
+			continue
+		}
+		fields = append(fields, field)
+	}
+	return fields
+}
+
 func (def *CRUD) CamelCaseName() string {
 	return strcase.ToLowerCamel(*def.Name)
 }
@@ -214,6 +226,10 @@ type Field struct {
 	ForcePrefixedName bool
 	// IsFieldMaskField when set to true, indicates this field is the field mask field for the message it belongs to
 	IsFieldMaskField bool
+}
+
+func (f *Field) IsMetaData() bool {
+	return f.IsFieldMaskField
 }
 
 // FQFN returns a fully qualified field name of this field.

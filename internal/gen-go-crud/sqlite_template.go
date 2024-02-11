@@ -21,6 +21,10 @@ func SQLiteIdent(s string) string {
 	return "\"" + s + "\""
 }
 
+func SQLiteTemplateIdent(s string) string {
+	return "\\\"" + s + "\\\""
+}
+
 func SQLiteTableName(s string) string {
 	return strcase.ToSnake(s)
 }
@@ -34,59 +38,6 @@ func SQLiteColumnIdentifier(s string) string {
 }
 
 type sqlite struct{}
-
-func (sqlite *sqlite) CreateRecordBinds(crud *descriptor.CRUD) string {
-	binds := []string{}
-	for range crud.Fields {
-		binds = append(binds, "?")
-	}
-	return strings.Join(binds, ", ")
-}
-
-func (sqlite *sqlite) CreateQuery(crud *descriptor.CRUD) string {
-	if len(crud.Fields) == 0 {
-		return ""
-	}
-	query := `INSERT INTO %s (%s) VALUES%s%%s`
-	cols := make([]string, 0, len(crud.Fields))
-	for _, def := range crud.Fields {
-		cols = append(cols, SQLiteColumnIdentifier(def.GetName()))
-	}
-	return strconv.Quote(fmt.Sprintf(
-		query,
-		SQLiteIdent(SQLiteTableName(crud.GetName())),
-		strings.Join(cols, ", "),
-		"\n",
-	))
-}
-
-func (sqlite *sqlite) ReadQuery(crud *descriptor.CRUD) string {
-	cols := make([]string, 0, len(crud.Fields))
-	for _, def := range crud.Fields {
-		cols = append(cols, SQLiteColumnIdentifier(def.GetName()))
-	}
-	return strconv.Quote(fmt.Sprintf(
-		`SELECT %s
-FROM %s`,
-		strings.Join(cols, ", "),
-		SQLiteIdent(SQLiteTableName(crud.GetName())),
-	))
-}
-
-func (sqlite *sqlite) ReadScan(crud *descriptor.CRUD) string {
-	scan := make([]string, 0, len(crud.Fields))
-	for _, def := range crud.Fields {
-		scan = append(
-			scan,
-			fmt.Sprintf(
-				"&%s.%s",
-				crud.CamelCaseName(),
-				casing.CamelIdentifier(def.GetName()),
-			),
-		)
-	}
-	return strings.Join(scan, ", ")
-}
 
 func (sqlite *sqlite) UpdateQuery(crud *descriptor.CRUD) string {
 	setStmts := make([]string, 0, len(crud.Fields))
@@ -141,13 +92,6 @@ func (sqlite *sqlite) UpdateBinds(crud *descriptor.CRUD) string {
 	return strings.Join(bindsStrs, ", ")
 }
 
-func (sqlite *sqlite) DeleteQuery(crud *descriptor.CRUD) string {
-	return strconv.Quote(fmt.Sprintf(
-		`DELETE FROM %s`,
-		SQLiteIdent(SQLiteTableName(crud.GetName())),
-	))
-}
-
 func getMinimalUID(crud *descriptor.CRUD) (string, []*descriptor.Field) {
 	var minUIDName string
 	var minUIDFields []*descriptor.Field
@@ -179,7 +123,13 @@ func (sqlite *sqlite) ColumnName(field *descriptor.Field) string {
 }
 
 var (
-	_ = template.Must(repositoryTemplate.New("repository-sqlite").Funcs(funcMap).Parse(`
+	sqliteFuncMap template.FuncMap = map[string]interface{}{
+		"sqliteIdent":      SQLiteTemplateIdent,
+		"sqliteTableName":  SQLiteTableName,
+		"sqliteColumnName": SQLiteColumnName,
+	}
+
+	_ = template.Must(repositoryTemplate.New("repository-sqlite").Funcs(funcMap).Funcs(sqliteFuncMap).Parse(`
 // InMemory{{.CRUD.Name}}Repository is an in memory implementation of the {{.CRUD.Name}}Repository interface.
 type SQLite{{.CRUD.Name}}Repository struct {
 	db *sql.DB
@@ -206,16 +156,23 @@ func (repo *SQLite{{.CRUD.Name}}Repository) Create(ctx context.Context, toCreate
 	binds := []any{}
 	bindsStrs := []string{}
 	for _, val := range toCreate {
-		{{- range $field :=  .CRUD.Fields}}
+		{{- range $field :=  .CRUD.DataFields}}
 		binds = append(binds, val.{{ camelIdentifier $field.GetName }})
 		{{- end}}
-		bindsStrs = append(bindsStrs, "({{.SQLite.CreateRecordBinds .CRUD}})")
+		bindsStrs = append(bindsStrs, "(
+			{{- range $i, $field :=  .CRUD.DataFields -}}
+			{{if $i}},{{end}}?
+			{{- end -}})")
 	}
-	query := fmt.Sprintf(
-		{{.SQLite.CreateQuery .CRUD}},
-		strings.Join(bindsStrs, ",\n"),
+	stmt, err := repo.db.Prepare(
+		fmt.Sprintf(
+			"INSERT INTO {{sqliteIdent (sqliteTableName .CRUD.GetName)}} (
+			{{- range $i, $field :=  .CRUD.DataFields -}}
+			{{if $i}},{{end}}{{sqliteIdent (sqliteColumnName $field.GetName)}}
+			{{- end -}}) VALUES \n %s",
+			strings.Join(bindsStrs, ",\n"),
+		),
 	)
-	stmt, err := repo.db.Prepare(query)
 	if err != nil {
 		return nil, err
 	}
@@ -234,7 +191,9 @@ func (repo *SQLite{{.CRUD.Name}}Repository) Create(ctx context.Context, toCreate
 // Read returns a set of {{.CRUD.Name}}s matching the provided criteria
 // Read is incomplete and it should be considered unstable
 func (repo *SQLite{{.CRUD.Name}}Repository) Read(ctx context.Context, expr expressions.Expression) ([]*{{.CRUD.GoType .CRUD.File.GoPkg.Path}}, error) {
-	query := {{.SQLite.ReadQuery .CRUD}}
+	query := "SELECT {{ range $i, $field :=  .CRUD.DataFields -}}
+		{{if $i}},{{end}}{{sqliteIdent (sqliteColumnName $field.GetName)}}
+		{{- end }} FROM {{sqliteIdent (sqliteTableName .CRUD.GetName)}}"
 	clauses, binds, err := whereClauseFromExpressionFor{{.CRUD.Name}}(expr)
 	if err != nil {
 		return nil, err
@@ -254,7 +213,11 @@ func (repo *SQLite{{.CRUD.Name}}Repository) Read(ctx context.Context, expr expre
 	var found []*{{.CRUD.GoType .CRUD.File.GoPkg.Path}}
 	for rows.Next() {
 		{{$.CRUD.CamelCaseName}} := &{{.CRUD.GoType .CRUD.File.GoPkg.Path}}{}
-		if err = rows.Scan({{.SQLite.ReadScan .CRUD}}); err != nil {
+		if err = rows.Scan(
+		{{- range $i, $field :=  .CRUD.DataFields -}}
+		{{if $i}},{{end}} &{{$.CRUD.CamelCaseName}}.{{camelIdentifier $field.GetName}}
+		{{- end -}}
+		); err != nil {
 			return nil, err
 		}
 		found = append(found, {{$.CRUD.CamelCaseName}})
@@ -302,7 +265,7 @@ func (repo *SQLite{{.CRUD.Name}}Repository) Update(ctx context.Context, toUpdate
 {{if .CRUD.Delete}}
 // Delete deletes {{.CRUD.Name}}s based on the defined unique identifiers
 func (repo *SQLite{{.CRUD.Name}}Repository) Delete(ctx context.Context, expr expressions.Expression) error {
-	query := {{.SQLite.DeleteQuery .CRUD}}
+	query := "DELETE FROM {{sqliteIdent (sqliteTableName .CRUD.GetName)}}"
 	clauses, binds, err := whereClauseFromExpressionFor{{.CRUD.Name}}(expr)
 	if err != nil {
 		return err

@@ -111,7 +111,7 @@ func TestApplyTemplate_RepositorySQLite(t *testing.T) {
 
 func TestApplyTemplate_RepositorySQLiteUIDs(t *testing.T) {
 	//allOperations := []options.Operation{options.Operation_CREATE, options.Operation_READ, options.Operation_UPDATE, options.Operation_DELETE}
-	allOperations := []options.Operation{options.Operation_READ}
+	allOperations := []options.Operation{options.Operation_CREATE}
 	operationCombinations := allOperationCombinations(allOperations)
 
 	supportedScalarTypes := []string{

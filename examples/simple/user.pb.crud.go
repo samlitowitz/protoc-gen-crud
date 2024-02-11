@@ -59,13 +59,14 @@ func (repo *SQLiteUserRepository) Create(ctx context.Context, toCreate []*User) 
 		binds = append(binds, val.Id)
 		binds = append(binds, val.Username)
 		binds = append(binds, val.Password)
-		bindsStrs = append(bindsStrs, "(?, ?, ?)")
+		bindsStrs = append(bindsStrs, "(?,?,?)")
 	}
-	query := fmt.Sprintf(
-		"INSERT INTO \"user\" (\"id\", \"username\", \"password\") VALUES\n%s",
-		strings.Join(bindsStrs, ",\n"),
+	stmt, err := repo.db.Prepare(
+		fmt.Sprintf(
+			"INSERT INTO \"user\" (\"id\",\"username\",\"password\") VALUES \n %s",
+			strings.Join(bindsStrs, ",\n"),
+		),
 	)
-	stmt, err := repo.db.Prepare(query)
 	if err != nil {
 		return nil, err
 	}
@@ -80,7 +81,7 @@ func (repo *SQLiteUserRepository) Create(ctx context.Context, toCreate []*User) 
 // Read returns a set of Users matching the provided criteria
 // Read is incomplete and it should be considered unstable
 func (repo *SQLiteUserRepository) Read(ctx context.Context, expr expressions.Expression) ([]*User, error) {
-	query := "SELECT \"id\", \"username\", \"password\"\nFROM \"user\""
+	query := "SELECT \"id\",\"username\",\"password\" FROM \"user\""
 	clauses, binds, err := whereClauseFromExpressionForUser(expr)
 	if err != nil {
 		return nil, err
