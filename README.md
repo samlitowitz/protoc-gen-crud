@@ -34,9 +34,9 @@
 
 ### Partial Creates/Updates
 
-| Implementation | Field Mask |
-|:---------------|:-----------|
-| SQLite         |            |
+| Implementation | Field Mask         |
+|:---------------|:-------------------|
+| SQLite         | :white_check_mark: |
 
 ### Meta-Data
 
@@ -56,7 +56,7 @@
 
 | Implementation | Single             | Composite |
 |:---------------|:-------------------|:----------|
-| SQLite         | :white_check_mark: |           |:white_check_mark:
+| SQLite         | :white_check_mark: |           |
 
 ### Auto-generate Strategy
 
