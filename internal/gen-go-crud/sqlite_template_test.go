@@ -247,7 +247,7 @@ func TestApplyTemplate_RepositorySQLiteUIDs(t *testing.T) {
 			}
 			uidMapDef := fmt.Sprintf(
 				"%sBy%s map[%s]*%s",
-				crud.CamelCaseName(),
+				strcase.ToLowerCamel(crud.GetName()),
 				strcase.ToCamel(uidName),
 				goTyp,
 				crud.GoType(crud.File.GoPkg.Path),

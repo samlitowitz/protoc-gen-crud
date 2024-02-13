@@ -33,6 +33,7 @@ var (
 		"sqliteIdent":      SQLiteTemplateIdent,
 		"sqliteTableName":  SQLiteTableName,
 		"sqliteColumnName": SQLiteColumnName,
+		"toLowerCamel":     strcase.ToLowerCamel,
 	}
 
 	_ = template.Must(repositoryTemplate.New("repository-sqlite").Funcs(funcMap).Funcs(sqliteFuncMap).Parse(`
@@ -71,9 +72,9 @@ func (repo *SQLite{{.CRUD.Name}}Repository) Create(ctx context.Context, toCreate
 	{{if eq .CRUD.FieldMaskFieldName "" -}}
 	binds := []any{}
 	bindsStrs := []string{}
-	for _, {{$.CRUD.CamelCaseName}} := range toCreate {
+	for _, {{toLowerCamel $.CRUD.GetName}} := range toCreate {
 		{{- range $field := .CRUD.DataFields}}
-		binds = append(binds, {{$.CRUD.CamelCaseName}}.Get{{camelIdentifier $field.GetName}}())
+		binds = append(binds, {{toLowerCamel $.CRUD.GetName}}.Get{{camelIdentifier $field.GetName}}())
 		{{- end}}
 		bindsStrs = append(bindsStrs, "(
 			{{- range $i, $field := .CRUD.DataFields -}}
@@ -97,10 +98,10 @@ func (repo *SQLite{{.CRUD.Name}}Repository) Create(ctx context.Context, toCreate
 	{{- else -}}
 	noMaskBinds := []any{}
 	noMaskBindsStrs := []string{}
-	for _, {{$.CRUD.CamelCaseName}} := range toCreate {
-		if {{$.CRUD.CamelCaseName}}.{{camelIdentifier $.CRUD.FieldMaskFieldName}} == nil {
+	for _, {{toLowerCamel $.CRUD.GetName}} := range toCreate {
+		if {{toLowerCamel $.CRUD.GetName}}.{{camelIdentifier $.CRUD.FieldMaskFieldName}} == nil {
 			{{- range $field := .CRUD.DataFields}}
-			noMaskBinds = append(noMaskBinds, {{$.CRUD.CamelCaseName}}.Get{{camelIdentifier $field.GetName}}())
+			noMaskBinds = append(noMaskBinds, {{toLowerCamel $.CRUD.GetName}}.Get{{camelIdentifier $field.GetName}}())
 			{{- end}}
 			noMaskBindsStrs = append(noMaskBindsStrs, "(
 			{{- range $i, $field := .CRUD.DataFields -}}
@@ -108,7 +109,7 @@ func (repo *SQLite{{.CRUD.Name}}Repository) Create(ctx context.Context, toCreate
 			{{- end -}})")
 			continue
 		}
-		valuesByColName, err := sqlite{{.CRUD.Name}}GetCreateValuesByColumnName({{$.CRUD.CamelCaseName}}, {{$.CRUD.CamelCaseName}}.{{camelIdentifier $.CRUD.FieldMaskFieldName}})
+		valuesByColName, err := sqlite{{.CRUD.Name}}GetCreateValuesByColumnName({{toLowerCamel $.CRUD.GetName}}, {{toLowerCamel $.CRUD.GetName}}.{{camelIdentifier $.CRUD.FieldMaskFieldName}})
 		if err != nil {
 			return nil, err
 		}
@@ -187,15 +188,15 @@ func (repo *SQLite{{.CRUD.Name}}Repository) Read(ctx context.Context, expr expre
 	defer rows.Close()
 	var found []*{{.CRUD.GoType .CRUD.File.GoPkg.Path}}
 	for rows.Next() {
-		{{$.CRUD.CamelCaseName}} := &{{.CRUD.GoType .CRUD.File.GoPkg.Path}}{}
+		{{toLowerCamel $.CRUD.GetName}} := &{{.CRUD.GoType .CRUD.File.GoPkg.Path}}{}
 		if err = rows.Scan(
 		{{- range $i, $field := .CRUD.DataFields -}}
-		{{if $i}},{{end}} &{{$.CRUD.CamelCaseName}}.{{camelIdentifier $field.GetName}}
+		{{if $i}},{{end}} &{{toLowerCamel $.CRUD.GetName}}.{{camelIdentifier $field.GetName}}
 		{{- end -}}
 		); err != nil {
 			return nil, err
 		}
-		found = append(found, {{$.CRUD.CamelCaseName}})
+		found = append(found, {{toLowerCamel $.CRUD.GetName}})
 	}
 	if err = rows.Err(); err != nil {
 		return nil, err
@@ -233,30 +234,30 @@ func (repo *SQLite{{.CRUD.Name}}Repository) Update(ctx context.Context, toUpdate
 	}
 	defer stmt.Close()
 	{{ if eq .CRUD.FieldMaskFieldName ""}}
-	for _, {{$.CRUD.CamelCaseName}} := range toUpdate {
+	for _, {{toLowerCamel $.CRUD.GetName}} := range toUpdate {
 		_, err = stmt.ExecContext(ctx, {{ range $i, $field := .CRUD.NonMinimalUIDDataFields -}}
-		{{if $i}},{{end}}{{$.CRUD.CamelCaseName}}.Get{{camelIdentifier $field.GetName}}()
+		{{if $i}},{{end}}{{toLowerCamel $.CRUD.GetName}}.Get{{camelIdentifier $field.GetName}}()
 		{{- end }},{{ range $i, $field := .CRUD.MinimalUIDFields -}}
-		{{if $i}},{{end}}{{$.CRUD.CamelCaseName}}.Get{{camelIdentifier $field.GetName}}()
+		{{if $i}},{{end}}{{toLowerCamel $.CRUD.GetName}}.Get{{camelIdentifier $field.GetName}}()
 		{{- end }})
 		if err != nil {
 			return nil, err
 		}
 	}
 	{{else}}
-	for _, {{$.CRUD.CamelCaseName}} := range toUpdate {
-		if {{$.CRUD.CamelCaseName}}.{{camelIdentifier $.CRUD.FieldMaskFieldName}} == nil {
+	for _, {{toLowerCamel $.CRUD.GetName}} := range toUpdate {
+		if {{toLowerCamel $.CRUD.GetName}}.{{camelIdentifier $.CRUD.FieldMaskFieldName}} == nil {
 			_, err = stmt.ExecContext(ctx, {{ range $i, $field := .CRUD.NonMinimalUIDDataFields -}}
-			{{if $i}},{{end}}{{$.CRUD.CamelCaseName}}.Get{{camelIdentifier $field.GetName}}()
+			{{if $i}},{{end}}{{toLowerCamel $.CRUD.GetName}}.Get{{camelIdentifier $field.GetName}}()
 			{{- end }},{{ range $i, $field := .CRUD.MinimalUIDFields -}}
-			{{if $i}},{{end}}{{$.CRUD.CamelCaseName}}.Get{{camelIdentifier $field.GetName}}()
+			{{if $i}},{{end}}{{toLowerCamel $.CRUD.GetName}}.Get{{camelIdentifier $field.GetName}}()
 			{{- end }})
 			if err != nil {
 				return nil, err
 			}
 			continue
 		}
-		valuesByColName, err := sqlite{{.CRUD.Name}}GetUpdateValuesByColumnName({{$.CRUD.CamelCaseName}}, {{$.CRUD.CamelCaseName}}.{{camelIdentifier $.CRUD.FieldMaskFieldName}})
+		valuesByColName, err := sqlite{{.CRUD.Name}}GetUpdateValuesByColumnName({{toLowerCamel $.CRUD.GetName}}, {{toLowerCamel $.CRUD.GetName}}.{{camelIdentifier $.CRUD.FieldMaskFieldName}})
 		if err != nil {
 			return nil, err
 		}
@@ -280,7 +281,7 @@ func (repo *SQLite{{.CRUD.Name}}Repository) Update(ctx context.Context, toUpdate
 			append(
 				binds,
 				{{ range $i, $field := .CRUD.MinimalUIDFields -}}
-				{{if $i}},{{end}}{{$.CRUD.CamelCaseName}}.Get{{camelIdentifier $field.GetName}}()
+				{{if $i}},{{end}}{{toLowerCamel $.CRUD.GetName}}.Get{{camelIdentifier $field.GetName}}()
 				{{- end }},
 			)...
 		)
@@ -397,14 +398,14 @@ func sqlite{{.CRUD.Name}}GetCreateValuesByColumnName(def *{{.CRUD.GoType .CRUD.F
 	if fieldMask == nil {
 		return nil, fmt.Errorf("no field mask provided")
 	}
-	{{$.CRUD.CamelCaseName}} := &{{.CRUD.GoType .CRUD.File.GoPkg.Path}}{}
+	{{toLowerCamel $.CRUD.GetName}} := &{{.CRUD.GoType .CRUD.File.GoPkg.Path}}{}
 	valuesByColumnName := make(map[string]any, 0)
 	nestedMask := fmutils.NestedMaskFromPaths(fieldMask.Paths)
 	{{ range $i, $field := .CRUD.DataFields -}}
 	if _, ok := nestedMask["{{$field.GetName}}"]; ok {
 		valuesByColumnName["{{$field.GetName}}"] = def.Get{{camelIdentifier $field.GetName}}()
 	} else {
-		valuesByColumnName["{{$field.GetName}}"] = {{$.CRUD.CamelCaseName}}.Get{{camelIdentifier $field.GetName}}()
+		valuesByColumnName["{{$field.GetName}}"] = {{toLowerCamel $.CRUD.GetName}}.Get{{camelIdentifier $field.GetName}}()
 	}
 	{{end -}}
 	return valuesByColumnName, nil

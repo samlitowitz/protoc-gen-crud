@@ -9,7 +9,6 @@ import (
 
 	"github.com/samlitowitz/protoc-gen-crud/internal/casing"
 
-	"github.com/iancoleman/strcase"
 	"google.golang.org/protobuf/types/descriptorpb"
 	"google.golang.org/protobuf/types/pluginpb"
 )
@@ -142,11 +141,6 @@ func (def *CRUD) DataFields() []*Field {
 		fields = append(fields, field)
 	}
 	return fields
-}
-
-// TODO: replace all uses of this function in templates with funcMap
-func (def *CRUD) CamelCaseName() string {
-	return strcase.ToLowerCamel(*def.Name)
 }
 
 func (def *CRUD) Create() bool {
