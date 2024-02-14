@@ -1,8 +1,8 @@
 syntax = "proto3";
 
-package protoc_gen_crud.examples.partial_creates_updates;
+package protoc_gen_crud.examples.link_via_unique_id_single;
 
-option go_package = "github.com/samlitowitz/protoc-gen-crud/examples/partial-creates-updates";
+option go_package = "github.com/samlitowitz/protoc-gen-crud/examples/link-via-unique-id-single";
 
 import "google/protobuf/field_mask.proto";
 import "protoc-gen-crud/options/annotations.proto";

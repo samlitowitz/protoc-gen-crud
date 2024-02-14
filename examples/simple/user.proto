@@ -1,6 +1,6 @@
 syntax = "proto3";
 
-package simple.options;
+package protoc_gen_crud.examples.simple;
 
 option go_package = "github.com/samlitowitz/protoc-gen-crud/examples/simple";
 
