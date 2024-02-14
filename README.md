@@ -72,9 +72,9 @@
 
 ### Non-scalar Field Relationship Strategy
 
-| Implementation | Link via Unique ID | Inline | Skip |
-|:---------------|:-------------------|:-------|:-----|
-| SQLite         |                    |        |      |
+| Implementation | Link via Unique ID (Single) | Inline | Skip |
+|:---------------|:----------------------------|:-------|:-----|
+| SQLite         |                             |        |      |
 
 # References
 
