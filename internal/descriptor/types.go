@@ -247,6 +247,12 @@ func (e *Enum) GoType(currentPackage string) string {
 	return fmt.Sprintf("%s.%s", e.File.Pkg(), name)
 }
 
+type Relationship struct {
+	*options.Relationship
+
+	CRUD *CRUD
+}
+
 // Field wraps descriptorpb.FieldDescriptorProto for richer features.
 type Field struct {
 	*descriptorpb.FieldDescriptorProto
@@ -258,6 +264,8 @@ type Field struct {
 	ForcePrefixedName bool
 	// IsFieldMaskField when set to true, indicates this field is the field mask field for the message it belongs to
 	IsFieldMaskField bool
+	// Relationship contains meta-data defining the relationship with a non-scalar field
+	Relationship *Relationship
 }
 
 func (f *Field) IsMetaData() bool {
@@ -271,6 +279,10 @@ func (f *Field) FQFN() string {
 
 func (f *Field) IsScalarGoType() bool {
 	return isScalarGoType(*f.FieldDescriptorProto.Type)
+}
+
+func (f *Field) HasRelationship() bool {
+	return f.Relationship != nil
 }
 
 func (f *Field) GoType() string {
@@ -309,9 +321,17 @@ func (f *Field) GoType() string {
 	case descriptorpb.FieldDescriptorProto_TYPE_STRING:
 		return "string"
 
-	case descriptorpb.FieldDescriptorProto_TYPE_GROUP:
-		fallthrough
 	case descriptorpb.FieldDescriptorProto_TYPE_MESSAGE:
+		if !f.HasRelationship() {
+			panic(fmt.Errorf("message type without relationship defined on field %s", f.GetName()))
+		}
+		minUIDFields := f.Relationship.CRUD.MinimalUIDFields()
+		if len(minUIDFields) != 1 {
+			panic(fmt.Errorf("message type must have unique identifier with exactly one field defined on field %s", f.GetName()))
+		}
+		return minUIDFields[0].GoType()
+
+	case descriptorpb.FieldDescriptorProto_TYPE_GROUP:
 		fallthrough
 	default:
 		panic(fmt.Errorf("non-scalar type on field %s", f.GetName()))

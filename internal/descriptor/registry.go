@@ -58,6 +58,11 @@ func (r *Registry) load(gen *protogen.Plugin) error {
 			return err
 		}
 	}
+	for _, crud := range r.cruds {
+		if err := r.fixupCRUDRelationships(crud); err != nil {
+			return err
+		}
+	}
 	return nil
 }
 

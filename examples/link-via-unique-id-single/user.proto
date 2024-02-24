@@ -21,4 +21,27 @@ message User {
   ];
   string username = 3;
   string password = 4;
+  Profile profile = 5 [
+    (protoc_gen_crud.options.crud_field_options) = {
+      relationship: {
+        direction: UNIDIRECTIONAL
+        type: ONE_TO_ONE
+      }
+    }
+  ];
+}
+
+message Profile {
+  option (protoc_gen_crud.options.crud_message_options) = {
+    operations: [CREATE, READ, UPDATE, DELETE]
+    implementations: [SQLITE]
+    fieldMaskField: "fieldMask"
+  };
+  google.protobuf.FieldMask fieldMask = 1;
+  string id = 2 [
+    (protoc_gen_crud.options.crud_field_options) = {
+      uids: ["id"]
+    }
+  ];
+  string name = 3;
 }

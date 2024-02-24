@@ -1,11 +1,10 @@
-package link_via_unique_id_single
+package link_via_unique_id_single_test
 
 import (
 	"context"
 	"database/sql"
 	"fmt"
 	"os"
-	"path"
 	"runtime"
 	"strings"
 	"testing"
@@ -19,7 +18,7 @@ import (
 	"github.com/google/go-cmp/cmp"
 
 	"github.com/google/uuid"
-	simple "github.com/samlitowitz/protoc-gen-crud/examples/partial-creates-updates"
+	simple "github.com/samlitowitz/protoc-gen-crud/examples/link-via-unique-id-single"
 )
 
 func TestSQLiteUserRepository_Create(t *testing.T) {
@@ -74,16 +73,28 @@ func TestSQLiteUserRepository_Create(t *testing.T) {
 					Id:       uuid.NewString(),
 					Username: "username-1",
 					Password: "password-1",
+					Profile: &simple.Profile{
+						Id:   uuid.NewString(),
+						Name: "name-1",
+					},
 				},
 				{
 					Id:       uuid.NewString(),
 					Username: "username-2",
 					Password: "password-2",
+					Profile: &simple.Profile{
+						Id:   uuid.NewString(),
+						Name: "name-2",
+					},
 				},
 				{
 					Id:       uuid.NewString(),
 					Username: "username-3",
 					Password: "password-3",
+					Profile: &simple.Profile{
+						Id:   uuid.NewString(),
+						Name: "name-3",
+					},
 				},
 			},
 			nil,
@@ -97,6 +108,10 @@ func TestSQLiteUserRepository_Create(t *testing.T) {
 					Id:       "1",
 					Username: "username-1",
 					Password: "password-1",
+					Profile: &simple.Profile{
+						Id:   uuid.NewString(),
+						Name: "name-1",
+					},
 				},
 				{
 					FieldMask: &field_mask.FieldMask{
@@ -105,6 +120,10 @@ func TestSQLiteUserRepository_Create(t *testing.T) {
 					Id:       uuid.NewString(),
 					Username: "username-2",
 					Password: "password-2",
+					Profile: &simple.Profile{
+						Id:   uuid.NewString(),
+						Name: "name-2",
+					},
 				},
 				{
 					FieldMask: &field_mask.FieldMask{
@@ -113,6 +132,10 @@ func TestSQLiteUserRepository_Create(t *testing.T) {
 					Id:       uuid.NewString(),
 					Username: "username-3",
 					Password: "password-3",
+					Profile: &simple.Profile{
+						Id:   uuid.NewString(),
+						Name: "name-3",
+					},
 				},
 				{
 					FieldMask: &field_mask.FieldMask{
@@ -121,6 +144,10 @@ func TestSQLiteUserRepository_Create(t *testing.T) {
 					Id:       uuid.NewString(),
 					Username: "username-4",
 					Password: "password-4",
+					Profile: &simple.Profile{
+						Id:   uuid.NewString(),
+						Name: "name-4",
+					},
 				},
 			},
 			nil,
@@ -777,42 +804,5 @@ func TestSQLiteUserRepository_Delete(t *testing.T) {
 
 	if diff := cmp.Diff(expectedUsers, actualUsers, opts); diff != "" {
 		t.Fatalf("Create() mismatch (-want +got):\n%s", diff)
-	}
-}
-
-func createTable(db *sql.DB, dir string) error {
-	code, err := os.ReadFile(path.Join(dir, "user.sqlite.sql"))
-	if err != nil {
-		return err
-	}
-	stmt, err := db.Prepare(string(code))
-	if err != nil {
-		return err
-	}
-	_, err = stmt.Exec()
-	if err != nil {
-		return err
-	}
-	return nil
-}
-
-// REFURL: https://github.com/golang/go/blob/988b718f4130ab5b3ce5a5774e1a58e83c92a163/src/path/filepath/path_test.go#L553
-func chtmpdir(t *testing.T) (restore func()) {
-	oldwd, err := os.Getwd()
-	if err != nil {
-		t.Fatalf("chtmpdir: %v", err)
-	}
-	d, err := os.MkdirTemp("", "test")
-	if err != nil {
-		t.Fatalf("chtmpdir: %v", err)
-	}
-	if err := os.Chdir(d); err != nil {
-		t.Fatalf("chtmpdir: %v", err)
-	}
-	return func() {
-		if err := os.Chdir(oldwd); err != nil {
-			t.Fatalf("chtmpdir: %v", err)
-		}
-		os.RemoveAll(d)
 	}
 }

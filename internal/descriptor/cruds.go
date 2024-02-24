@@ -34,12 +34,46 @@ func (r *Registry) loadCRUDs(file *File) error {
 			if err != nil {
 				return err
 			}
+
+			err = assignRelationships(r.msgs, field, fieldOpts)
+			if err != nil {
+				return err
+			}
 		}
 		processFieldMaskField(def)
 
 		file.CRUDs = append(file.CRUDs, def)
 		r.cruds[msg.FQMN()] = def
 	}
+	return nil
+}
+
+// fixupCRUDRelationships turns all relationships from CRUD stubs to registry CRUDs
+func (r *Registry) fixupCRUDRelationships(crud *CRUD) error {
+	for _, field := range crud.Fields {
+		// can't fix a relationship that doesn't exist
+		if !field.HasRelationship() {
+			continue
+		}
+		target, ok := r.cruds[*field.TypeName]
+		if !ok {
+			return &UnsupportedTypeError{
+				fmt.Sprintf("no CRUD defined: %s", *field.TypeName),
+			}
+		}
+		if len(target.UniqueIdentifiers) == 0 {
+			return &UnsupportedTypeError{
+				fmt.Sprintf("CRUD must have at least one unique identifier defined: %s", *field.TypeName),
+			}
+		}
+		if len(target.MinimalUIDFields()) != 1 {
+			return &UnsupportedTypeError{
+				fmt.Sprintf("CRUD must have unique identifier with exactly one field defined: %s", *field.TypeName),
+			}
+		}
+		field.Relationship.CRUD = target
+	}
+
 	return nil
 }
 
@@ -65,6 +99,13 @@ func assignMessageOptions(def *CRUD, msgOpts *options.MessageOptions) {
 }
 
 func assignUniqueIdentifiers(def *CRUD, field *Field, fieldOpts *options.FieldOptions) error {
+	if fieldOpts.Uids == nil {
+		return nil
+	}
+	if len(fieldOpts.Uids) == 0 {
+		return nil
+	}
+
 	if field.Type == nil && field.TypeName == nil {
 		return &UnknownTypeError{}
 	}
@@ -113,6 +154,21 @@ func assignUniqueIdentifiers(def *CRUD, field *Field, fieldOpts *options.FieldOp
 		)
 	}
 
+	return nil
+}
+
+func assignRelationships(msgs map[string]*Message, field *Field, fieldOpts *options.FieldOptions) error {
+	if fieldOpts.Relationship == nil {
+		return nil
+	}
+	_, ok := msgs[*field.TypeName]
+	if !ok {
+		return &UnsupportedTypeError{*field.TypeName}
+	}
+	field.Relationship = &Relationship{
+		Relationship: fieldOpts.Relationship,
+		CRUD:         &CRUD{Message: msgs[*field.TypeName]},
+	}
 	return nil
 }
 

@@ -70,11 +70,27 @@
 |:---------------|:---------|:-------------|
 | SQLite         |          |              |
 
-### Non-scalar Field Relationship Strategy
+### Non-scalar Fields
 
-| Implementation | Link via Unique ID (Single) | Inline | Skip |
-|:---------------|:----------------------------|:-------|:-----|
-| SQLite         |                             |        |      |
+| Implementation | Skip | Inline | Relationship (see below) |
+|:---------------|:-----|:-------|:-------------------------|
+| SQLite         |      |        | -                        |
+
+#### Relationship
+
+1. direction
+   1. bidirectional
+   2. unidirectional
+2. type
+   1. one-to-one
+   2. one-to-many
+   3. many-to-one
+
+##### Unidirectional
+
+| Implementation | One-to-one | One-to-many | Many-to-many |
+|:---------------|:-----------|:------------|:-------------|
+| SQLite         |            |             |              |
 
 # References
 

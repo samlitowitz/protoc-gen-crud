@@ -2,6 +2,8 @@ syntax = "proto3";
 
 package protoc_gen_crud.options;
 
+import "protoc-gen-crud/options/relationship.proto";
+
 option go_package = "github.com/samlitowitz/protoc-gen-crud/options";
 
 enum Implementation {
@@ -30,4 +32,5 @@ message ServiceOptions {}
 
 message FieldOptions {
   repeated string uids = 1;
+  Relationship relationship = 2;
 }

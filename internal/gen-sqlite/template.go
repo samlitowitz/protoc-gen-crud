@@ -21,6 +21,15 @@ type crud struct {
 	*descriptor.CRUD
 }
 
+// TODO: figure out how to resolve message field types appropriately based on circumstance
+
+func sqliteColumnNameFromFieldName(f *descriptor.Field) string {
+	if !f.HasRelationship() {
+		return *f.Name
+	}
+	return *f.Name + "_id"
+}
+
 func sqliteType(f *descriptor.Field) string {
 	switch *f.Type {
 	case descriptorpb.FieldDescriptorProto_TYPE_DOUBLE:
@@ -56,9 +65,17 @@ func sqliteType(f *descriptor.Field) string {
 	case descriptorpb.FieldDescriptorProto_TYPE_STRING:
 		return "TEXT"
 
-	case descriptorpb.FieldDescriptorProto_TYPE_GROUP:
-		fallthrough
 	case descriptorpb.FieldDescriptorProto_TYPE_MESSAGE:
+		if !f.HasRelationship() {
+			panic(fmt.Errorf("message type without relationship defined on field %s", f.GetName()))
+		}
+		minUIDFields := f.Relationship.CRUD.MinimalUIDFields()
+		if len(minUIDFields) != 1 {
+			panic(fmt.Errorf("message type must have unique identifier with exactly one field defined on field %s", f.GetName()))
+		}
+		return sqliteType(minUIDFields[0])
+
+	case descriptorpb.FieldDescriptorProto_TYPE_GROUP:
 		fallthrough
 	default:
 		panic(fmt.Errorf("non-scalar type on field %s", f.GetName()))
@@ -90,10 +107,11 @@ func applyTemplate(p param, reg *descriptor.Registry) (string, error) {
 
 var (
 	funcMap template.FuncMap = map[string]interface{}{
-		"sqliteIdent":      gen_go_crud.SQLiteIdent,
-		"sqliteTableName":  gen_go_crud.SQLiteTableName,
-		"sqliteColumnName": gen_go_crud.SQLiteColumnName,
-		"sqliteType":       sqliteType,
+		"sqliteIdent":                   gen_go_crud.SQLiteIdent,
+		"sqliteTableName":               gen_go_crud.SQLiteTableName,
+		"sqliteColumnName":              gen_go_crud.SQLiteColumnName,
+		"sqliteColumnNameFromFieldName": sqliteColumnNameFromFieldName,
+		"sqliteType":                    sqliteType,
 	}
 
 	// https://www.sqlite.org/lang_createtable.html
@@ -102,7 +120,7 @@ DROP TABLE IF EXISTS {{sqliteIdent (sqliteTableName .CRUD.GetName)}};
 CREATE TABLE IF NOT EXISTS {{sqliteIdent (sqliteTableName .CRUD.GetName)}} (
     {{ range $i, $field := .CRUD.DataFields -}}
     {{if $i}},
-    {{end}}{{sqliteIdent (sqliteColumnName $field.GetName)}} {{sqliteType $field}}
+    {{end}}{{sqliteIdent (sqliteColumnName (sqliteColumnNameFromFieldName $field))}} {{sqliteType $field}}
     {{- end }}
     {{- if gt (len .CRUD.MinimalUIDFields) 0 -}}
         ,
