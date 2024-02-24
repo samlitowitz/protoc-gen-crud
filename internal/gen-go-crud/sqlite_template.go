@@ -4,10 +4,18 @@ import (
 	"text/template"
 
 	"github.com/iancoleman/strcase"
+	"github.com/samlitowitz/protoc-gen-crud/internal/descriptor"
 )
 
 func init() {
 	strcase.ConfigureAcronym("UID", "uid")
+}
+
+func SQLiteColumnNameFromFieldName(f *descriptor.Field) string {
+	if !f.HasRelationship() {
+		return *f.Name
+	}
+	return *f.Name + "_id"
 }
 
 func SQLiteIdent(s string) string {

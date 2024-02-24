@@ -21,15 +21,6 @@ type crud struct {
 	*descriptor.CRUD
 }
 
-// TODO: figure out how to resolve message field types appropriately based on circumstance
-
-func sqliteColumnNameFromFieldName(f *descriptor.Field) string {
-	if !f.HasRelationship() {
-		return *f.Name
-	}
-	return *f.Name + "_id"
-}
-
 func sqliteType(f *descriptor.Field) string {
 	switch *f.Type {
 	case descriptorpb.FieldDescriptorProto_TYPE_DOUBLE:
@@ -110,7 +101,7 @@ var (
 		"sqliteIdent":                   gen_go_crud.SQLiteIdent,
 		"sqliteTableName":               gen_go_crud.SQLiteTableName,
 		"sqliteColumnName":              gen_go_crud.SQLiteColumnName,
-		"sqliteColumnNameFromFieldName": sqliteColumnNameFromFieldName,
+		"SQLiteColumnNameFromFieldName": gen_go_crud.SQLiteColumnNameFromFieldName,
 		"sqliteType":                    sqliteType,
 	}
 
@@ -120,7 +111,7 @@ DROP TABLE IF EXISTS {{sqliteIdent (sqliteTableName .CRUD.GetName)}};
 CREATE TABLE IF NOT EXISTS {{sqliteIdent (sqliteTableName .CRUD.GetName)}} (
     {{ range $i, $field := .CRUD.DataFields -}}
     {{if $i}},
-    {{end}}{{sqliteIdent (sqliteColumnName (sqliteColumnNameFromFieldName $field))}} {{sqliteType $field}}
+    {{end}}{{sqliteIdent (sqliteColumnName (SQLiteColumnNameFromFieldName $field))}} {{sqliteType $field}}
     {{- end }}
     {{- if gt (len .CRUD.MinimalUIDFields) 0 -}}
         ,
