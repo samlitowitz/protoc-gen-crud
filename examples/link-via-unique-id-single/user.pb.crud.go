@@ -22,19 +22,19 @@ import (
 )
 
 const (
-	User_FieldMask_Field expressions.FieldID = "7efcc4b1e37ccfd27abf0900cfc133cb96e6eeb09c785a67cbab74c701acb02c"
-	User_Id_Field        expressions.FieldID = "441df8206d64f0e4cf6ad874026ceab109b6b0d2262387c2273ed1d80973589f"
-	User_Password_Field  expressions.FieldID = "fcf0b45269d1e8a2cc0c5c9d3d6013283791fb304e4022200c908dfb41da4019"
-	User_Profile_Field   expressions.FieldID = "5e25e6f951dfc1b02b565d5eeebc15a257f69f351e187d7f06096849065ac10b"
-	User_Username_Field  expressions.FieldID = "3a893c049a89f5736a021eebc001470079160c4bb5e213e8913b73108d67ba6a"
+	User_FieldMask_Field  expressions.FieldID = "7efcc4b1e37ccfd27abf0900cfc133cb96e6eeb09c785a67cbab74c701acb02c"
+	User_Id_Field         expressions.FieldID = "441df8206d64f0e4cf6ad874026ceab109b6b0d2262387c2273ed1d80973589f"
+	User_Password_Field   expressions.FieldID = "fcf0b45269d1e8a2cc0c5c9d3d6013283791fb304e4022200c908dfb41da4019"
+	User_Profile_Id_Field expressions.FieldID = "4a0a0f23b2423415a583781a693d84eb244b9f096aa46f6b3f1c4370f42818f3"
+	User_Username_Field   expressions.FieldID = "3a893c049a89f5736a021eebc001470079160c4bb5e213e8913b73108d67ba6a"
 )
 
 var validUserFields = map[expressions.FieldID]struct{}{
-	User_FieldMask_Field: struct{}{},
-	User_Id_Field:        struct{}{},
-	User_Password_Field:  struct{}{},
-	User_Profile_Field:   struct{}{},
-	User_Username_Field:  struct{}{},
+	User_FieldMask_Field:  struct{}{},
+	User_Id_Field:         struct{}{},
+	User_Password_Field:   struct{}{},
+	User_Profile_Id_Field: struct{}{},
+	User_Username_Field:   struct{}{},
 }
 
 // InMemoryUserRepository is an in memory implementation of the UserRepository interface.
@@ -72,7 +72,7 @@ func (repo *SQLiteUserRepository) Create(ctx context.Context, toCreate []*User) 
 			noMaskBinds = append(noMaskBinds, user.GetId())
 			noMaskBinds = append(noMaskBinds, user.GetUsername())
 			noMaskBinds = append(noMaskBinds, user.GetPassword())
-			noMaskBinds = append(noMaskBinds, user.GetProfile())
+			noMaskBinds = append(noMaskBinds, user.GetProfile().GetId())
 			noMaskBindsStrs = append(noMaskBindsStrs, "(?,?,?,?)")
 			continue
 		}
@@ -246,11 +246,11 @@ func (repo *SQLiteUserRepository) Delete(ctx context.Context, expr expressions.E
 }
 
 var sqliteUserColumnNameByFieldID = map[expressions.FieldID]string{
-	User_FieldMask_Field: "field_mask",
-	User_Id_Field:        "id",
-	User_Password_Field:  "password",
-	User_Profile_Field:   "profile",
-	User_Username_Field:  "username",
+	User_FieldMask_Field:  "field_mask",
+	User_Id_Field:         "id",
+	User_Password_Field:   "password",
+	User_Profile_Id_Field: "profile",
+	User_Username_Field:   "username",
 }
 
 func whereClauseFromExpressionForUser(expr expressions.Expression) (string, []any, error) {

@@ -49,6 +49,18 @@ func (crud *crud) FieldByFieldConstants() map[string]*field {
 			strcase.ToCamel(crud.CRUD.GetName()),
 			strcase.ToCamel(fieldDef.GetName()),
 		)
+		if fieldDef.HasRelationship() {
+			minUIDFields := fieldDef.Relationship.CRUD.MinimalUIDFields()
+			if len(minUIDFields) != 1 {
+				panic(fmt.Errorf("message type must have unique identifier with exactly one field defined on field %s", fieldDef.GetName()))
+			}
+			name = fmt.Sprintf(
+				"%s_%s_Id_Field",
+				strcase.ToCamel(crud.CRUD.GetName()),
+				strcase.ToCamel(fieldDef.GetName()),
+			)
+		}
+
 		h := sha256.New()
 		_, err := h.Write([]byte(name))
 		if err != nil {

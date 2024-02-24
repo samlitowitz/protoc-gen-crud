@@ -1,7 +1,10 @@
 package gen_go_crud
 
 import (
+	"fmt"
 	"text/template"
+
+	"github.com/samlitowitz/protoc-gen-crud/internal/casing"
 
 	"github.com/iancoleman/strcase"
 	"github.com/samlitowitz/protoc-gen-crud/internal/descriptor"
@@ -9,6 +12,24 @@ import (
 
 func init() {
 	strcase.ConfigureAcronym("UID", "uid")
+}
+
+func SQLiteMemberAccessor(f *descriptor.Field) string {
+	if !f.HasRelationship() {
+		return fmt.Sprintf(
+			"Get%s()",
+			casing.CamelIdentifier(*f.Name),
+		)
+	}
+	minUIDFields := f.Relationship.CRUD.MinimalUIDFields()
+	if len(minUIDFields) != 1 {
+		panic(fmt.Errorf("message type must have unique identifier with exactly one field defined on field %s", f.GetName()))
+	}
+	return fmt.Sprintf(
+		"Get%s().Get%s()",
+		casing.CamelIdentifier(*f.Name),
+		casing.CamelIdentifier(*minUIDFields[0].Name),
+	)
 }
 
 func SQLiteColumnNameFromFieldName(f *descriptor.Field) string {
@@ -38,10 +59,11 @@ type sqlite struct{}
 
 var (
 	sqliteFuncMap template.FuncMap = map[string]interface{}{
-		"sqliteIdent":      SQLiteTemplateIdent,
-		"sqliteTableName":  SQLiteTableName,
-		"sqliteColumnName": SQLiteColumnName,
-		"toLowerCamel":     strcase.ToLowerCamel,
+		"sqliteIdent":          SQLiteTemplateIdent,
+		"sqliteTableName":      SQLiteTableName,
+		"sqliteColumnName":     SQLiteColumnName,
+		"sqliteMemberAccessor": SQLiteMemberAccessor,
+		"toLowerCamel":         strcase.ToLowerCamel,
 	}
 
 	_ = template.Must(repositoryTemplate.New("repository-sqlite").Funcs(funcMap).Funcs(sqliteFuncMap).Parse(`
@@ -82,7 +104,7 @@ func (repo *SQLite{{.CRUD.Name}}Repository) Create(ctx context.Context, toCreate
 	bindsStrs := []string{}
 	for _, {{toLowerCamel $.CRUD.GetName}} := range toCreate {
 		{{- range $field := .CRUD.DataFields}}
-		binds = append(binds, {{toLowerCamel $.CRUD.GetName}}.Get{{camelIdentifier $field.GetName}}())
+		binds = append(binds, {{toLowerCamel $.CRUD.GetName}}.{{sqliteMemberAccessor $field}})
 		{{- end}}
 		bindsStrs = append(bindsStrs, "(
 			{{- range $i, $field := .CRUD.DataFields -}}
@@ -109,7 +131,7 @@ func (repo *SQLite{{.CRUD.Name}}Repository) Create(ctx context.Context, toCreate
 	for _, {{toLowerCamel $.CRUD.GetName}} := range toCreate {
 		if {{toLowerCamel $.CRUD.GetName}}.{{camelIdentifier $.CRUD.FieldMaskFieldName}} == nil {
 			{{- range $field := .CRUD.DataFields}}
-			noMaskBinds = append(noMaskBinds, {{toLowerCamel $.CRUD.GetName}}.Get{{camelIdentifier $field.GetName}}())
+			noMaskBinds = append(noMaskBinds, {{toLowerCamel $.CRUD.GetName}}.{{sqliteMemberAccessor $field}})
 			{{- end}}
 			noMaskBindsStrs = append(noMaskBindsStrs, "(
 			{{- range $i, $field := .CRUD.DataFields -}}
