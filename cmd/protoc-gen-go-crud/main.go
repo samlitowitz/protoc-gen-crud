@@ -3,8 +3,9 @@ package main
 import (
 	"flag"
 	"fmt"
-	gen_sqlite "github.com/samlitowitz/protoc-gen-crud/internal/gen-sqlite"
 	"os"
+
+	gen_sqlite "github.com/samlitowitz/protoc-gen-crud/internal/gen-sqlite"
 
 	gen_gen "github.com/samlitowitz/protoc-gen-crud/internal/gen-gen"
 
@@ -63,7 +64,6 @@ func main() {
 				return err
 			}
 		}
-
 		return err
 	})
 }

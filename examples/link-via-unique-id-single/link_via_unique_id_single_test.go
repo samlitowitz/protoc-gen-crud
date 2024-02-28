@@ -51,6 +51,8 @@ func TestSQLiteUserRepository_Create(t *testing.T) {
 	opts := cmp.Options{
 		cmpopts.IgnoreUnexported(simple.User{}),
 		cmpopts.IgnoreFields(simple.User{}, "FieldMask"),
+		cmpopts.IgnoreUnexported(simple.Profile{}),
+		cmpopts.IgnoreFields(simple.Profile{}, "FieldMask"),
 		cmpopts.SortSlices(func(x, y *simple.User) bool {
 			switch strings.Compare(x.GetId(), y.GetId()) {
 			case -1:
@@ -75,8 +77,7 @@ func TestSQLiteUserRepository_Create(t *testing.T) {
 					Username: "username-1",
 					Password: "password-1",
 					Profile: &simple.Profile{
-						Id:   uuid.NewString(),
-						Name: "name-1",
+						Id: uuid.NewString(),
 					},
 				},
 				{
@@ -84,8 +85,7 @@ func TestSQLiteUserRepository_Create(t *testing.T) {
 					Username: "username-2",
 					Password: "password-2",
 					Profile: &simple.Profile{
-						Id:   uuid.NewString(),
-						Name: "name-2",
+						Id: uuid.NewString(),
 					},
 				},
 				{
@@ -93,8 +93,7 @@ func TestSQLiteUserRepository_Create(t *testing.T) {
 					Username: "username-3",
 					Password: "password-3",
 					Profile: &simple.Profile{
-						Id:   uuid.NewString(),
-						Name: "name-3",
+						Id: uuid.NewString(),
 					},
 				},
 			},
@@ -110,8 +109,7 @@ func TestSQLiteUserRepository_Create(t *testing.T) {
 					Username: "username-1",
 					Password: "password-1",
 					Profile: &simple.Profile{
-						Id:   uuid.NewString(),
-						Name: "name-1",
+						Id: uuid.NewString(),
 					},
 				},
 				{
@@ -122,8 +120,7 @@ func TestSQLiteUserRepository_Create(t *testing.T) {
 					Username: "username-2",
 					Password: "password-2",
 					Profile: &simple.Profile{
-						Id:   uuid.NewString(),
-						Name: "name-2",
+						Id: uuid.NewString(),
 					},
 				},
 				{
@@ -134,8 +131,7 @@ func TestSQLiteUserRepository_Create(t *testing.T) {
 					Username: "username-3",
 					Password: "password-3",
 					Profile: &simple.Profile{
-						Id:   uuid.NewString(),
-						Name: "name-3",
+						Id: uuid.NewString(),
 					},
 				},
 				{
@@ -146,8 +142,7 @@ func TestSQLiteUserRepository_Create(t *testing.T) {
 					Username: "username-4",
 					Password: "password-4",
 					Profile: &simple.Profile{
-						Id:   uuid.NewString(),
-						Name: "name-4",
+						Id: uuid.NewString(),
 					},
 				},
 			},
@@ -202,6 +197,7 @@ func TestSQLiteUserRepository_Create(t *testing.T) {
 				continue
 			}
 			fmutils.Filter(user, user.FieldMask.GetPaths())
+			user.Profile = &simple.Profile{}
 		}
 
 		// Check stored data
@@ -247,6 +243,7 @@ func TestSQLiteUserRepository_Read(t *testing.T) {
 
 	opts := cmp.Options{
 		cmpopts.IgnoreUnexported(simple.User{}),
+		cmpopts.IgnoreUnexported(simple.Profile{}),
 		cmpopts.SortSlices(func(x, y *simple.User) bool {
 			switch strings.Compare(x.GetId(), y.GetId()) {
 			case -1:
@@ -272,16 +269,25 @@ func TestSQLiteUserRepository_Read(t *testing.T) {
 					Id:       uuid.NewString(),
 					Username: "username-1",
 					Password: "password-1",
+					Profile: &simple.Profile{
+						Id: uuid.NewString(),
+					},
 				},
 				{
 					Id:       uuid.NewString(),
 					Username: "username-2",
 					Password: "password-2",
+					Profile: &simple.Profile{
+						Id: uuid.NewString(),
+					},
 				},
 				{
 					Id:       uuid.NewString(),
 					Username: "username-3",
 					Password: "password-3",
+					Profile: &simple.Profile{
+						Id: uuid.NewString(),
+					},
 				},
 			},
 			nil,
@@ -292,11 +298,17 @@ func TestSQLiteUserRepository_Read(t *testing.T) {
 					Id:       uuid.NewString(),
 					Username: "username-2",
 					Password: "password-2",
+					Profile: &simple.Profile{
+						Id: uuid.NewString(),
+					},
 				},
 				{
 					Id:       uuid.NewString(),
 					Username: "username-3",
 					Password: "password-3",
+					Profile: &simple.Profile{
+						Id: uuid.NewString(),
+					},
 				},
 			},
 			[]*simple.User{
@@ -304,6 +316,9 @@ func TestSQLiteUserRepository_Read(t *testing.T) {
 					Id:       "1",
 					Username: "username-1",
 					Password: "password-1",
+					Profile: &simple.Profile{
+						Id: uuid.NewString(),
+					},
 				},
 			},
 			expressions.NewEqual(
@@ -317,11 +332,17 @@ func TestSQLiteUserRepository_Read(t *testing.T) {
 					Id:       uuid.NewString(),
 					Username: "username-2",
 					Password: "password-2",
+					Profile: &simple.Profile{
+						Id: uuid.NewString(),
+					},
 				},
 				{
 					Id:       uuid.NewString(),
 					Username: "username-3",
 					Password: "password-3",
+					Profile: &simple.Profile{
+						Id: uuid.NewString(),
+					},
 				},
 			},
 			[]*simple.User{
@@ -329,6 +350,9 @@ func TestSQLiteUserRepository_Read(t *testing.T) {
 					Id:       uuid.NewString(),
 					Username: "username-1",
 					Password: "password-1",
+					Profile: &simple.Profile{
+						Id: uuid.NewString(),
+					},
 				},
 			},
 			expressions.NewEqual(
@@ -342,11 +366,17 @@ func TestSQLiteUserRepository_Read(t *testing.T) {
 					Id:       uuid.NewString(),
 					Username: "username-2",
 					Password: "password-2",
+					Profile: &simple.Profile{
+						Id: uuid.NewString(),
+					},
 				},
 				{
 					Id:       uuid.NewString(),
 					Username: "username-3",
 					Password: "password-3",
+					Profile: &simple.Profile{
+						Id: uuid.NewString(),
+					},
 				},
 			},
 			[]*simple.User{
@@ -354,6 +384,9 @@ func TestSQLiteUserRepository_Read(t *testing.T) {
 					Id:       uuid.NewString(),
 					Username: "username-1",
 					Password: "password-1",
+					Profile: &simple.Profile{
+						Id: uuid.NewString(),
+					},
 				},
 			},
 			expressions.NewEqual(
@@ -367,11 +400,17 @@ func TestSQLiteUserRepository_Read(t *testing.T) {
 					Id:       uuid.NewString(),
 					Username: "username-2",
 					Password: "password-2",
+					Profile: &simple.Profile{
+						Id: uuid.NewString(),
+					},
 				},
 				{
 					Id:       uuid.NewString(),
 					Username: "username-3",
 					Password: "password-3",
+					Profile: &simple.Profile{
+						Id: uuid.NewString(),
+					},
 				},
 			},
 			[]*simple.User{
@@ -379,6 +418,9 @@ func TestSQLiteUserRepository_Read(t *testing.T) {
 					Id:       uuid.NewString(),
 					Username: "username-1",
 					Password: "password-1",
+					Profile: &simple.Profile{
+						Id: uuid.NewString(),
+					},
 				},
 			},
 			expressions.NewAnd(
@@ -481,6 +523,8 @@ func TestSQLiteUserRepository_Update(t *testing.T) {
 	opts := cmp.Options{
 		cmpopts.IgnoreUnexported(simple.User{}),
 		cmpopts.IgnoreFields(simple.User{}, "FieldMask"),
+		cmpopts.IgnoreUnexported(simple.Profile{}),
+		cmpopts.IgnoreFields(simple.Profile{}, "FieldMask"),
 		cmpopts.SortSlices(func(x, y *simple.User) bool {
 			switch strings.Compare(x.GetId(), y.GetId()) {
 			case -1:
@@ -506,16 +550,25 @@ func TestSQLiteUserRepository_Update(t *testing.T) {
 					Id:       uuid.NewString(),
 					Username: "username-1",
 					Password: "password-1",
+					Profile: &simple.Profile{
+						Id: uuid.NewString(),
+					},
 				},
 				{
 					Id:       uuid.NewString(),
 					Username: "username-2",
 					Password: "password-2",
+					Profile: &simple.Profile{
+						Id: uuid.NewString(),
+					},
 				},
 				{
 					Id:       uuid.NewString(),
 					Username: "username-3",
 					Password: "password-3",
+					Profile: &simple.Profile{
+						Id: uuid.NewString(),
+					},
 				},
 			},
 			[]*simple.User{
@@ -560,21 +613,33 @@ func TestSQLiteUserRepository_Update(t *testing.T) {
 					Id:       uuid.NewString(),
 					Username: "username-1",
 					Password: "password-1",
+					Profile: &simple.Profile{
+						Id: uuid.NewString(),
+					},
 				},
 				{
 					Id:       uuid.NewString(),
 					Username: "username-2",
 					Password: "password-2",
+					Profile: &simple.Profile{
+						Id: uuid.NewString(),
+					},
 				},
 				{
 					Id:       uuid.NewString(),
 					Username: "username-3",
 					Password: "password-3",
+					Profile: &simple.Profile{
+						Id: uuid.NewString(),
+					},
 				},
 				{
 					Id:       uuid.NewString(),
 					Username: "username-4",
 					Password: "password-4",
+					Profile: &simple.Profile{
+						Id: uuid.NewString(),
+					},
 				},
 			},
 			[]*simple.User{
@@ -686,8 +751,20 @@ func TestSQLiteUserRepository_Update(t *testing.T) {
 			if testData.expectedUsers[i].Id == "" {
 				testData.expectedUsers[i].Id = user.Id
 			}
+			if testData.expectedUsers[i].Profile == nil {
+				testData.expectedUsers[i].Profile = &simple.Profile{}
+			}
+			if testData.expectedUsers[i].Profile.Id == "" {
+				testData.expectedUsers[i].Profile.Id = user.Profile.GetId()
+			}
 			if testData.updates[i].Id == "" {
 				testData.updates[i].Id = user.Id
+			}
+			if testData.updates[i].Profile == nil {
+				testData.updates[i].Profile = &simple.Profile{}
+			}
+			if testData.updates[i].Profile.Id == "" {
+				testData.updates[i].Profile.Id = user.Profile.Id
 			}
 		}
 
@@ -743,6 +820,7 @@ func TestSQLiteUserRepository_Delete(t *testing.T) {
 
 	opts := cmp.Options{
 		cmpopts.IgnoreUnexported(simple.User{}),
+		cmpopts.IgnoreUnexported(simple.Profile{}),
 		cmpopts.SortSlices(func(x, y *simple.User) bool {
 			switch strings.Compare(x.GetId(), y.GetId()) {
 			case -1:
@@ -776,6 +854,9 @@ func TestSQLiteUserRepository_Delete(t *testing.T) {
 			Id:       uuid.NewString(),
 			Username: fmt.Sprintf("username-%d", i),
 			Password: fmt.Sprintf("password-%d", i),
+			Profile: &simple.Profile{
+				Id: uuid.NewString(),
+			},
 		})
 	}
 

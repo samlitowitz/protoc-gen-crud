@@ -108,7 +108,7 @@ func (repo *SQLiteUserRepository) Create(ctx context.Context, toCreate []*User) 
 		_, err = tx.ExecContext(
 			ctx,
 			fmt.Sprintf(
-				"INSERT INTO \"user\" (\"id\",\"username\",\"password\",\"profile\") VALUES \n %s",
+				"INSERT INTO \"user\" (\"id\",\"username\",\"password\",\"profile_id\") VALUES \n %s",
 				strings.Join(noMaskBindsStrs, ",\n"),
 			),
 			noMaskBinds...,
@@ -128,7 +128,7 @@ func (repo *SQLiteUserRepository) Create(ctx context.Context, toCreate []*User) 
 // Read returns a set of Users matching the provided criteria
 // Read is incomplete and it should be considered unstable
 func (repo *SQLiteUserRepository) Read(ctx context.Context, expr expressions.Expression) ([]*User, error) {
-	query := "SELECT \"id\",\"username\",\"password\",\"profile\" FROM \"user\""
+	query := "SELECT \"id\",\"username\",\"password\",\"profile_id\" FROM \"user\""
 	clauses, binds, err := whereClauseFromExpressionForUser(expr)
 	if err != nil {
 		return nil, err
@@ -147,8 +147,10 @@ func (repo *SQLiteUserRepository) Read(ctx context.Context, expr expressions.Exp
 	defer rows.Close()
 	var found []*User
 	for rows.Next() {
-		user := &User{}
-		if err = rows.Scan(&user.Id, &user.Username, &user.Password, &user.Profile); err != nil {
+		user := &User{
+			Profile: &Profile{},
+		}
+		if err = rows.Scan(&user.Id, &user.Username, &user.Password, &user.Profile.Id); err != nil {
 			return nil, err
 		}
 		found = append(found, user)
@@ -172,7 +174,7 @@ func (repo *SQLiteUserRepository) Update(ctx context.Context, toUpdate []*User) 
 	defer tx.Rollback()
 
 	stmt, err := tx.Prepare(
-		"UPDATE \"user\" SET \"username\" = ?,\"password\" = ?,\"profile\" = ? WHERE \"id\" = ?",
+		"UPDATE \"user\" SET \"username\" = ?,\"password\" = ?,\"profile_id\" = ? WHERE \"id\" = ?",
 	)
 	if err != nil {
 		return nil, err
@@ -181,7 +183,7 @@ func (repo *SQLiteUserRepository) Update(ctx context.Context, toUpdate []*User) 
 
 	for _, user := range toUpdate {
 		if user.FieldMask == nil {
-			_, err = stmt.ExecContext(ctx, user.GetUsername(), user.GetPassword(), user.GetProfile(), user.GetId())
+			_, err = stmt.ExecContext(ctx, user.GetUsername(), user.GetPassword(), user.GetProfile().GetId(), user.GetId())
 			if err != nil {
 				return nil, err
 			}
@@ -337,9 +339,9 @@ func sqliteUserGetCreateValuesByColumnName(def *User, fieldMask *fieldmaskpb.Fie
 		valuesByColumnName["password"] = user.GetPassword()
 	}
 	if _, ok := nestedMask["profile"]; ok {
-		valuesByColumnName["profile"] = def.GetProfile()
+		valuesByColumnName["profile_id"] = def.GetProfile().GetId()
 	} else {
-		valuesByColumnName["profile"] = user.GetProfile()
+		valuesByColumnName["profile_id"] = user.GetProfile().GetId()
 	}
 	return valuesByColumnName, nil
 }
@@ -359,7 +361,7 @@ func sqliteUserGetUpdateValuesByColumnName(def *User, fieldMask *fieldmaskpb.Fie
 		valuesByColumnName["password"] = def.GetPassword()
 	}
 	if _, ok := nestedMask["profile"]; ok {
-		valuesByColumnName["profile"] = def.GetProfile()
+		valuesByColumnName["profile_id"] = def.GetProfile().GetId()
 	}
 	return valuesByColumnName, nil
 }

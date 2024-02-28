@@ -14,6 +14,21 @@ func init() {
 	strcase.ConfigureAcronym("UID", "uid")
 }
 
+func SQLiteMemberField(f *descriptor.Field) string {
+	if !f.HasRelationship() {
+		return casing.CamelIdentifier(*f.Name)
+	}
+	minUIDFields := f.Relationship.CRUD.MinimalUIDFields()
+	if len(minUIDFields) != 1 {
+		panic(fmt.Errorf("message type must have unique identifier with exactly one field defined on field %s", f.GetName()))
+	}
+	return fmt.Sprintf(
+		"%s.%s",
+		casing.CamelIdentifier(*f.Name),
+		casing.CamelIdentifier(*minUIDFields[0].Name),
+	)
+}
+
 func SQLiteMemberAccessor(f *descriptor.Field) string {
 	if !f.HasRelationship() {
 		return fmt.Sprintf(
@@ -59,11 +74,13 @@ type sqlite struct{}
 
 var (
 	sqliteFuncMap template.FuncMap = map[string]interface{}{
-		"sqliteIdent":          SQLiteTemplateIdent,
-		"sqliteTableName":      SQLiteTableName,
-		"sqliteColumnName":     SQLiteColumnName,
-		"sqliteMemberAccessor": SQLiteMemberAccessor,
-		"toLowerCamel":         strcase.ToLowerCamel,
+		"sqliteIdent":                   SQLiteTemplateIdent,
+		"sqliteTableName":               SQLiteTableName,
+		"sqliteColumnName":              SQLiteColumnName,
+		"sqliteColumnNameFromFieldName": SQLiteColumnNameFromFieldName,
+		"sqliteMemberAccessor":          SQLiteMemberAccessor,
+		"sqliteMemberField":             SQLiteMemberField,
+		"toLowerCamel":                  strcase.ToLowerCamel,
 	}
 
 	_ = template.Must(repositoryTemplate.New("repository-sqlite").Funcs(funcMap).Funcs(sqliteFuncMap).Parse(`
@@ -173,7 +190,7 @@ func (repo *SQLite{{.CRUD.Name}}Repository) Create(ctx context.Context, toCreate
 			fmt.Sprintf(
 				"INSERT INTO {{sqliteIdent (sqliteTableName .CRUD.GetName)}} (
 				{{- range $i, $field := .CRUD.DataFields -}}
-				{{if $i}},{{end}}{{sqliteIdent (sqliteColumnName $field.GetName)}}
+				{{if $i}},{{end}}{{sqliteIdent (sqliteColumnName (sqliteColumnNameFromFieldName $field))}}
 				{{- end -}}) VALUES \n %s",
 				strings.Join(noMaskBindsStrs, ",\n"),
 			),
@@ -198,7 +215,7 @@ func (repo *SQLite{{.CRUD.Name}}Repository) Create(ctx context.Context, toCreate
 // Read is incomplete and it should be considered unstable
 func (repo *SQLite{{.CRUD.Name}}Repository) Read(ctx context.Context, expr expressions.Expression) ([]*{{.CRUD.GoType .CRUD.File.GoPkg.Path}}, error) {
 	query := "SELECT {{ range $i, $field := .CRUD.DataFields -}}
-		{{if $i}},{{end}}{{sqliteIdent (sqliteColumnName $field.GetName)}}
+		{{if $i}},{{end}}{{sqliteIdent (sqliteColumnName (sqliteColumnNameFromFieldName $field))}}
 		{{- end }} FROM {{sqliteIdent (sqliteTableName .CRUD.GetName)}}"
 	clauses, binds, err := whereClauseFromExpressionFor{{.CRUD.Name}}(expr)
 	if err != nil {
@@ -218,10 +235,14 @@ func (repo *SQLite{{.CRUD.Name}}Repository) Read(ctx context.Context, expr expre
 	defer rows.Close()
 	var found []*{{.CRUD.GoType .CRUD.File.GoPkg.Path}}
 	for rows.Next() {
-		{{toLowerCamel $.CRUD.GetName}} := &{{.CRUD.GoType .CRUD.File.GoPkg.Path}}{}
+		{{toLowerCamel $.CRUD.GetName}} := &{{.CRUD.GoType .CRUD.File.GoPkg.Path}}{
+			{{range $i, $field := .CRUD.DataFields -}}
+			{{if $field.HasRelationship}}{{camelIdentifier $field.GetName}}: &{{$field.FieldMessage.GoType $.CRUD.File.GoPkg.Path}}{},{{end}}
+			{{- end}}
+		}
 		if err = rows.Scan(
 		{{- range $i, $field := .CRUD.DataFields -}}
-		{{if $i}},{{end}} &{{toLowerCamel $.CRUD.GetName}}.{{camelIdentifier $field.GetName}}
+		{{if $i}},{{end}} &{{toLowerCamel $.CRUD.GetName}}.{{sqliteMemberField $field}}
 		{{- end -}}
 		); err != nil {
 			return nil, err
@@ -254,7 +275,7 @@ func (repo *SQLite{{.CRUD.Name}}Repository) Update(ctx context.Context, toUpdate
 
 	stmt, err := tx.Prepare(
 		"UPDATE {{sqliteIdent (sqliteTableName .CRUD.GetName)}} SET {{range $i, $field := .CRUD.NonMinimalUIDDataFields -}}
-		{{if $i}},{{end}}{{sqliteIdent (sqliteColumnName $field.GetName)}} = ?
+		{{if $i}},{{end}}{{sqliteIdent (sqliteColumnName (sqliteColumnNameFromFieldName $field))}} = ?
 		{{- end }} WHERE {{ range $i, $field := .CRUD.MinimalUIDFields -}}
 		{{if $i}},{{end}}{{sqliteIdent (sqliteColumnName $field.GetName)}} = ?
 		{{- end }}",
@@ -266,9 +287,9 @@ func (repo *SQLite{{.CRUD.Name}}Repository) Update(ctx context.Context, toUpdate
 	{{ if eq .CRUD.FieldMaskFieldName ""}}
 	for _, {{toLowerCamel $.CRUD.GetName}} := range toUpdate {
 		_, err = stmt.ExecContext(ctx, {{ range $i, $field := .CRUD.NonMinimalUIDDataFields -}}
-		{{if $i}},{{end}}{{toLowerCamel $.CRUD.GetName}}.Get{{camelIdentifier $field.GetName}}()
+		{{if $i}},{{end}}{{toLowerCamel $.CRUD.GetName}}.{{sqliteMemberAccessor $field}}
 		{{- end }},{{ range $i, $field := .CRUD.MinimalUIDFields -}}
-		{{if $i}},{{end}}{{toLowerCamel $.CRUD.GetName}}.Get{{camelIdentifier $field.GetName}}()
+		{{if $i}},{{end}}{{toLowerCamel $.CRUD.GetName}}.{{sqliteMemberAccessor $field}}
 		{{- end }})
 		if err != nil {
 			return nil, err
@@ -278,9 +299,9 @@ func (repo *SQLite{{.CRUD.Name}}Repository) Update(ctx context.Context, toUpdate
 	for _, {{toLowerCamel $.CRUD.GetName}} := range toUpdate {
 		if {{toLowerCamel $.CRUD.GetName}}.{{camelIdentifier $.CRUD.FieldMaskFieldName}} == nil {
 			_, err = stmt.ExecContext(ctx, {{ range $i, $field := .CRUD.NonMinimalUIDDataFields -}}
-			{{if $i}},{{end}}{{toLowerCamel $.CRUD.GetName}}.Get{{camelIdentifier $field.GetName}}()
+			{{if $i}},{{end}}{{toLowerCamel $.CRUD.GetName}}.{{sqliteMemberAccessor $field}}
 			{{- end }},{{ range $i, $field := .CRUD.MinimalUIDFields -}}
-			{{if $i}},{{end}}{{toLowerCamel $.CRUD.GetName}}.Get{{camelIdentifier $field.GetName}}()
+			{{if $i}},{{end}}{{toLowerCamel $.CRUD.GetName}}.{{sqliteMemberAccessor $field}}
 			{{- end }})
 			if err != nil {
 				return nil, err
@@ -433,9 +454,9 @@ func sqlite{{.CRUD.Name}}GetCreateValuesByColumnName(def *{{.CRUD.GoType .CRUD.F
 	nestedMask := fmutils.NestedMaskFromPaths(fieldMask.Paths)
 	{{ range $i, $field := .CRUD.DataFields -}}
 	if _, ok := nestedMask["{{$field.GetName}}"]; ok {
-		valuesByColumnName["{{$field.GetName}}"] = def.Get{{camelIdentifier $field.GetName}}()
+		valuesByColumnName["{{sqliteColumnName (sqliteColumnNameFromFieldName $field)}}"] = def.{{sqliteMemberAccessor $field}}
 	} else {
-		valuesByColumnName["{{$field.GetName}}"] = {{toLowerCamel $.CRUD.GetName}}.Get{{camelIdentifier $field.GetName}}()
+		valuesByColumnName["{{sqliteColumnName (sqliteColumnNameFromFieldName $field)}}"] = {{toLowerCamel $.CRUD.GetName}}.{{sqliteMemberAccessor $field}}
 	}
 	{{end -}}
 	return valuesByColumnName, nil
@@ -448,7 +469,7 @@ func sqlite{{.CRUD.Name}}GetUpdateValuesByColumnName(def *{{.CRUD.GoType .CRUD.F
 	nestedMask := fmutils.NestedMaskFromPaths(fieldMask.Paths)
 	{{ range $i, $field := .CRUD.DataFields -}}
 	if _, ok := nestedMask["{{$field.GetName}}"]; ok {
-		valuesByColumnName["{{$field.GetName}}"] = def.Get{{camelIdentifier $field.GetName}}()
+		valuesByColumnName["{{sqliteColumnName (sqliteColumnNameFromFieldName $field)}}"] = def.{{sqliteMemberAccessor $field}}
 	}
 	{{end -}}
 	return valuesByColumnName, nil

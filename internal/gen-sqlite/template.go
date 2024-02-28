@@ -101,7 +101,7 @@ var (
 		"sqliteIdent":                   gen_go_crud.SQLiteIdent,
 		"sqliteTableName":               gen_go_crud.SQLiteTableName,
 		"sqliteColumnName":              gen_go_crud.SQLiteColumnName,
-		"SQLiteColumnNameFromFieldName": gen_go_crud.SQLiteColumnNameFromFieldName,
+		"sqliteColumnNameFromFieldName": gen_go_crud.SQLiteColumnNameFromFieldName,
 		"sqliteType":                    sqliteType,
 	}
 
@@ -111,13 +111,13 @@ DROP TABLE IF EXISTS {{sqliteIdent (sqliteTableName .CRUD.GetName)}};
 CREATE TABLE IF NOT EXISTS {{sqliteIdent (sqliteTableName .CRUD.GetName)}} (
     {{ range $i, $field := .CRUD.DataFields -}}
     {{if $i}},
-    {{end}}{{sqliteIdent (sqliteColumnName (SQLiteColumnNameFromFieldName $field))}} {{sqliteType $field}}
+    {{end}}{{sqliteIdent (sqliteColumnName (sqliteColumnNameFromFieldName $field))}} {{sqliteType $field}}
     {{- end }}
     {{- if gt (len .CRUD.MinimalUIDFields) 0 -}}
         ,
 
     PRIMARY KEY ({{ range $i, $field := .CRUD.MinimalUIDFields -}}
-        {{if $i}},{{end}}{{sqliteIdent (sqliteColumnName $field.GetName)}}
+        {{if $i}},{{end}}{{sqliteIdent (sqliteColumnName (sqliteColumnNameFromFieldName $field))}}
         {{- end }})
     {{- end}}
 );

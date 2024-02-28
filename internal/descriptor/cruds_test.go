@@ -198,7 +198,7 @@ func TestExtractCRUDOperations(t *testing.T) {
 }
 
 func TestExtractCRUDImplementations(t *testing.T) {
-	allImplementations := []options.Implementation{options.Implementation_IN_MEMORY}
+	allImplementations := []options.Implementation{options.Implementation_SQLITE}
 	combinations := allImplementationCombinations(allImplementations)
 	for _, implementations := range combinations {
 		src := `

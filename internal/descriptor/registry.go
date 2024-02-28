@@ -48,6 +48,15 @@ func (r *Registry) load(gen *protogen.Plugin) error {
 	for _, filePath := range filePaths {
 		r.loadFile(filePath, gen.FilesByPath[filePath])
 	}
+	for _, filePath := range filePaths {
+		if !gen.FilesByPath[filePath].Generate {
+			continue
+		}
+		err := r.fixupFieldFieldMessage(r.files[filePath])
+		if err != nil {
+			return err
+		}
+	}
 
 	for _, filePath := range filePaths {
 		if !gen.FilesByPath[filePath].Generate {
@@ -129,6 +138,29 @@ func (r *Registry) registerEnum(file *File, outerPath []string, enums []*descrip
 		file.Enums = append(file.Enums, e)
 		r.enums[e.FQEN()] = e
 	}
+}
+
+func (r *Registry) fixupFieldFieldMessage(file *File) error {
+	for _, msg := range file.Messages {
+		for _, field := range msg.Fields {
+			if field.TypeName == nil {
+				continue
+			}
+			if *field.TypeName == "" {
+				continue
+			}
+			fieldMessage, err := r.LookupMsg("", *field.TypeName)
+			if err != nil {
+				return fmt.Errorf(
+					"failed to fix up field %s on message %s",
+					*field.Name,
+					*msg.Name,
+				)
+			}
+			field.FieldMessage = fieldMessage
+		}
+	}
+	return nil
 }
 
 func (r *Registry) LookupMsg(location, name string) (*Message, error) {

@@ -1,5 +1,10 @@
 # Protobuf Annotations
 
+TODO: Impelemnt proto linter
+
+https://github.com/ghostiam/protogetter
+https://golangci-lint.run/usage/linters/#protogetter
+
 # Table of Contents
 
 1. [Feature Support](#feature-support)

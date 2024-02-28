@@ -3,3 +3,4 @@
 !.editorconfig
 !.gitattributes
 !.gitignore
+!.golangci.yaml
