@@ -20,7 +20,8 @@ message Entity {
       uids: ["id"]
     }
   ];
-  repeated Tag tags = 3 [
+  string description = 3;
+  repeated Tag tags = 4 [
     (protoc_gen_crud.options.crud_field_options) = {
       relationship: {
         direction: UNIDIRECTIONAL

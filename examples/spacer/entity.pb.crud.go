@@ -22,15 +22,17 @@ import (
 )
 
 const (
-	Entity_FieldMask_Field expressions.FieldID = "d5fdfb07533897d35c72f1cad763f720734b2f231dabc9452b2770b6fc7d9edb"
-	Entity_Id_Field        expressions.FieldID = "354878eecbd3d61175d8c0b157e8ef8d1b18983e4d1c689ecf1f9ab7b86498ae"
-	Entity_Tags_Id_Field   expressions.FieldID = "bbac816399d4272b9b3a310cd87c121c05aac1053dbcec9e2aa2017d4d14a3de"
+	Entity_Description_Field expressions.FieldID = "bd2ece94ac8414bb4f9209cdcf47d3680d2aebf98ae56179bf6d4888e2ea111d"
+	Entity_FieldMask_Field   expressions.FieldID = "d5fdfb07533897d35c72f1cad763f720734b2f231dabc9452b2770b6fc7d9edb"
+	Entity_Id_Field          expressions.FieldID = "354878eecbd3d61175d8c0b157e8ef8d1b18983e4d1c689ecf1f9ab7b86498ae"
+	Entity_Tags_Id_Field     expressions.FieldID = "bbac816399d4272b9b3a310cd87c121c05aac1053dbcec9e2aa2017d4d14a3de"
 )
 
 var validEntityFields = map[expressions.FieldID]struct{}{
-	Entity_FieldMask_Field: struct{}{},
-	Entity_Id_Field:        struct{}{},
-	Entity_Tags_Id_Field:   struct{}{},
+	Entity_Description_Field: struct{}{},
+	Entity_FieldMask_Field:   struct{}{},
+	Entity_Id_Field:          struct{}{},
+	Entity_Tags_Id_Field:     struct{}{},
 }
 
 // InMemoryEntityRepository is an in memory implementation of the EntityRepository interface.
@@ -66,7 +68,7 @@ func (repo *SQLiteEntityRepository) Create(ctx context.Context, toCreate []*Enti
 	for _, entity := range toCreate {
 		if entity.FieldMask == nil {
 			noMaskBinds = append(noMaskBinds, entity.GetId())
-			noMaskBinds = append(noMaskBinds, entity.GetTags().GetId())
+			noMaskBinds = append(noMaskBinds, entity.GetDescription())
 			noMaskBindsStrs = append(noMaskBindsStrs, "(?,?)")
 			continue
 		}
@@ -102,7 +104,7 @@ func (repo *SQLiteEntityRepository) Create(ctx context.Context, toCreate []*Enti
 		_, err = tx.ExecContext(
 			ctx,
 			fmt.Sprintf(
-				"INSERT INTO \"entity\" (\"id\",\"tags_id\") VALUES \n %s",
+				"INSERT INTO \"entity\" (\"id\",\"description\") VALUES \n %s",
 				strings.Join(noMaskBindsStrs, ",\n"),
 			),
 			noMaskBinds...,
@@ -122,7 +124,7 @@ func (repo *SQLiteEntityRepository) Create(ctx context.Context, toCreate []*Enti
 // Read returns a set of Entitys matching the provided criteria
 // Read is incomplete and it should be considered unstable
 func (repo *SQLiteEntityRepository) Read(ctx context.Context, expr expressions.Expression) ([]*Entity, error) {
-	query := "SELECT \"id\",\"tags_id\" FROM \"entity\""
+	query := "SELECT \"id\",\"description\" FROM \"entity\""
 	clauses, binds, err := whereClauseFromExpressionForEntity(expr)
 	if err != nil {
 		return nil, err
@@ -141,10 +143,8 @@ func (repo *SQLiteEntityRepository) Read(ctx context.Context, expr expressions.E
 	defer rows.Close()
 	var found []*Entity
 	for rows.Next() {
-		entity := &Entity{
-			Tags: &Tag{},
-		}
-		if err = rows.Scan(&entity.Id, &entity.Tags.Id); err != nil {
+		entity := &Entity{}
+		if err = rows.Scan(&entity.Id, &entity.Description); err != nil {
 			return nil, err
 		}
 		found = append(found, entity)
@@ -168,7 +168,7 @@ func (repo *SQLiteEntityRepository) Update(ctx context.Context, toUpdate []*Enti
 	defer tx.Rollback()
 
 	stmt, err := tx.Prepare(
-		"UPDATE \"entity\" SET \"tags_id\" = ? WHERE \"id\" = ?",
+		"UPDATE \"entity\" SET \"description\" = ?,\"tags_id\" = ? WHERE \"id\" = ?",
 	)
 	if err != nil {
 		return nil, err
@@ -177,7 +177,7 @@ func (repo *SQLiteEntityRepository) Update(ctx context.Context, toUpdate []*Enti
 
 	for _, entity := range toUpdate {
 		if entity.FieldMask == nil {
-			_, err = stmt.ExecContext(ctx, entity.GetTags().GetId(), entity.GetId())
+			_, err = stmt.ExecContext(ctx, entity.GetDescription(), entity.GetTags().GetId(), entity.GetId())
 			if err != nil {
 				return nil, err
 			}
@@ -242,9 +242,10 @@ func (repo *SQLiteEntityRepository) Delete(ctx context.Context, expr expressions
 }
 
 var sqliteEntityColumnNameByFieldID = map[expressions.FieldID]string{
-	Entity_FieldMask_Field: "field_mask",
-	Entity_Id_Field:        "id",
-	Entity_Tags_Id_Field:   "tags",
+	Entity_Description_Field: "description",
+	Entity_FieldMask_Field:   "field_mask",
+	Entity_Id_Field:          "id",
+	Entity_Tags_Id_Field:     "tags",
 }
 
 func whereClauseFromExpressionForEntity(expr expressions.Expression) (string, []any, error) {
@@ -320,10 +321,10 @@ func sqliteEntityGetCreateValuesByColumnName(def *Entity, fieldMask *fieldmaskpb
 	} else {
 		valuesByColumnName["id"] = entity.GetId()
 	}
-	if _, ok := nestedMask["tags"]; ok {
-		valuesByColumnName["tags_id"] = def.GetTags().GetId()
+	if _, ok := nestedMask["description"]; ok {
+		valuesByColumnName["description"] = def.GetDescription()
 	} else {
-		valuesByColumnName["tags_id"] = entity.GetTags().GetId()
+		valuesByColumnName["description"] = entity.GetDescription()
 	}
 	return valuesByColumnName, nil
 }
@@ -336,8 +337,8 @@ func sqliteEntityGetUpdateValuesByColumnName(def *Entity, fieldMask *fieldmaskpb
 	if _, ok := nestedMask["id"]; ok {
 		valuesByColumnName["id"] = def.GetId()
 	}
-	if _, ok := nestedMask["tags"]; ok {
-		valuesByColumnName["tags_id"] = def.GetTags().GetId()
+	if _, ok := nestedMask["description"]; ok {
+		valuesByColumnName["description"] = def.GetDescription()
 	}
 	return valuesByColumnName, nil
 }
