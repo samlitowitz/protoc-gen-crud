@@ -76,24 +76,30 @@ func TestSQLiteUserRepository_Create(t *testing.T) {
 					Id:       uuid.NewString(),
 					Username: "username-1",
 					Password: "password-1",
-					Profile: &simple.Role{
-						Id: uuid.NewString(),
+					Roles: []*simple.Role{
+						{
+							Id: uuid.NewString(),
+						},
 					},
 				},
 				{
 					Id:       uuid.NewString(),
 					Username: "username-2",
 					Password: "password-2",
-					Profile: &simple.Role{
-						Id: uuid.NewString(),
+					Roles: []*simple.Role{
+						{
+							Id: uuid.NewString(),
+						},
 					},
 				},
 				{
 					Id:       uuid.NewString(),
 					Username: "username-3",
 					Password: "password-3",
-					Profile: &simple.Role{
-						Id: uuid.NewString(),
+					Roles: []*simple.Role{
+						{
+							Id: uuid.NewString(),
+						},
 					},
 				},
 			},
@@ -108,8 +114,10 @@ func TestSQLiteUserRepository_Create(t *testing.T) {
 					Id:       "1",
 					Username: "username-1",
 					Password: "password-1",
-					Profile: &simple.Role{
-						Id: uuid.NewString(),
+					Roles: []*simple.Role{
+						{
+							Id: uuid.NewString(),
+						},
 					},
 				},
 				{
@@ -119,8 +127,10 @@ func TestSQLiteUserRepository_Create(t *testing.T) {
 					Id:       uuid.NewString(),
 					Username: "username-2",
 					Password: "password-2",
-					Profile: &simple.Role{
-						Id: uuid.NewString(),
+					Roles: []*simple.Role{
+						{
+							Id: uuid.NewString(),
+						},
 					},
 				},
 				{
@@ -130,8 +140,10 @@ func TestSQLiteUserRepository_Create(t *testing.T) {
 					Id:       uuid.NewString(),
 					Username: "username-3",
 					Password: "password-3",
-					Profile: &simple.Role{
-						Id: uuid.NewString(),
+					Roles: []*simple.Role{
+						{
+							Id: uuid.NewString(),
+						},
 					},
 				},
 				{
@@ -141,8 +153,10 @@ func TestSQLiteUserRepository_Create(t *testing.T) {
 					Id:       uuid.NewString(),
 					Username: "username-4",
 					Password: "password-4",
-					Profile: &simple.Role{
-						Id: uuid.NewString(),
+					Roles: []*simple.Role{
+						{
+							Id: uuid.NewString(),
+						},
 					},
 				},
 			},
@@ -269,24 +283,30 @@ func TestSQLiteUserRepository_Read(t *testing.T) {
 					Id:       uuid.NewString(),
 					Username: "username-1",
 					Password: "password-1",
-					Profile: &simple.Role{
-						Id: uuid.NewString(),
+					Roles: []*simple.Role{
+						{
+							Id: uuid.NewString(),
+						},
 					},
 				},
 				{
 					Id:       uuid.NewString(),
 					Username: "username-2",
 					Password: "password-2",
-					Profile: &simple.Role{
-						Id: uuid.NewString(),
+					Roles: []*simple.Role{
+						{
+							Id: uuid.NewString(),
+						},
 					},
 				},
 				{
 					Id:       uuid.NewString(),
 					Username: "username-3",
 					Password: "password-3",
-					Profile: &simple.Role{
-						Id: uuid.NewString(),
+					Roles: []*simple.Role{
+						{
+							Id: uuid.NewString(),
+						},
 					},
 				},
 			},
@@ -298,16 +318,20 @@ func TestSQLiteUserRepository_Read(t *testing.T) {
 					Id:       uuid.NewString(),
 					Username: "username-2",
 					Password: "password-2",
-					Profile: &simple.Role{
-						Id: uuid.NewString(),
+					Roles: []*simple.Role{
+						{
+							Id: uuid.NewString(),
+						},
 					},
 				},
 				{
 					Id:       uuid.NewString(),
 					Username: "username-3",
 					Password: "password-3",
-					Profile: &simple.Role{
-						Id: uuid.NewString(),
+					Roles: []*simple.Role{
+						{
+							Id: uuid.NewString(),
+						},
 					},
 				},
 			},
@@ -316,8 +340,10 @@ func TestSQLiteUserRepository_Read(t *testing.T) {
 					Id:       "1",
 					Username: "username-1",
 					Password: "password-1",
-					Profile: &simple.Role{
-						Id: uuid.NewString(),
+					Roles: []*simple.Role{
+						{
+							Id: uuid.NewString(),
+						},
 					},
 				},
 			},
@@ -332,16 +358,20 @@ func TestSQLiteUserRepository_Read(t *testing.T) {
 					Id:       uuid.NewString(),
 					Username: "username-2",
 					Password: "password-2",
-					Profile: &simple.Role{
-						Id: uuid.NewString(),
+					Roles: []*simple.Role{
+						{
+							Id: uuid.NewString(),
+						},
 					},
 				},
 				{
 					Id:       uuid.NewString(),
 					Username: "username-3",
 					Password: "password-3",
-					Profile: &simple.Role{
-						Id: uuid.NewString(),
+					Roles: []*simple.Role{
+						{
+							Id: uuid.NewString(),
+						},
 					},
 				},
 			},
@@ -350,8 +380,10 @@ func TestSQLiteUserRepository_Read(t *testing.T) {
 					Id:       uuid.NewString(),
 					Username: "username-1",
 					Password: "password-1",
-					Profile: &simple.Role{
-						Id: uuid.NewString(),
+					Roles: []*simple.Role{
+						{
+							Id: uuid.NewString(),
+						},
 					},
 				},
 			},
@@ -366,16 +398,20 @@ func TestSQLiteUserRepository_Read(t *testing.T) {
 					Id:       uuid.NewString(),
 					Username: "username-2",
 					Password: "password-2",
-					Profile: &simple.Role{
-						Id: uuid.NewString(),
+					Roles: []*simple.Role{
+						{
+							Id: uuid.NewString(),
+						},
 					},
 				},
 				{
 					Id:       uuid.NewString(),
 					Username: "username-3",
 					Password: "password-3",
-					Profile: &simple.Role{
-						Id: uuid.NewString(),
+					Roles: []*simple.Role{
+						{
+							Id: uuid.NewString(),
+						},
 					},
 				},
 			},
@@ -384,8 +420,10 @@ func TestSQLiteUserRepository_Read(t *testing.T) {
 					Id:       uuid.NewString(),
 					Username: "username-1",
 					Password: "password-1",
-					Profile: &simple.Role{
-						Id: uuid.NewString(),
+					Roles: []*simple.Role{
+						{
+							Id: uuid.NewString(),
+						},
 					},
 				},
 			},
@@ -400,16 +438,20 @@ func TestSQLiteUserRepository_Read(t *testing.T) {
 					Id:       uuid.NewString(),
 					Username: "username-2",
 					Password: "password-2",
-					Profile: &simple.Role{
-						Id: uuid.NewString(),
+					Roles: []*simple.Role{
+						{
+							Id: uuid.NewString(),
+						},
 					},
 				},
 				{
 					Id:       uuid.NewString(),
 					Username: "username-3",
 					Password: "password-3",
-					Profile: &simple.Role{
-						Id: uuid.NewString(),
+					Roles: []*simple.Role{
+						{
+							Id: uuid.NewString(),
+						},
 					},
 				},
 			},
@@ -418,8 +460,10 @@ func TestSQLiteUserRepository_Read(t *testing.T) {
 					Id:       uuid.NewString(),
 					Username: "username-1",
 					Password: "password-1",
-					Profile: &simple.Role{
-						Id: uuid.NewString(),
+					Roles: []*simple.Role{
+						{
+							Id: uuid.NewString(),
+						},
 					},
 				},
 			},
@@ -550,24 +594,30 @@ func TestSQLiteUserRepository_Update(t *testing.T) {
 					Id:       uuid.NewString(),
 					Username: "username-1",
 					Password: "password-1",
-					Profile: &simple.Role{
-						Id: uuid.NewString(),
+					Roles: []*simple.Role{
+						{
+							Id: uuid.NewString(),
+						},
 					},
 				},
 				{
 					Id:       uuid.NewString(),
 					Username: "username-2",
 					Password: "password-2",
-					Profile: &simple.Role{
-						Id: uuid.NewString(),
+					Roles: []*simple.Role{
+						{
+							Id: uuid.NewString(),
+						},
 					},
 				},
 				{
 					Id:       uuid.NewString(),
 					Username: "username-3",
 					Password: "password-3",
-					Profile: &simple.Role{
-						Id: uuid.NewString(),
+					Roles: []*simple.Role{
+						{
+							Id: uuid.NewString(),
+						},
 					},
 				},
 			},
@@ -613,32 +663,40 @@ func TestSQLiteUserRepository_Update(t *testing.T) {
 					Id:       uuid.NewString(),
 					Username: "username-1",
 					Password: "password-1",
-					Profile: &simple.Role{
-						Id: uuid.NewString(),
+					Roles: []*simple.Role{
+						{
+							Id: uuid.NewString(),
+						},
 					},
 				},
 				{
 					Id:       uuid.NewString(),
 					Username: "username-2",
 					Password: "password-2",
-					Profile: &simple.Role{
-						Id: uuid.NewString(),
+					Roles: []*simple.Role{
+						{
+							Id: uuid.NewString(),
+						},
 					},
 				},
 				{
 					Id:       uuid.NewString(),
 					Username: "username-3",
 					Password: "password-3",
-					Profile: &simple.Role{
-						Id: uuid.NewString(),
+					Roles: []*simple.Role{
+						{
+							Id: uuid.NewString(),
+						},
 					},
 				},
 				{
 					Id:       uuid.NewString(),
 					Username: "username-4",
 					Password: "password-4",
-					Profile: &simple.Role{
-						Id: uuid.NewString(),
+					Roles: []*simple.Role{
+						{
+							Id: uuid.NewString(),
+						},
 					},
 				},
 			},
