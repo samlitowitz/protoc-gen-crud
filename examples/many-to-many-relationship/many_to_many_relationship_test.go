@@ -812,8 +812,8 @@ func TestSQLiteUserRepository_Update(t *testing.T) {
 			if testData.expectedUsers[i].Roles == nil {
 				testData.expectedUsers[i].Roles = []*simple.Role{}
 			}
-			if testData.expectedUsers[i].Profile.Id == "" {
-				testData.expectedUsers[i].Profile.Id = user.Profile.GetId()
+			for _, role := range user.Roles {
+				testData.expectedUsers[i].Roles = append(testData.expectedUsers[i].Roles, role)
 			}
 			if testData.updates[i].Id == "" {
 				testData.updates[i].Id = user.Id
@@ -821,8 +821,8 @@ func TestSQLiteUserRepository_Update(t *testing.T) {
 			if testData.updates[i].Roles == nil {
 				testData.updates[i].Roles = []*simple.Role{}
 			}
-			if testData.updates[i].Profile.Id == "" {
-				testData.updates[i].Profile.Id = user.Profile.Id
+			for _, role := range user.Roles {
+				testData.updates[i].Roles = append(testData.updates[i].Roles, role)
 			}
 		}
 
@@ -912,8 +912,10 @@ func TestSQLiteUserRepository_Delete(t *testing.T) {
 			Id:       uuid.NewString(),
 			Username: fmt.Sprintf("username-%d", i),
 			Password: fmt.Sprintf("password-%d", i),
-			Profile: &simple.Role{
-				Id: uuid.NewString(),
+			Roles: []*simple.Role{
+				{
+					Id: uuid.NewString(),
+				},
 			},
 		})
 	}
