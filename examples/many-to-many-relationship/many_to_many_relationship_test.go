@@ -211,7 +211,7 @@ func TestSQLiteUserRepository_Create(t *testing.T) {
 				continue
 			}
 			fmutils.Filter(user, user.FieldMask.GetPaths())
-			user.Profile = &simple.Role{}
+			user.Roles = []*simple.Role{}
 		}
 
 		// Check stored data
@@ -809,8 +809,8 @@ func TestSQLiteUserRepository_Update(t *testing.T) {
 			if testData.expectedUsers[i].Id == "" {
 				testData.expectedUsers[i].Id = user.Id
 			}
-			if testData.expectedUsers[i].Profile == nil {
-				testData.expectedUsers[i].Profile = &simple.Role{}
+			if testData.expectedUsers[i].Roles == nil {
+				testData.expectedUsers[i].Roles = []*simple.Role{}
 			}
 			if testData.expectedUsers[i].Profile.Id == "" {
 				testData.expectedUsers[i].Profile.Id = user.Profile.GetId()
@@ -818,8 +818,8 @@ func TestSQLiteUserRepository_Update(t *testing.T) {
 			if testData.updates[i].Id == "" {
 				testData.updates[i].Id = user.Id
 			}
-			if testData.updates[i].Profile == nil {
-				testData.updates[i].Profile = &simple.Role{}
+			if testData.updates[i].Roles == nil {
+				testData.updates[i].Roles = []*simple.Role{}
 			}
 			if testData.updates[i].Profile.Id == "" {
 				testData.updates[i].Profile.Id = user.Profile.Id
@@ -1051,7 +1051,7 @@ func TestSQLiteProfileRepository_Create(t *testing.T) {
 			t.Fatal(err)
 		}
 
-		repo, err := simple.NewSQLiteProfileRepository(db)
+		repo, err := simple.NewSQLiteRoleRepository(db)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -1225,7 +1225,7 @@ func TestSQLiteProfileRepository_Read(t *testing.T) {
 			t.Fatal(err)
 		}
 
-		repo, err := simple.NewSQLiteProfileRepository(db)
+		repo, err := simple.NewSQLiteRoleRepository(db)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -1444,7 +1444,7 @@ func TestSQLiteProfileRepository_Update(t *testing.T) {
 			t.Fatal(err)
 		}
 
-		repo, err := simple.NewSQLiteProfileRepository(db)
+		repo, err := simple.NewSQLiteRoleRepository(db)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -1560,7 +1560,7 @@ func TestSQLiteProfileRepository_Delete(t *testing.T) {
 		}),
 	}
 
-	repo, err := simple.NewSQLiteProfileRepository(db)
+	repo, err := simple.NewSQLiteRoleRepository(db)
 	if err != nil {
 		t.Fatal(err)
 	}
