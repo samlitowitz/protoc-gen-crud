@@ -1,4 +1,3 @@
-
 DROP TABLE IF EXISTS "user";
 CREATE TABLE IF NOT EXISTS "user" (
     "id" TEXT,
@@ -8,7 +7,6 @@ CREATE TABLE IF NOT EXISTS "user" (
 
     PRIMARY KEY ("id")
 );
-
 DROP TABLE IF EXISTS "profile";
 CREATE TABLE IF NOT EXISTS "profile" (
     "id" TEXT,
