@@ -43,7 +43,7 @@ func (r *Registry) loadCRUDs(file *File) error {
 			}
 		}
 		processFieldMaskField(def)
-
+		msg.CRUD = def
 		file.CRUDs = append(file.CRUDs, def)
 		r.cruds[msg.FQMN()] = def
 	}
@@ -168,13 +168,12 @@ func assignRelationships(msgs map[string]*Message, field *Field, fieldOpts *opti
 		return &UnsupportedTypeError{*field.TypeName}
 	}
 	switch fieldOpts.Relationship.GetType() {
-	case relationships.Type_MANY_TO_MANY:
-		return fmt.Errorf("many to many relationships are not implemented")
 	case relationships.Type_MANY_TO_ONE:
 		return fmt.Errorf("many to one relationships are not implemented")
 	case relationships.Type_ONE_TO_MANY:
 		return fmt.Errorf("one to many relationships are not implemented")
 
+	case relationships.Type_MANY_TO_MANY:
 	case relationships.Type_ONE_TO_ONE:
 
 	default:

@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/samlitowitz/protoc-gen-crud/options/relationships"
+
 	"github.com/samlitowitz/protoc-gen-crud/options"
 
 	"github.com/samlitowitz/protoc-gen-crud/internal/casing"
@@ -138,6 +140,23 @@ func (def *CRUD) DataFields() []*Field {
 		if field.IsMetaData() {
 			continue
 		}
+		if field.RelatesToMany() {
+			continue
+		}
+		fields = append(fields, field)
+	}
+	return fields
+}
+
+func (def *CRUD) RelatesToManyFields() []*Field {
+	var fields []*Field
+	for _, field := range def.Fields {
+		if field.IsMetaData() {
+			continue
+		}
+		if !field.RelatesToMany() {
+			continue
+		}
 		fields = append(fields, field)
 	}
 	return fields
@@ -181,6 +200,12 @@ type Message struct {
 	Index int
 	// ForcePrefixedName when set to true, prefixes a type with a package prefix.
 	ForcePrefixedName bool
+	// CRUD associated with this message, nil if none are associated
+	CRUD *CRUD
+}
+
+func (m *Message) HasCRUD() bool {
+	return m.CRUD != nil
 }
 
 func (m *Message) FQMN() string {
@@ -268,6 +293,27 @@ type Field struct {
 	Relationship *Relationship
 }
 
+func (f *Field) GetFieldMessageMinimalUIDFields() []*Field {
+	if f.FieldMessage == nil {
+		panic(
+			fmt.Sprintf(
+				"field named %s: expected field to be of type message got field of type %s instead",
+				f.GetName(),
+				f.FieldDescriptorProto.GetType().String(),
+			),
+		)
+	}
+	if f.FieldMessage.CRUD == nil {
+		panic(
+			fmt.Sprintf(
+				"field named %s: expected field have CRUD defining at least one UID",
+				f.GetName(),
+			),
+		)
+	}
+	return f.FieldMessage.CRUD.MinimalUIDFields()
+}
+
 func (f *Field) IsMetaData() bool {
 	return f.IsFieldMaskField
 }
@@ -283,6 +329,25 @@ func (f *Field) IsScalarGoType() bool {
 
 func (f *Field) HasRelationship() bool {
 	return f.Relationship != nil
+}
+
+func (f *Field) RelatesToMany() bool {
+	if !f.HasRelationship() {
+		return false
+	}
+	switch f.Relationship.GetType() {
+	case relationships.Type_MANY_TO_MANY:
+		fallthrough
+	case relationships.Type_ONE_TO_MANY:
+		return true
+
+	case relationships.Type_MANY_TO_ONE:
+		fallthrough
+	case relationships.Type_ONE_TO_ONE:
+		fallthrough
+	default:
+		return false
+	}
 }
 
 func (f *Field) GoType() string {

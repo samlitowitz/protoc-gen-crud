@@ -103,12 +103,26 @@ var (
 		"sqliteColumnName":              gen_go_crud.SQLiteColumnName,
 		"sqliteColumnNameFromFieldName": gen_go_crud.SQLiteColumnNameFromFieldName,
 		"sqliteType":                    sqliteType,
+
+		"sprintf": fmt.Sprintf,
 	}
 
 	// TODO: Add support for many to many relationships
 
 	// https://www.sqlite.org/lang_createtable.html
 	createTableTemplate = template.Must(template.New("create-table").Funcs(funcMap).Parse(`
+{{ range $i, $field := .CRUD.RelatesToManyFields -}}
+DROP TABLE IF EXISTS {{sqliteIdent (sqliteTableName (sprintf "%s_%s" $.CRUD.GetName $field.GetName))}};
+CREATE TABLE IF NOT EXISTS {{sqliteIdent (sqliteTableName (sprintf "%s_%s" $.CRUD.GetName $field.GetName))}} (
+    {{ range $j, $minUIDField := $.CRUD.MinimalUIDFields -}}
+    {{if $j}},{{end}}{{sqliteIdent (sprintf "%s_%s" (sqliteColumnName $.CRUD.GetName) (sqliteColumnName (sqliteColumnNameFromFieldName $minUIDField)))}} {{sqliteType $minUIDField}}
+    {{- end }}
+    {{ range $j, $minUIDField := $field.GetFieldMessageMinimalUIDFields -}}
+    {{if $j}},{{end}}{{sqliteIdent (sprintf "%s_%s" (sqliteColumnName $field.FieldMessage.CRUD.GetName) (sqliteColumnName (sqliteColumnNameFromFieldName $minUIDField)))}} {{sqliteType $minUIDField}}
+    {{- end }}
+);
+{{- end}}
+
 DROP TABLE IF EXISTS {{sqliteIdent (sqliteTableName .CRUD.GetName)}};
 CREATE TABLE IF NOT EXISTS {{sqliteIdent (sqliteTableName .CRUD.GetName)}} (
     {{ range $i, $field := .CRUD.DataFields -}}
