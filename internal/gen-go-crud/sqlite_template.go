@@ -49,9 +49,19 @@ func SQLiteMemberAccessor(f *descriptor.Field) string {
 
 func SQLiteColumnNameFromFieldName(f *descriptor.Field) string {
 	if !f.HasRelationship() {
-		return *f.Name
+		return SQLiteColumnName(*f.Name)
 	}
-	return *f.Name + "_id"
+	return SQLiteColumnName(*f.Name + "_id")
+}
+
+func SQLiteRelatesToManyTableName(f *descriptor.Field) string {
+	return SQLiteTableName(
+		fmt.Sprintf(
+			"%s_%s",
+			f.Message.CRUD.GetName(),
+			f.GetName(),
+		),
+	)
 }
 
 func SQLiteIdent(s string) string {
@@ -192,7 +202,7 @@ func (repo *SQLite{{.CRUD.Name}}Repository) Create(ctx context.Context, toCreate
 			fmt.Sprintf(
 				"INSERT INTO {{sqliteIdent (sqliteTableName .CRUD.GetName)}} (
 				{{- range $i, $field := .CRUD.DataFields -}}
-				{{if $i}},{{end}}{{sqliteIdent (sqliteColumnName (sqliteColumnNameFromFieldName $field))}}
+				{{if $i}},{{end}}{{sqliteIdent (sqliteColumnNameFromFieldName $field)}}
 				{{- end -}}) VALUES \n %s",
 				strings.Join(noMaskBindsStrs, ",\n"),
 			),
@@ -217,7 +227,7 @@ func (repo *SQLite{{.CRUD.Name}}Repository) Create(ctx context.Context, toCreate
 // Read is incomplete and it should be considered unstable
 func (repo *SQLite{{.CRUD.Name}}Repository) Read(ctx context.Context, expr expressions.Expression) ([]*{{.CRUD.GoType .CRUD.File.GoPkg.Path}}, error) {
 	query := "SELECT {{ range $i, $field := .CRUD.DataFields -}}
-		{{if $i}},{{end}}{{sqliteIdent (sqliteColumnName (sqliteColumnNameFromFieldName $field))}}
+		{{if $i}},{{end}}{{sqliteIdent (sqliteColumnNameFromFieldName $field)}}
 		{{- end }} FROM {{sqliteIdent (sqliteTableName .CRUD.GetName)}}"
 	clauses, binds, err := whereClauseFromExpressionFor{{.CRUD.Name}}(expr)
 	if err != nil {
@@ -277,7 +287,7 @@ func (repo *SQLite{{.CRUD.Name}}Repository) Update(ctx context.Context, toUpdate
 
 	stmt, err := tx.Prepare(
 		"UPDATE {{sqliteIdent (sqliteTableName .CRUD.GetName)}} SET {{range $i, $field := .CRUD.NonMinimalUIDDataFields -}}
-		{{if $i}},{{end}}{{sqliteIdent (sqliteColumnName (sqliteColumnNameFromFieldName $field))}} = ?
+		{{if $i}},{{end}}{{sqliteIdent (sqliteColumnNameFromFieldName $field)}} = ?
 		{{- end }} WHERE {{ range $i, $field := .CRUD.MinimalUIDFields -}}
 		{{if $i}},{{end}}{{sqliteIdent (sqliteColumnName $field.GetName)}} = ?
 		{{- end }}",
@@ -456,9 +466,9 @@ func sqlite{{.CRUD.Name}}GetCreateValuesByColumnName(def *{{.CRUD.GoType .CRUD.F
 	nestedMask := fmutils.NestedMaskFromPaths(fieldMask.Paths)
 	{{ range $i, $field := .CRUD.DataFields -}}
 	if _, ok := nestedMask["{{$field.GetName}}"]; ok {
-		valuesByColumnName["{{sqliteColumnName (sqliteColumnNameFromFieldName $field)}}"] = def.{{sqliteMemberAccessor $field}}
+		valuesByColumnName["{{sqliteColumnNameFromFieldName $field}}"] = def.{{sqliteMemberAccessor $field}}
 	} else {
-		valuesByColumnName["{{sqliteColumnName (sqliteColumnNameFromFieldName $field)}}"] = {{toLowerCamel $.CRUD.GetName}}.{{sqliteMemberAccessor $field}}
+		valuesByColumnName["{{sqliteColumnNameFromFieldName $field}}"] = {{toLowerCamel $.CRUD.GetName}}.{{sqliteMemberAccessor $field}}
 	}
 	{{end -}}
 	return valuesByColumnName, nil
@@ -471,7 +481,7 @@ func sqlite{{.CRUD.Name}}GetUpdateValuesByColumnName(def *{{.CRUD.GoType .CRUD.F
 	nestedMask := fmutils.NestedMaskFromPaths(fieldMask.Paths)
 	{{ range $i, $field := .CRUD.DataFields -}}
 	if _, ok := nestedMask["{{$field.GetName}}"]; ok {
-		valuesByColumnName["{{sqliteColumnName (sqliteColumnNameFromFieldName $field)}}"] = def.{{sqliteMemberAccessor $field}}
+		valuesByColumnName["{{sqliteColumnNameFromFieldName $field}}"] = def.{{sqliteMemberAccessor $field}}
 	}
 	{{end -}}
 	return valuesByColumnName, nil
