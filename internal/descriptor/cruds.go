@@ -3,6 +3,8 @@ package descriptor
 import (
 	"fmt"
 
+	"github.com/samlitowitz/protoc-gen-crud/options/relationships"
+
 	"github.com/samlitowitz/protoc-gen-crud/options"
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/descriptorpb"
@@ -164,6 +166,19 @@ func assignRelationships(msgs map[string]*Message, field *Field, fieldOpts *opti
 	_, ok := msgs[*field.TypeName]
 	if !ok {
 		return &UnsupportedTypeError{*field.TypeName}
+	}
+	switch fieldOpts.Relationship.GetType() {
+	case relationships.Type_MANY_TO_MANY:
+		return fmt.Errorf("many to many relationships are not implemented")
+	case relationships.Type_MANY_TO_ONE:
+		return fmt.Errorf("many to one relationships are not implemented")
+	case relationships.Type_ONE_TO_MANY:
+		return fmt.Errorf("one to many relationships are not implemented")
+
+	case relationships.Type_ONE_TO_ONE:
+
+	default:
+		return fmt.Errorf("unknown relationships type")
 	}
 	field.Relationship = &Relationship{
 		Relationship: fieldOpts.Relationship,
