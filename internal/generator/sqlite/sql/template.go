@@ -1,13 +1,13 @@
-package gen_sqlite
+package sql
 
 import (
 	"bytes"
 	"fmt"
 	"text/template"
 
-	"google.golang.org/protobuf/types/descriptorpb"
+	"github.com/samlitowitz/protoc-gen-crud/internal/generator/sqlite"
 
-	gen_go_crud "github.com/samlitowitz/protoc-gen-crud/internal/gen-go-crud"
+	"google.golang.org/protobuf/types/descriptorpb"
 
 	"github.com/samlitowitz/protoc-gen-crud/internal/casing"
 	"github.com/samlitowitz/protoc-gen-crud/internal/descriptor"
@@ -98,12 +98,12 @@ func applyTemplate(p param, reg *descriptor.Registry) (string, error) {
 
 var (
 	funcMap template.FuncMap = map[string]interface{}{
-		"sqliteIdent":                   gen_go_crud.SQLiteIdent,
-		"sqliteTableName":               gen_go_crud.SQLiteTableName,
-		"sqliteColumnName":              gen_go_crud.SQLiteColumnName,
-		"sqliteColumnNameFromFieldName": gen_go_crud.SQLiteColumnNameFromFieldName,
-		"sqliteRelatesToManyTableName":  gen_go_crud.SQLiteRelatesToManyTableName,
-		"sqliteRelatesToManyCableName":  gen_go_crud.SQLiteRelatesToManyColumnName,
+		"sqliteIdent":                   sqlite.SQLiteIdent,
+		"sqliteTableName":               sqlite.SQLiteTableName,
+		"sqliteColumnName":              sqlite.SQLiteColumnName,
+		"sqliteColumnNameFromFieldName": sqlite.SQLiteColumnNameFromFieldName,
+		"sqliteRelatesToManyTableName":  sqlite.SQLiteRelatesToManyTableName,
+		"sqliteRelatesToManyCableName":  sqlite.SQLiteRelatesToManyColumnName,
 		"sqliteType":                    sqliteType,
 
 		"sprintf": fmt.Sprintf,

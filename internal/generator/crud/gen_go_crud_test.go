@@ -1,4 +1,4 @@
-package gen_go_crud
+package crud
 
 import (
 	"fmt"

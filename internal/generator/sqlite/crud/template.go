@@ -1,111 +1,128 @@
-package gen_go_crud
+package crud
 
 import (
+	"bytes"
+	"crypto/sha256"
+	"encoding/hex"
 	"fmt"
+	"strings"
 	"text/template"
 
 	"github.com/samlitowitz/protoc-gen-crud/internal/casing"
+	"github.com/samlitowitz/protoc-gen-crud/internal/descriptor"
+
+	sqlite2 "github.com/samlitowitz/protoc-gen-crud/internal/generator/sqlite"
 
 	"github.com/iancoleman/strcase"
-	"github.com/samlitowitz/protoc-gen-crud/internal/descriptor"
 )
 
 func init() {
 	strcase.ConfigureAcronym("UID", "uid")
 }
 
-func SQLiteMemberField(f *descriptor.Field) string {
-	if !f.HasRelationship() {
-		return casing.CamelIdentifier(*f.Name)
-	}
-	minUIDFields := f.Relationship.CRUD.MinimalUIDFields()
-	if len(minUIDFields) != 1 {
-		panic(fmt.Errorf("message type must have unique identifier with exactly one field defined on field %s", f.GetName()))
-	}
-	return fmt.Sprintf(
-		"%s.%s",
-		casing.CamelIdentifier(*f.Name),
-		casing.CamelIdentifier(*minUIDFields[0].Name),
-	)
-}
-
-func SQLiteMemberAccessor(f *descriptor.Field) string {
-	if !f.HasRelationship() {
-		return fmt.Sprintf(
-			"Get%s()",
-			casing.CamelIdentifier(*f.Name),
-		)
-	}
-	minUIDFields := f.Relationship.CRUD.MinimalUIDFields()
-	if len(minUIDFields) != 1 {
-		panic(fmt.Errorf("message type must have unique identifier with exactly one field defined on field %s", f.GetName()))
-	}
-	return fmt.Sprintf(
-		"Get%s().Get%s()",
-		casing.CamelIdentifier(*f.Name),
-		casing.CamelIdentifier(*minUIDFields[0].Name),
-	)
-}
-
-func SQLiteColumnNameFromFieldName(f *descriptor.Field) string {
-	if !f.HasRelationship() {
-		return SQLiteColumnName(*f.Name)
-	}
-	return SQLiteColumnName(*f.Name + "_id")
-}
-
-func SQLiteRelatesToManyTableName(f *descriptor.Field) string {
-	return SQLiteTableName(
-		fmt.Sprintf(
-			"%s_%s",
-			f.Message.CRUD.GetName(),
-			f.GetName(),
-		),
-	)
-}
-
-func SQLiteRelatesToManyColumnName(f *descriptor.Field) string {
-	return SQLiteTableName(
-		fmt.Sprintf(
-			"%s_%s",
-			SQLiteColumnName(f.Message.CRUD.GetName()),
-			SQLiteColumnNameFromFieldName(f),
-		),
-	)
-}
-
-func SQLiteIdent(s string) string {
-	return "\"" + s + "\""
-}
-
-func SQLiteTemplateIdent(s string) string {
-	return "\\\"" + s + "\\\""
-}
-
-func SQLiteTableName(s string) string {
-	return strcase.ToSnake(s)
-}
-
-func SQLiteColumnName(s string) string {
-	return strcase.ToSnake(s)
-}
-
 type sqlite struct{}
 
-var (
-	sqliteFuncMap template.FuncMap = map[string]interface{}{
-		"sqliteIdent":                   SQLiteTemplateIdent,
-		"sqliteTableName":               SQLiteTableName,
-		"sqliteColumnName":              SQLiteColumnName,
-		"sqliteColumnNameFromFieldName": SQLiteColumnNameFromFieldName,
-		"sqliteMemberAccessor":          SQLiteMemberAccessor,
-		"sqliteMemberField":             SQLiteMemberField,
-		"toLowerCamel":                  strcase.ToLowerCamel,
+type param struct {
+	*descriptor.File
+	Imports []descriptor.GoPackage
+}
+
+type field struct {
+	Def  *descriptor.Field
+	Hash string
+}
+
+type crud struct {
+	*descriptor.CRUD
+	Registry *descriptor.Registry
+	SQLite   *sqlite
+
+	fieldByFieldConstants map[string]*field
+}
+
+func (crud *crud) FieldByFieldConstants() map[string]*field {
+	if crud.fieldByFieldConstants != nil {
+		return crud.fieldByFieldConstants
 	}
 
-	// TODO: Add support for many to many relationships, account for field type, i.e. array
+	crud.fieldByFieldConstants = make(map[string]*field)
+	for _, fieldDef := range crud.CRUD.Fields {
+		name := fmt.Sprintf(
+			"%s_%s_Field",
+			strcase.ToCamel(crud.CRUD.GetName()),
+			strcase.ToCamel(fieldDef.GetName()),
+		)
+		if fieldDef.HasRelationship() {
+			minUIDFields := fieldDef.Relationship.CRUD.MinimalUIDFields()
+			if len(minUIDFields) != 1 {
+				panic(fmt.Errorf("message type must have unique identifier with exactly one field defined on field %s", fieldDef.GetName()))
+			}
+			name = fmt.Sprintf(
+				"%s_%s_Id_Field",
+				strcase.ToCamel(crud.CRUD.GetName()),
+				strcase.ToCamel(fieldDef.GetName()),
+			)
+		}
 
-	_ = template.Must(repositoryTemplate.New("sqlite-repository").Funcs(funcMap).Funcs(sqliteFuncMap).Parse(`
+		h := sha256.New()
+		_, err := h.Write([]byte(name))
+		if err != nil {
+			panic(err)
+		}
+		crud.fieldByFieldConstants[name] = &field{
+			Def:  fieldDef,
+			Hash: hex.EncodeToString(h.Sum(nil)),
+		}
+	}
+	return crud.fieldByFieldConstants
+}
+
+func applyTemplate(p param, reg *descriptor.Registry) (string, error) {
+	w := bytes.NewBuffer(nil)
+	if err := headerTemplate.Execute(w, p); err != nil {
+		return "", err
+	}
+
+	for _, msg := range p.Messages {
+		msgName := casing.Camel(*msg.Name)
+		msg.Name = &msgName
+	}
+	for _, def := range p.CRUDs {
+		inject := &crud{
+			CRUD:     def,
+			Registry: reg,
+			SQLite:   &sqlite{},
+		}
+		if err := repositoryTemplate.Execute(w, inject); err != nil {
+			return "", nil
+		}
+	}
+
+	return w.String(), nil
+}
+
+var (
+	headerTemplate = template.Must(template.New("sqlite-header").Parse(`
+// Code generated by protoc-gen-go-crud. DO NOT EDIT.
+// source: {{.GetName}}
+
+/*
+Package {{.GoPkg.Name}} is a repository.
+
+SQLite implementation.
+*/
+
+package {{.GoPkg.Name}}
+{{if .Imports}}
+import (
+	{{range $i := .Imports}}{{if $i.Standard}}{{$i | printf "%s\n"}}{{end}}{{end}}
+
+	{{range $i := .Imports}}{{if not $i.Standard}}{{$i | printf "%s\n"}}{{end}}{{end}}
+)
+{{end}}
+`))
+
+	repositoryTemplate = template.Must(template.New("repository").Parse(`
 {{template "sqlite-repository-struct" .}}
 
 {{if .CRUD.Create}}
@@ -145,7 +162,20 @@ func NewSQLite{{.CRUD.Name}}Repository(db *sql.DB) (*SQLite{{.CRUD.Name}}Reposit
 }
 `))
 
-	_ = template.Must(repositoryTemplate.New("sqlite-repository-struct-create").Funcs(funcMap).Funcs(sqliteFuncMap).Parse(`
+	funcMap template.FuncMap = map[string]interface{}{
+		"sqliteIdent":                   sqlite2.SQLiteTemplateIdent,
+		"sqliteTableName":               sqlite2.SQLiteTableName,
+		"sqliteColumnName":              sqlite2.SQLiteColumnName,
+		"sqliteColumnNameFromFieldName": sqlite2.SQLiteColumnNameFromFieldName,
+		"sqliteMemberAccessor":          sqlite2.SQLiteMemberAccessor,
+		"sqliteMemberField":             sqlite2.SQLiteMemberField,
+
+		"camelIdentifier": casing.CamelIdentifier,
+		"toLower":         strings.ToLower,
+		"toLowerCamel":    strcase.ToLowerCamel,
+	}
+
+	_ = template.Must(repositoryTemplate.New("sqlite-repository-struct-create").Funcs(funcMap).Parse(`
 // Create creates new {{.CRUD.Name}}s.
 // Successfully created {{.CRUD.Name}}s are returned along with any errors that may have occurred.
 func (repo *SQLite{{.CRUD.Name}}Repository) Create(ctx context.Context, toCreate []*{{.CRUD.GoType .CRUD.File.GoPkg.Path}}) ([]*{{.CRUD.GoType .CRUD.File.GoPkg.Path}}, error) {
@@ -175,7 +205,7 @@ func (repo *SQLite{{.CRUD.Name}}Repository) Create(ctx context.Context, toCreate
 }
 `))
 
-	_ = template.Must(repositoryTemplate.New("sqlite-repository-struct-create-no-field-mask").Funcs(funcMap).Funcs(sqliteFuncMap).Parse(`
+	_ = template.Must(repositoryTemplate.New("sqlite-repository-struct-create-no-field-mask").Funcs(funcMap).Parse(`
 	binds := []any{}
 	bindsStrs := []string{}
 	for _, {{toLowerCamel $.CRUD.GetName}} := range toCreate {
@@ -203,7 +233,7 @@ func (repo *SQLite{{.CRUD.Name}}Repository) Create(ctx context.Context, toCreate
 	}
 `))
 
-	_ = template.Must(repositoryTemplate.New("sqlite-repository-struct-create-field-mask").Funcs(funcMap).Funcs(sqliteFuncMap).Parse(`
+	_ = template.Must(repositoryTemplate.New("sqlite-repository-struct-create-field-mask").Funcs(funcMap).Parse(`
 	noMaskBinds := []any{}
 	noMaskBindsStrs := []string{}
 	for _, {{toLowerCamel $.CRUD.GetName}} := range toCreate {
@@ -263,7 +293,7 @@ func (repo *SQLite{{.CRUD.Name}}Repository) Create(ctx context.Context, toCreate
 	}
 `))
 
-	_ = template.Must(repositoryTemplate.New("sqlite-repository-struct-read").Funcs(funcMap).Funcs(sqliteFuncMap).Parse(`
+	_ = template.Must(repositoryTemplate.New("sqlite-repository-struct-read").Funcs(funcMap).Parse(`
 // Read returns a set of {{.CRUD.Name}}s matching the provided criteria
 // Read is incomplete and it should be considered unstable
 func (repo *SQLite{{.CRUD.Name}}Repository) Read(ctx context.Context, expr expressions.Expression) ([]*{{.CRUD.GoType .CRUD.File.GoPkg.Path}}, error) {
@@ -309,7 +339,7 @@ func (repo *SQLite{{.CRUD.Name}}Repository) Read(ctx context.Context, expr expre
 }
 `))
 
-	_ = template.Must(repositoryTemplate.New("sqlite-repository-struct-update").Funcs(funcMap).Funcs(sqliteFuncMap).Parse(`
+	_ = template.Must(repositoryTemplate.New("sqlite-repository-struct-update").Funcs(funcMap).Parse(`
 // Update modifies existing {{.CRUD.Name}}s based on the defined unique identifiers.
 func (repo *SQLite{{.CRUD.Name}}Repository) Update(ctx context.Context, toUpdate []*{{.CRUD.GoType .CRUD.File.GoPkg.Path}}) ([]*{{.CRUD.GoType .CRUD.File.GoPkg.Path}}, error) {
 	{{if eq (len .CRUD.MinimalUIDFields) 0 -}}
@@ -352,7 +382,7 @@ func (repo *SQLite{{.CRUD.Name}}Repository) Update(ctx context.Context, toUpdate
 }
 `))
 
-	_ = template.Must(repositoryTemplate.New("sqlite-repository-struct-update-no-field-mask").Funcs(funcMap).Funcs(sqliteFuncMap).Parse(`
+	_ = template.Must(repositoryTemplate.New("sqlite-repository-struct-update-no-field-mask").Funcs(funcMap).Parse(`
 for _, {{toLowerCamel $.CRUD.GetName}} := range toUpdate {
 		_, err = stmt.ExecContext(ctx, {{ range $i, $field := .CRUD.NonMinimalUIDDataFields -}}
 		{{if $i}},{{end}}{{toLowerCamel $.CRUD.GetName}}.{{sqliteMemberAccessor $field}}
@@ -365,7 +395,7 @@ for _, {{toLowerCamel $.CRUD.GetName}} := range toUpdate {
 	}
 `))
 
-	_ = template.Must(repositoryTemplate.New("sqlite-repository-struct-update-field-mask").Funcs(funcMap).Funcs(sqliteFuncMap).Parse(`
+	_ = template.Must(repositoryTemplate.New("sqlite-repository-struct-update-field-mask").Funcs(funcMap).Parse(`
 for _, {{toLowerCamel $.CRUD.GetName}} := range toUpdate {
 		if {{toLowerCamel $.CRUD.GetName}}.{{camelIdentifier $.CRUD.FieldMaskFieldName}} == nil {
 			_, err = stmt.ExecContext(ctx, {{ range $i, $field := .CRUD.NonMinimalUIDDataFields -}}
@@ -412,7 +442,7 @@ for _, {{toLowerCamel $.CRUD.GetName}} := range toUpdate {
 	}
 `))
 
-	_ = template.Must(repositoryTemplate.New("sqlite-repository-struct-delete").Funcs(funcMap).Funcs(sqliteFuncMap).Parse(`
+	_ = template.Must(repositoryTemplate.New("sqlite-repository-struct-delete").Funcs(funcMap).Parse(`
 // Delete deletes {{.CRUD.Name}}s based on the defined unique identifiers
 func (repo *SQLite{{.CRUD.Name}}Repository) Delete(ctx context.Context, expr expressions.Expression) error {
 	query := "DELETE FROM {{sqliteIdent (sqliteTableName .CRUD.GetName)}}"
@@ -435,7 +465,7 @@ func (repo *SQLite{{.CRUD.Name}}Repository) Delete(ctx context.Context, expr exp
 }
 `))
 
-	_ = template.Must(repositoryTemplate.New("sqlite-repository-struct-misc").Funcs(funcMap).Funcs(sqliteFuncMap).Parse(`
+	_ = template.Must(repositoryTemplate.New("sqlite-repository-struct-misc").Funcs(funcMap).Parse(`
 {{if or .CRUD.Read .CRUD.Delete}}
 var sqlite{{.CRUD.Name}}ColumnNameByFieldID = map[expressions.FieldID]string{
 {{- range $name, $data := .FieldByFieldConstants}}

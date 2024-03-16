@@ -1,5 +1,5 @@
 // REFURL: https://github.com/grpc-ecosystem/grpc-gateway/blob/main/protoc-gen-grpc-gateway/internal/gengateway/generator.go
-package gen_go_crud
+package crud
 
 import (
 	"fmt"
@@ -19,10 +19,7 @@ type generator struct {
 
 func New(reg *descriptor.Registry) gen.Generator {
 	var imports []descriptor.GoPackage
-	for _, pkgpath := range []string{
-		//"io",
-		//"google.golang.org/protobuf/proto",
-	} {
+	for _, pkgpath := range []string{} {
 		pkg := descriptor.GoPackage{
 			Path: pkgpath,
 			Name: path.Base(pkgpath),
@@ -58,7 +55,7 @@ func (g *generator) Generate(targets []*descriptor.File) ([]*descriptor.Response
 		}
 		files = append(files, &descriptor.ResponseFile{
 			CodeGeneratorResponse_File: &pluginpb.CodeGeneratorResponse_File{
-				Name:    proto.String(file.GeneratedFilenamePrefix + ".pb.crud.go"),
+				Name:    proto.String(file.GeneratedFilenamePrefix + ".pb.crud.sqlite.go"),
 				Content: proto.String(string(formatted)),
 			},
 			GoPkg: file.GoPkg,
@@ -79,7 +76,7 @@ func (g *generator) generate(file *descriptor.File) (string, error) {
 		imports = append(imports, g.addMessagePathParamImports(file, msg, pkgSeen)...)
 	}
 	for _, crud := range file.CRUDs {
-		imports = append(imports, g.addCrudPathParamImports(file, crud, pkgSeen)...)
+		imports = append(imports, g.addCrudPathParamImports(crud, pkgSeen)...)
 	}
 
 	params := param{
@@ -108,7 +105,7 @@ func (g *generator) addMessagePathParamImports(file *descriptor.File, m *descrip
 	return imports
 }
 
-func (g *generator) addCrudPathParamImports(file *descriptor.File, crud *descriptor.CRUD, pkgSeen map[string]bool) []descriptor.GoPackage {
+func (g *generator) addCrudPathParamImports(crud *descriptor.CRUD, pkgSeen map[string]bool) []descriptor.GoPackage {
 	var imports []descriptor.GoPackage
 
 	hasAnyCRUDOperations := len(crud.Operations) > 0
@@ -144,7 +141,7 @@ func (g *generator) addCrudPathParamImports(file *descriptor.File, crud *descrip
 	}
 	if crud.Read() && !pkgSeen["fmt"] {
 		pkgSeen["fmt"] = true
-		imports = append(imports, descriptor.GoPackage{Path: "fmt", Name: "expressions"})
+		imports = append(imports, descriptor.GoPackage{Path: "fmt", Name: "fmt"})
 	}
 
 	for _, fields := range crud.UniqueIdentifiers {

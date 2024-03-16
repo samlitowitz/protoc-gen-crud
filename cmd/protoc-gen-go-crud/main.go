@@ -5,14 +5,12 @@ import (
 	"fmt"
 	"os"
 
-	gen_sqlite "github.com/samlitowitz/protoc-gen-crud/internal/gen-sqlite"
-
-	gen_gen "github.com/samlitowitz/protoc-gen-crud/internal/gen-gen"
-
-	gen_go_crud "github.com/samlitowitz/protoc-gen-crud/internal/gen-go-crud"
+	gen_go_crud "github.com/samlitowitz/protoc-gen-crud/internal/generator/crud"
+	gen_gen "github.com/samlitowitz/protoc-gen-crud/internal/generator/generator"
+	gen_sqlite_crud "github.com/samlitowitz/protoc-gen-crud/internal/generator/sqlite/crud"
+	gen_sqlite_sql "github.com/samlitowitz/protoc-gen-crud/internal/generator/sqlite/sql"
 
 	"github.com/samlitowitz/protoc-gen-crud/internal/descriptor"
-
 	"google.golang.org/protobuf/compiler/protogen"
 )
 
@@ -40,9 +38,10 @@ func main() {
 		reg := descriptor.NewRegistry()
 
 		crudGen := gen_go_crud.New(reg)
-		sqliteGen := gen_sqlite.New(reg)
+		sqliteCRUDGen := gen_sqlite_crud.New(reg)
+		sqliteSQLGen := gen_sqlite_sql.New(reg)
 
-		genGen := gen_gen.New(crudGen, sqliteGen)
+		genGen := gen_gen.New(crudGen, sqliteCRUDGen, sqliteSQLGen)
 
 		if err := reg.LoadFromPlugin(gen); err != nil {
 			return err

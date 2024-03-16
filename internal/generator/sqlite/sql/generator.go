@@ -1,4 +1,4 @@
-package gen_sqlite
+package sql
 
 import (
 	"github.com/samlitowitz/protoc-gen-crud/internal/descriptor"

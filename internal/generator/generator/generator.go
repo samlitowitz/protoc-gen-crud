@@ -1,4 +1,4 @@
-package gen_gen
+package generator
 
 import (
 	"fmt"

@@ -4,19 +4,15 @@
 /*
 Package simple is a repository.
 
-It provides an interface to implement and some implementations of the interface.
+It provides an interface to implement.
 */
 
 package simple
 
 import (
 	"context"
-	"database/sql"
-	"fmt"
-	"strings"
 
 	"github.com/samlitowitz/protoc-gen-crud/expressions"
-	"modernc.org/sqlite"
 )
 
 const (
@@ -31,210 +27,20 @@ var validUserFields = map[expressions.FieldID]struct{}{
 	User_Username_Field: struct{}{},
 }
 
-// InMemoryUserRepository is an in memory implementation of the UserRepository interface.
-type SQLiteUserRepository struct {
-	db *sql.DB
-}
+type UserRepository interface {
+	// Create creates new Users.
+	// Successfully created Users are returned along with any errors that may have occurred.
+	Create(context.Context, []*User) ([]*User, error)
 
-// NewInMemory creates a new InMemoryUserRepository to be used.
-func NewSQLiteUserRepository(db *sql.DB) (*SQLiteUserRepository, error) {
-	_, ok := db.Driver().(*sqlite.Driver)
-	if !ok {
-		return nil, fmt.Errorf("invalid driver, must be of type *modernc.org/sqlite.Driver")
-	}
-	return &SQLiteUserRepository{
-		db: db,
-	}, nil
-}
+	// Read returns a set of Users matching the provided criteria
+	// Read is incomplete and it should be considered unstable
+	Read(context.Context, expressions.Expression) ([]*User, error)
 
-// Create creates new Users.
-// Successfully created Users are returned along with any errors that may have occurred.
-func (repo *SQLiteUserRepository) Create(ctx context.Context, toCreate []*User) ([]*User, error) {
-	if len(toCreate) == 0 {
-		return nil, nil
-	}
-	tx, err := repo.db.BeginTx(ctx, &sql.TxOptions{Isolation: sql.LevelSerializable})
-	if err != nil {
-		return nil, err
-	}
-	defer tx.Rollback()
-	binds := []any{}
-	bindsStrs := []string{}
-	for _, user := range toCreate {
-		binds = append(binds, user.GetId())
-		binds = append(binds, user.GetUsername())
-		binds = append(binds, user.GetPassword())
-		bindsStrs = append(bindsStrs, "(?,?,?)")
-	}
-	_, err = tx.ExecContext(
-		ctx,
-		fmt.Sprintf(
-			"INSERT INTO \"user\" (\"id\",\"username\",\"password\") VALUES \n %s",
-			strings.Join(bindsStrs, ",\n"),
-		),
-		binds...,
-	)
-	if err != nil {
-		return nil, err
-	}
-	err = tx.Commit()
-	if err != nil {
-		return nil, err
-	}
-	return toCreate, nil
-}
+	// Update modifies existing Users based on the defined unique identifiers.
+	// Successfully modified Users are returned along with any errors that may have occurred.
+	Update(context.Context, []*User) ([]*User, error)
 
-// Read returns a set of Users matching the provided criteria
-// Read is incomplete and it should be considered unstable
-func (repo *SQLiteUserRepository) Read(ctx context.Context, expr expressions.Expression) ([]*User, error) {
-	query := "SELECT \"id\",\"username\",\"password\" FROM \"user\""
-	clauses, binds, err := whereClauseFromExpressionForUser(expr)
-	if err != nil {
-		return nil, err
-	}
-	if clauses != "" {
-		query += "\nWHERE\n" + clauses
-	}
-	stmt, err := repo.db.Prepare(query)
-	if err != nil {
-		return nil, err
-	}
-	rows, err := stmt.QueryContext(ctx, binds...)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	var found []*User
-	for rows.Next() {
-		user := &User{}
-		if err = rows.Scan(&user.Id, &user.Username, &user.Password); err != nil {
-			return nil, err
-		}
-		found = append(found, user)
-	}
-	if err = rows.Err(); err != nil {
-		return nil, err
-	}
-	return found, nil
-}
-
-// Update modifies existing Users based on the defined unique identifiers.
-func (repo *SQLiteUserRepository) Update(ctx context.Context, toUpdate []*User) ([]*User, error) {
-
-	if len(toUpdate) == 0 {
-		return nil, nil
-	}
-	tx, err := repo.db.BeginTx(ctx, &sql.TxOptions{Isolation: sql.LevelSerializable})
-	if err != nil {
-		return nil, err
-	}
-	defer tx.Rollback()
-
-	stmt, err := tx.Prepare(
-		"UPDATE \"user\" SET \"username\" = ?,\"password\" = ? WHERE \"id\" = ?",
-	)
-	if err != nil {
-		return nil, err
-	}
-	defer stmt.Close()
-	for _, user := range toUpdate {
-		_, err = stmt.ExecContext(ctx, user.GetUsername(), user.GetPassword(), user.GetId())
-		if err != nil {
-			return nil, err
-		}
-	}
-	err = tx.Commit()
-	if err != nil {
-		return nil, err
-	}
-	return toUpdate, nil
-
-}
-
-// Delete deletes Users based on the defined unique identifiers
-func (repo *SQLiteUserRepository) Delete(ctx context.Context, expr expressions.Expression) error {
-	query := "DELETE FROM \"user\""
-	clauses, binds, err := whereClauseFromExpressionForUser(expr)
-	if err != nil {
-		return err
-	}
-	if clauses != "" {
-		query += "\nWHERE\n" + clauses
-	}
-	stmt, err := repo.db.Prepare(query)
-	if err != nil {
-		return err
-	}
-	_, err = stmt.ExecContext(ctx, binds...)
-	if err != nil {
-		return err
-	}
-	return nil
-}
-
-var sqliteUserColumnNameByFieldID = map[expressions.FieldID]string{
-	User_Id_Field:       "id",
-	User_Password_Field: "password",
-	User_Username_Field: "username",
-}
-
-func whereClauseFromExpressionForUser(expr expressions.Expression) (string, []any, error) {
-	if expr == nil {
-		return "", nil, nil
-	}
-	switch expr := expr.(type) {
-	case *expressions.And:
-		left, leftBinds, err := whereClauseFromExpressionForUser(expr.Left())
-		if err != nil {
-			return "", nil, err
-		}
-		right, rightBinds, err := whereClauseFromExpressionForUser(expr.Right())
-		if err != nil {
-			return "", nil, err
-		}
-		return fmt.Sprintf("%s AND %s", left, right), append(leftBinds, rightBinds...), nil
-
-	case *expressions.Or:
-		left, leftBinds, err := whereClauseFromExpressionForUser(expr.Left())
-		if err != nil {
-			return "", nil, err
-		}
-		right, rightBinds, err := whereClauseFromExpressionForUser(expr.Right())
-		if err != nil {
-			return "", nil, err
-		}
-		return fmt.Sprintf("%s OR %s", left, right), append(leftBinds, rightBinds...), nil
-	case *expressions.Not:
-		operand, binds, err := whereClauseFromExpressionForUser(expr.Operand())
-		if err != nil {
-			return "", nil, err
-		}
-		return fmt.Sprintf("NOT %s", operand), binds, nil
-
-	case *expressions.Equal:
-		left, leftBinds, err := whereClauseFromExpressionForUser(expr.Left())
-		if err != nil {
-			return "", nil, err
-		}
-		right, rightBinds, err := whereClauseFromExpressionForUser(expr.Right())
-		if err != nil {
-			return "", nil, err
-		}
-		return fmt.Sprintf("%s = %s", left, right), append(leftBinds, rightBinds...), nil
-
-	case *expressions.Identifier:
-		if _, ok := validUserFields[expr.ID()]; !ok {
-			return "", nil, fmt.Errorf("invalid field id: %s", expr.ID())
-		}
-		colName, ok := sqliteUserColumnNameByFieldID[expr.ID()]
-		if !ok {
-			return "", nil, fmt.Errorf("missing meta-data: field id: %s", expr.ID())
-		}
-		return fmt.Sprintf("\"user\".\"%s\"", colName), nil, nil
-
-	case *expressions.Scalar:
-		return "?", []any{expr.Value()}, nil
-	default:
-		return "", nil, fmt.Errorf("unknown expression")
-	}
+	// Delete deletes Users matching the provided criteria
+	// Delete is incomplete and it should be considered unstable
+	Delete(context.Context, expressions.Expression) error
 }

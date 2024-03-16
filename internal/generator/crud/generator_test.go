@@ -1,5 +1,5 @@
 // REFURL: https://github.com/grpc-ecosystem/grpc-gateway/blob/v2.15.2/protoc-gen-grpc-gateway/internal/gengateway/generator_test.go
-package gen_go_crud
+package crud
 
 import (
 	"testing"

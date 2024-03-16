@@ -1,5 +1,5 @@
 // REFURL: https://github.com/grpc-ecosystem/grpc-gateway/blob/main/protoc-gen-grpc-gateway/internal/gengateway/template.go
-package gen_go_crud
+package crud
 
 import (
 	"bytes"
@@ -32,7 +32,6 @@ type field struct {
 type crud struct {
 	*descriptor.CRUD
 	Registry *descriptor.Registry
-	SQLite   *sqlite
 
 	fieldByFieldConstants map[string]*field
 }
@@ -88,7 +87,6 @@ func applyTemplate(p param, reg *descriptor.Registry) (string, error) {
 		inject := &crud{
 			CRUD:     def,
 			Registry: reg,
-			SQLite:   &sqlite{},
 		}
 		if err := repositoryTemplate.Execute(w, inject); err != nil {
 			return "", nil
@@ -106,7 +104,7 @@ var (
 /*
 Package {{.GoPkg.Name}} is a repository.
 
-It provides an interface to implement and some implementations of the interface.
+It provides an interface to implement.
 */
 
 package {{.GoPkg.Name}}
@@ -134,9 +132,8 @@ var valid{{.CRUD.Name}}Fields = map[expressions.FieldID]struct{}{
 {{- end}}
 }
 {{end}}
-{{if .CRUD.SQLiteImplementation}}
-	{{template "sqlite-repository" .}}
-{{end}}
+
+{{template "repository-interface" .}}
 `))
 
 	funcMap template.FuncMap = map[string]interface{}{
@@ -145,7 +142,6 @@ var valid{{.CRUD.Name}}Fields = map[expressions.FieldID]struct{}{
 	}
 
 	_ = template.Must(repositoryTemplate.New("repository-interface").Funcs(funcMap).Parse(`
-
 type {{.CRUD.Name}}Repository interface {
 	{{if .CRUD.Create}}// Create creates new {{.CRUD.Name}}s.
 	// Successfully created {{.CRUD.Name}}s are returned along with any errors that may have occurred.
