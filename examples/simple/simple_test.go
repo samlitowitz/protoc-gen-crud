@@ -1,83 +1,768 @@
 package simple_test
 
 import (
+	"context"
+	"database/sql"
 	"fmt"
+	"os"
+	"runtime"
+	"strings"
+	"testing"
 
-	"github.com/samlitowitz/protoc-gen-crud/internal/descriptor"
-	"google.golang.org/protobuf/types/descriptorpb"
+	"github.com/samlitowitz/protoc-gen-crud/expressions"
+
+	"github.com/google/go-cmp/cmp/cmpopts"
+
+	"github.com/google/go-cmp/cmp"
+
+	"github.com/google/uuid"
+	"github.com/samlitowitz/protoc-gen-crud/examples/simple"
 )
 
-func allStringCombinations(set []string) (subsets [][]string) {
-	length := uint(len(set))
-
-	// Go through all possible combinations of objects
-	// from 1 (only first object in subset) to 2^length (all objects in subset)
-	for subsetBits := 1; subsetBits < (1 << length); subsetBits++ {
-		var subset []string
-
-		for object := uint(0); object < length; object++ {
-			// checks if object is contained in subset
-			// by checking if bit 'object' is set in subsetBits
-			if (subsetBits>>object)&1 == 1 {
-				// add object to subset
-				subset = append(subset, set[object])
-			}
-		}
-		// add subset to subsets
-		subsets = append(subsets, subset)
+func TestSQLiteUserRepository_Create(t *testing.T) {
+	// REFURL: https://github.com/golang/go/blob/988b718f4130ab5b3ce5a5774e1a58e83c92a163/src/path/filepath/path_test.go#L600
+	// -- START -- //
+	if runtime.GOOS == "ios" {
+		restore := chtmpdir(t)
+		defer restore()
 	}
-	return subsets
+
+	tmpDir := t.TempDir()
+
+	origDir, err := os.Getwd()
+	if err != nil {
+		t.Fatal("finding working dir:", err)
+	}
+	if err = os.Chdir(tmpDir); err != nil {
+		t.Fatal("entering temp dir:", err)
+	}
+	defer os.Chdir(origDir)
+	// -- END -- //
+
+	db, err := sql.Open("sqlite", ":memory:")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer db.Close()
+
+	opts := cmp.Options{
+		cmpopts.IgnoreUnexported(simple.User{}),
+		cmpopts.SortSlices(func(x, y *simple.User) bool {
+			switch strings.Compare(x.GetId(), y.GetId()) {
+			case -1:
+				return true
+			case 0:
+				return true
+			case 1:
+				return false
+			}
+			panic("this should never happen")
+		}),
+	}
+
+	tests := map[string]struct {
+		expectedUsers []*simple.User
+		expr          expressions.Expression
+	}{
+		"sets all fields": {
+			[]*simple.User{
+				{
+					Id:       uuid.NewString(),
+					Username: "username-1",
+					Password: "password-1",
+				},
+				{
+					Id:       uuid.NewString(),
+					Username: "username-2",
+					Password: "password-2",
+				},
+				{
+					Id:       uuid.NewString(),
+					Username: "username-3",
+					Password: "password-3",
+				},
+			},
+			nil,
+		},
+	}
+
+	for testCase, testData := range tests {
+		err = createTable(db, origDir)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		repo, err := simple.NewSQLiteUserRepository(db)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		users, err := repo.Read(context.Background(), nil)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if len(users) != 0 {
+			t.Fatalf(
+				"%s: expected 0 users, got %d",
+				testCase,
+				len(users),
+			)
+		}
+
+		toCreate := make([]*simple.User, 0, len(testData.expectedUsers))
+		for _, user := range testData.expectedUsers {
+			toCreate = append(toCreate, user)
+		}
+
+		// Check create response
+		actualUsers, err := repo.Create(context.Background(), toCreate)
+		if err != nil {
+			t.Fatalf("%s: %s", testCase, err)
+		}
+
+		if diff := cmp.Diff(toCreate, actualUsers, opts); diff != "" {
+			t.Fatalf(
+				"%s: Create() mismatch (-want +got):\n%s",
+				testCase,
+				diff,
+			)
+		}
+
+		// Check stored data
+		actualUsers, err = repo.Read(context.Background(), testData.expr)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if diff := cmp.Diff(testData.expectedUsers, actualUsers, opts); diff != "" {
+			t.Fatalf(
+				"%s: Read() mismatch (-want +got):\n%s",
+				testCase,
+				diff,
+			)
+		}
+	}
 }
 
-func goTypeByFieldDescType(defs []*descriptor.Field) (string, error) {
-	if len(defs) < 1 {
-		return "", fmt.Errorf("no fields found, cannot build key type")
+func TestSQLiteUserRepository_Read(t *testing.T) {
+	// REFURL: https://github.com/golang/go/blob/988b718f4130ab5b3ce5a5774e1a58e83c92a163/src/path/filepath/path_test.go#L600
+	// -- START -- //
+	if runtime.GOOS == "ios" {
+		restore := chtmpdir(t)
+		defer restore()
 	}
-	if len(defs) == 1 {
-		def := defs[0]
-		switch *def.Type {
-		case descriptorpb.FieldDescriptorProto_TYPE_DOUBLE:
-			fallthrough
-		case descriptorpb.FieldDescriptorProto_TYPE_FLOAT:
-			fallthrough
-		case descriptorpb.FieldDescriptorProto_TYPE_BOOL:
-			fallthrough
-		case descriptorpb.FieldDescriptorProto_TYPE_ENUM:
-			fallthrough
-		case descriptorpb.FieldDescriptorProto_TYPE_GROUP:
-			fallthrough
-		case descriptorpb.FieldDescriptorProto_TYPE_MESSAGE:
-			return "", &descriptor.UnsupportedTypeError{TypName: *def.TypeName}
 
-		case descriptorpb.FieldDescriptorProto_TYPE_UINT32:
-			return "uint32", nil
-		case descriptorpb.FieldDescriptorProto_TYPE_UINT64:
-			return "uint64", nil
+	tmpDir := t.TempDir()
 
-		case descriptorpb.FieldDescriptorProto_TYPE_INT32:
-			fallthrough
-		case descriptorpb.FieldDescriptorProto_TYPE_FIXED32:
-			fallthrough
-		case descriptorpb.FieldDescriptorProto_TYPE_SFIXED32:
-			fallthrough
-		case descriptorpb.FieldDescriptorProto_TYPE_SINT32:
-			return "int32", nil
+	origDir, err := os.Getwd()
+	if err != nil {
+		t.Fatal("finding working dir:", err)
+	}
+	if err = os.Chdir(tmpDir); err != nil {
+		t.Fatal("entering temp dir:", err)
+	}
+	defer os.Chdir(origDir)
+	// -- END -- //
 
-		case descriptorpb.FieldDescriptorProto_TYPE_INT64:
-			fallthrough
-		case descriptorpb.FieldDescriptorProto_TYPE_FIXED64:
-			fallthrough
-		case descriptorpb.FieldDescriptorProto_TYPE_SFIXED64:
-			fallthrough
-		case descriptorpb.FieldDescriptorProto_TYPE_SINT64:
-			return "int64", nil
+	db, err := sql.Open("sqlite", ":memory:")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer db.Close()
 
-		case descriptorpb.FieldDescriptorProto_TYPE_BYTES:
-			return "string", nil
+	opts := cmp.Options{
+		cmpopts.IgnoreUnexported(simple.User{}),
+		cmpopts.SortSlices(func(x, y *simple.User) bool {
+			switch strings.Compare(x.GetId(), y.GetId()) {
+			case -1:
+				return true
+			case 0:
+				return true
+			case 1:
+				return false
+			}
+			panic("this should never happen")
+		}),
+	}
 
-		case descriptorpb.FieldDescriptorProto_TYPE_STRING:
-			return "string", nil
+	tests := map[string]struct {
+		unexpectedUsers []*simple.User
+		expectedUsers   []*simple.User
+		expr            expressions.Expression
+	}{
+		"no expression returns all users": {
+			[]*simple.User{},
+			[]*simple.User{
+				{
+					Id:       uuid.NewString(),
+					Username: "username-1",
+					Password: "password-1",
+				},
+				{
+					Id:       uuid.NewString(),
+					Username: "username-2",
+					Password: "password-2",
+				},
+				{
+					Id:       uuid.NewString(),
+					Username: "username-3",
+					Password: "password-3",
+				},
+			},
+			nil,
+		},
+		"id equals expression returns matched user": {
+			[]*simple.User{
+				{
+					Id:       uuid.NewString(),
+					Username: "username-2",
+					Password: "password-2",
+				},
+				{
+					Id:       uuid.NewString(),
+					Username: "username-3",
+					Password: "password-3",
+				},
+			},
+			[]*simple.User{
+				{
+					Id:       "1",
+					Username: "username-1",
+					Password: "password-1",
+				},
+			},
+			expressions.NewEqual(
+				expressions.NewIdentifier(simple.User_Id_Field),
+				expressions.NewScalar("1"),
+			),
+		},
+		"username equals expression returns matched user": {
+			[]*simple.User{
+				{
+					Id:       uuid.NewString(),
+					Username: "username-2",
+					Password: "password-2",
+				},
+				{
+					Id:       uuid.NewString(),
+					Username: "username-3",
+					Password: "password-3",
+				},
+			},
+			[]*simple.User{
+				{
+					Id:       uuid.NewString(),
+					Username: "username-1",
+					Password: "password-1",
+				},
+			},
+			expressions.NewEqual(
+				expressions.NewIdentifier(simple.User_Username_Field),
+				expressions.NewScalar("username-1"),
+			),
+		},
+		"password equals expression returns matched user": {
+			[]*simple.User{
+				{
+					Id:       uuid.NewString(),
+					Username: "username-2",
+					Password: "password-2",
+				},
+				{
+					Id:       uuid.NewString(),
+					Username: "username-3",
+					Password: "password-3",
+				},
+			},
+			[]*simple.User{
+				{
+					Id:       uuid.NewString(),
+					Username: "username-1",
+					Password: "password-1",
+				},
+			},
+			expressions.NewEqual(
+				expressions.NewIdentifier(simple.User_Password_Field),
+				expressions.NewScalar("password-1"),
+			),
+		},
+		"username and password equals expression returns matched user": {
+			[]*simple.User{
+				{
+					Id:       uuid.NewString(),
+					Username: "username-2",
+					Password: "password-2",
+				},
+				{
+					Id:       uuid.NewString(),
+					Username: "username-3",
+					Password: "password-3",
+				},
+			},
+			[]*simple.User{
+				{
+					Id:       uuid.NewString(),
+					Username: "username-1",
+					Password: "password-1",
+				},
+			},
+			expressions.NewAnd(
+				expressions.NewEqual(
+					expressions.NewIdentifier(simple.User_Username_Field),
+					expressions.NewScalar("username-1"),
+				),
+				expressions.NewEqual(
+					expressions.NewIdentifier(simple.User_Password_Field),
+					expressions.NewScalar("password-1"),
+				),
+			),
+		},
+	}
+
+	for testCase, testData := range tests {
+		err = createTable(db, origDir)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		repo, err := simple.NewSQLiteUserRepository(db)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		users, err := repo.Read(context.Background(), nil)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if len(users) != 0 {
+			t.Fatalf(
+				"%s: expected 0 users, got %d",
+				testCase,
+				len(users),
+			)
+		}
+
+		expectedUserCount := 3
+		expectedUsers := make([]*simple.User, 0, expectedUserCount)
+		for i := 0; i < expectedUserCount; i++ {
+			expectedUsers = append(expectedUsers, &simple.User{
+				Id:       uuid.NewString(),
+				Username: fmt.Sprintf("username-%d", i),
+				Password: fmt.Sprintf("password-%d", i),
+			})
+		}
+
+		toCreate := make([]*simple.User, 0, len(testData.unexpectedUsers)+len(testData.expectedUsers))
+		for _, user := range testData.unexpectedUsers {
+			toCreate = append(toCreate, user)
+		}
+		for _, user := range testData.expectedUsers {
+			toCreate = append(toCreate, user)
+		}
+
+		actualUsers, err := repo.Create(context.Background(), toCreate)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		if diff := cmp.Diff(toCreate, actualUsers, opts); diff != "" {
+			t.Fatalf(
+				"%s: Create() mismatch (-want +got):\n%s",
+				testCase,
+				diff,
+			)
+		}
+
+		actualUsers, err = repo.Read(context.Background(), testData.expr)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if diff := cmp.Diff(testData.expectedUsers, actualUsers, opts); diff != "" {
+			t.Fatalf(
+				"%s: Read() mismatch (-want +got):\n%s",
+				testCase,
+				diff,
+			)
 		}
 	}
-	return "string", nil
+}
+
+func TestSQLiteUserRepository_Update(t *testing.T) {
+	// REFURL: https://github.com/golang/go/blob/988b718f4130ab5b3ce5a5774e1a58e83c92a163/src/path/filepath/path_test.go#L600
+	// -- START -- //
+	if runtime.GOOS == "ios" {
+		restore := chtmpdir(t)
+		defer restore()
+	}
+
+	tmpDir := t.TempDir()
+
+	origDir, err := os.Getwd()
+	if err != nil {
+		t.Fatal("finding working dir:", err)
+	}
+	if err = os.Chdir(tmpDir); err != nil {
+		t.Fatal("entering temp dir:", err)
+	}
+	defer os.Chdir(origDir)
+	// -- END -- //
+
+	db, err := sql.Open("sqlite", ":memory:")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer db.Close()
+
+	opts := cmp.Options{
+		cmpopts.IgnoreUnexported(simple.User{}),
+		cmpopts.SortSlices(func(x, y *simple.User) bool {
+			switch strings.Compare(x.GetId(), y.GetId()) {
+			case -1:
+				return true
+			case 0:
+				return true
+			case 1:
+				return false
+			}
+			panic("this should never happen")
+		}),
+	}
+
+	tests := map[string]struct {
+		createUsers   []*simple.User
+		expectedUsers []*simple.User
+		expr          expressions.Expression
+	}{
+		"update username": {
+			[]*simple.User{
+				{
+					Id:       uuid.NewString(),
+					Username: "username-1",
+					Password: "password-1",
+				},
+				{
+					Id:       uuid.NewString(),
+					Username: "username-2",
+					Password: "password-2",
+				},
+				{
+					Id:       uuid.NewString(),
+					Username: "username-3",
+					Password: "password-3",
+				},
+			},
+			[]*simple.User{
+				{
+					Id:       "",
+					Username: "username-1-1",
+					Password: "",
+				},
+				{
+					Id:       "",
+					Username: "username-2-1",
+					Password: "",
+				},
+				{
+					Id:       "",
+					Username: "username-3-1",
+					Password: "",
+				},
+			},
+			nil,
+		},
+		"update password": {
+			[]*simple.User{
+				{
+					Id:       uuid.NewString(),
+					Username: "username-1",
+					Password: "password-1",
+				},
+				{
+					Id:       uuid.NewString(),
+					Username: "username-2",
+					Password: "password-2",
+				},
+				{
+					Id:       uuid.NewString(),
+					Username: "username-3",
+					Password: "password-3",
+				},
+			},
+			[]*simple.User{
+				{
+					Id:       "",
+					Username: "",
+					Password: "password-1-1",
+				},
+				{
+					Id:       "",
+					Username: "",
+					Password: "password-2-1",
+				},
+				{
+					Id:       "",
+					Username: "",
+					Password: "password-3-1",
+				},
+			},
+			nil,
+		},
+		"update username and password": {
+			[]*simple.User{
+				{
+					Id:       uuid.NewString(),
+					Username: "username-1",
+					Password: "password-1",
+				},
+				{
+					Id:       uuid.NewString(),
+					Username: "username-2",
+					Password: "password-2",
+				},
+				{
+					Id:       uuid.NewString(),
+					Username: "username-3",
+					Password: "password-3",
+				},
+			},
+			[]*simple.User{
+				{
+					Id:       "",
+					Username: "username-1-1",
+					Password: "password-1-1",
+				},
+				{
+					Id:       "",
+					Username: "username-2-1",
+					Password: "password-2-1",
+				},
+				{
+					Id:       "",
+					Username: "username-3-1",
+					Password: "password-3-1",
+				},
+			},
+			nil,
+		},
+	}
+
+	for testCase, testData := range tests {
+		err = createTable(db, origDir)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		repo, err := simple.NewSQLiteUserRepository(db)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		users, err := repo.Read(context.Background(), nil)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if len(users) != 0 {
+			t.Fatalf(
+				"%s: expected 0 users, got %d",
+				testCase,
+				len(users),
+			)
+		}
+
+		actualUsers, err := repo.Create(context.Background(), testData.createUsers)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		if diff := cmp.Diff(testData.createUsers, actualUsers, opts); diff != "" {
+			t.Fatalf(
+				"%s: Create() mismatch (-want +got):\n%s",
+				testCase,
+				diff,
+			)
+		}
+
+		actualUsers, err = repo.Read(context.Background(), testData.expr)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if diff := cmp.Diff(testData.createUsers, actualUsers, opts); diff != "" {
+			t.Fatalf(
+				"%s: Read() mismatch (-want +got):\n%s",
+				testCase,
+				diff,
+			)
+		}
+
+		for i, user := range testData.createUsers {
+			if testData.expectedUsers[i].Id == "" {
+				testData.expectedUsers[i].Id = user.Id
+			}
+			if testData.expectedUsers[i].Username == "" {
+				testData.expectedUsers[i].Username = user.Username
+			}
+			if testData.expectedUsers[i].Password == "" {
+				testData.expectedUsers[i].Password = user.Password
+			}
+		}
+
+		actualUsers, err = repo.Update(context.Background(), testData.expectedUsers)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		if diff := cmp.Diff(testData.expectedUsers, actualUsers, opts); diff != "" {
+			t.Fatalf(
+				"%s: Create() mismatch (-want +got):\n%s",
+				testCase,
+				diff,
+			)
+		}
+
+		actualUsers, err = repo.Read(context.Background(), testData.expr)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if diff := cmp.Diff(testData.expectedUsers, actualUsers, opts); diff != "" {
+			t.Fatalf(
+				"%s: Read() mismatch (-want +got):\n%s",
+				testCase,
+				diff,
+			)
+		}
+	}
+}
+
+func TestSQLiteUserRepository_Delete(t *testing.T) {
+	// REFURL: https://github.com/golang/go/blob/988b718f4130ab5b3ce5a5774e1a58e83c92a163/src/path/filepath/path_test.go#L600
+	// -- START -- //
+	if runtime.GOOS == "ios" {
+		restore := chtmpdir(t)
+		defer restore()
+	}
+
+	tmpDir := t.TempDir()
+
+	origDir, err := os.Getwd()
+	if err != nil {
+		t.Fatal("finding working dir:", err)
+	}
+	if err = os.Chdir(tmpDir); err != nil {
+		t.Fatal("entering temp dir:", err)
+	}
+	defer os.Chdir(origDir)
+	// -- END -- //
+
+	db, err := sql.Open("sqlite", ":memory:")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer db.Close()
+
+	err = createTable(db, origDir)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	opts := cmp.Options{
+		cmpopts.IgnoreUnexported(simple.User{}),
+		cmpopts.SortSlices(func(x, y *simple.User) bool {
+			switch strings.Compare(x.GetId(), y.GetId()) {
+			case -1:
+				return true
+			case 0:
+				return true
+			case 1:
+				return false
+			}
+			panic("this should never happen")
+		}),
+	}
+
+	repo, err := simple.NewSQLiteUserRepository(db)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	users, err := repo.Read(context.Background(), nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(users) != 0 {
+		t.Fatalf("expected 0 users, got %d", len(users))
+	}
+
+	expectedUserCount := 3
+	expectedUsers := make([]*simple.User, 0, expectedUserCount)
+	for i := 0; i < expectedUserCount; i++ {
+		expectedUsers = append(expectedUsers, &simple.User{
+			Id:       uuid.NewString(),
+			Username: fmt.Sprintf("username-%d", i),
+			Password: fmt.Sprintf("password-%d", i),
+		})
+	}
+
+	actualUsers, err := repo.Create(context.Background(), expectedUsers)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if diff := cmp.Diff(expectedUsers, actualUsers, opts); diff != "" {
+		t.Fatalf("Create() mismatch (-want +got):\n%s", diff)
+	}
+
+	expr := expressions.NewEqual(
+		expressions.NewIdentifier(simple.User_Id_Field),
+		expressions.NewScalar(expectedUsers[0].Id),
+	)
+	err = repo.Delete(context.Background(), expr)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	expectedUsers = expectedUsers[1:]
+	actualUsers, err = repo.Read(context.Background(), nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if diff := cmp.Diff(expectedUsers, actualUsers, opts); diff != "" {
+		t.Fatalf("Create() mismatch (-want +got):\n%s", diff)
+	}
+}
+
+func createTable(db *sql.DB, dir string) error {
+	code, err := os.ReadFile(dir + string(os.PathSeparator) + "user.sqlite.sql")
+	if err != nil {
+		return err
+	}
+	stmt, err := db.Prepare(string(code))
+	if err != nil {
+		return err
+	}
+	_, err = stmt.Exec()
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+// REFURL: https://github.com/golang/go/blob/988b718f4130ab5b3ce5a5774e1a58e83c92a163/src/path/filepath/path_test.go#L553
+func chtmpdir(t *testing.T) (restore func()) {
+	oldwd, err := os.Getwd()
+	if err != nil {
+		t.Fatalf("chtmpdir: %v", err)
+	}
+	d, err := os.MkdirTemp("", "test")
+	if err != nil {
+		t.Fatalf("chtmpdir: %v", err)
+	}
+	if err := os.Chdir(d); err != nil {
+		t.Fatalf("chtmpdir: %v", err)
+	}
+	return func() {
+		if err := os.Chdir(oldwd); err != nil {
+			t.Fatalf("chtmpdir: %v", err)
+		}
+		os.RemoveAll(d)
+	}
 }
