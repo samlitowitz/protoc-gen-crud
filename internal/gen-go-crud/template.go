@@ -135,7 +135,7 @@ var valid{{.CRUD.Name}}Fields = map[expressions.FieldID]struct{}{
 }
 {{end}}
 {{if .CRUD.SQLiteImplementation}}
-	{{template "repository-sqlite" .}}
+	{{template "sqlite-repository" .}}
 {{end}}
 `))
 

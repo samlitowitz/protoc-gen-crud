@@ -105,7 +105,29 @@ var (
 
 	// TODO: Add support for many to many relationships, account for field type, i.e. array
 
-	_ = template.Must(repositoryTemplate.New("repository-sqlite").Funcs(funcMap).Funcs(sqliteFuncMap).Parse(`
+	_ = template.Must(repositoryTemplate.New("sqlite-repository").Funcs(funcMap).Funcs(sqliteFuncMap).Parse(`
+{{template "sqlite-repository-struct" .}}
+
+{{if .CRUD.Create}}
+{{template "sqlite-repository-struct-create" .}}
+{{end}}
+
+{{if .CRUD.Read}}
+{{template "sqlite-repository-struct-read" .}}
+{{end}}
+
+{{if .CRUD.Update}}
+{{template "sqlite-repository-struct-update" .}}
+{{end}}
+
+{{if .CRUD.Delete}}
+{{template "sqlite-repository-struct-delete" .}}
+{{end}}
+
+{{template "sqlite-repository-struct-misc" .}}
+`))
+
+	_ = template.Must(repositoryTemplate.New("sqlite-repository-struct").Parse(`
 // InMemory{{.CRUD.Name}}Repository is an in memory implementation of the {{.CRUD.Name}}Repository interface.
 type SQLite{{.CRUD.Name}}Repository struct {
 	db *sql.DB
@@ -121,8 +143,9 @@ func NewSQLite{{.CRUD.Name}}Repository(db *sql.DB) (*SQLite{{.CRUD.Name}}Reposit
 		db: db,
 	}, nil
 }
+`))
 
-{{if .CRUD.Create}}
+	_ = template.Must(repositoryTemplate.New("sqlite-repository-struct-create").Funcs(funcMap).Funcs(sqliteFuncMap).Parse(`
 // Create creates new {{.CRUD.Name}}s.
 // Successfully created {{.CRUD.Name}}s are returned along with any errors that may have occurred.
 func (repo *SQLite{{.CRUD.Name}}Repository) Create(ctx context.Context, toCreate []*{{.CRUD.GoType .CRUD.File.GoPkg.Path}}) ([]*{{.CRUD.GoType .CRUD.File.GoPkg.Path}}, error) {
@@ -232,9 +255,9 @@ func (repo *SQLite{{.CRUD.Name}}Repository) Create(ctx context.Context, toCreate
 	return toCreate, nil
 	{{- end }}
 }
-{{end}}
+`))
 
-{{if .CRUD.Read}}
+	_ = template.Must(repositoryTemplate.New("sqlite-repository-struct-read").Funcs(funcMap).Funcs(sqliteFuncMap).Parse(`
 // Read returns a set of {{.CRUD.Name}}s matching the provided criteria
 // Read is incomplete and it should be considered unstable
 func (repo *SQLite{{.CRUD.Name}}Repository) Read(ctx context.Context, expr expressions.Expression) ([]*{{.CRUD.GoType .CRUD.File.GoPkg.Path}}, error) {
@@ -278,9 +301,9 @@ func (repo *SQLite{{.CRUD.Name}}Repository) Read(ctx context.Context, expr expre
 	}
 	return found, nil
 }
-{{end}}
+`))
 
-{{if .CRUD.Update}}
+	_ = template.Must(repositoryTemplate.New("sqlite-repository-struct-update").Funcs(funcMap).Funcs(sqliteFuncMap).Parse(`
 // Update modifies existing {{.CRUD.Name}}s based on the defined unique identifiers.
 func (repo *SQLite{{.CRUD.Name}}Repository) Update(ctx context.Context, toUpdate []*{{.CRUD.GoType .CRUD.File.GoPkg.Path}}) ([]*{{.CRUD.GoType .CRUD.File.GoPkg.Path}}, error) {
 	{{if eq (len .CRUD.MinimalUIDFields) 0 -}}
@@ -373,9 +396,9 @@ func (repo *SQLite{{.CRUD.Name}}Repository) Update(ctx context.Context, toUpdate
 	return toUpdate, nil
 	{{end}}
 }
-{{end}}
+`))
 
-{{if .CRUD.Delete}}
+	_ = template.Must(repositoryTemplate.New("sqlite-repository-struct-delete").Funcs(funcMap).Funcs(sqliteFuncMap).Parse(`
 // Delete deletes {{.CRUD.Name}}s based on the defined unique identifiers
 func (repo *SQLite{{.CRUD.Name}}Repository) Delete(ctx context.Context, expr expressions.Expression) error {
 	query := "DELETE FROM {{sqliteIdent (sqliteTableName .CRUD.GetName)}}"
@@ -396,8 +419,9 @@ func (repo *SQLite{{.CRUD.Name}}Repository) Delete(ctx context.Context, expr exp
 	}
 	return nil
 }
-{{end}}
+`))
 
+	_ = template.Must(repositoryTemplate.New("sqlite-repository-struct-misc").Funcs(funcMap).Funcs(sqliteFuncMap).Parse(`
 {{if or .CRUD.Read .CRUD.Delete}}
 var sqlite{{.CRUD.Name}}ColumnNameByFieldID = map[expressions.FieldID]string{
 {{- range $name, $data := .FieldByFieldConstants}}
