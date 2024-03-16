@@ -58,10 +58,8 @@ func (repo *SQLiteUserRepository) Create(ctx context.Context, toCreate []*User) 
 		return nil, err
 	}
 	defer tx.Rollback()
-
 	binds := []any{}
 	bindsStrs := []string{}
-
 	for _, user := range toCreate {
 		binds = append(binds, user.GetId())
 		binds = append(binds, user.GetUsername())
@@ -139,14 +137,12 @@ func (repo *SQLiteUserRepository) Update(ctx context.Context, toUpdate []*User) 
 		return nil, err
 	}
 	defer stmt.Close()
-
 	for _, user := range toUpdate {
 		_, err = stmt.ExecContext(ctx, user.GetUsername(), user.GetPassword(), user.GetId())
 		if err != nil {
 			return nil, err
 		}
 	}
-
 	err = tx.Commit()
 	if err != nil {
 		return nil, err

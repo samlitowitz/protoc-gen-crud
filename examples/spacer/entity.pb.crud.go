@@ -62,7 +62,6 @@ func (repo *SQLiteEntityRepository) Create(ctx context.Context, toCreate []*Enti
 		return nil, err
 	}
 	defer tx.Rollback()
-
 	noMaskBinds := []any{}
 	noMaskBindsStrs := []string{}
 	for _, entity := range toCreate {
@@ -113,7 +112,6 @@ func (repo *SQLiteEntityRepository) Create(ctx context.Context, toCreate []*Enti
 			return nil, err
 		}
 	}
-
 	err = tx.Commit()
 	if err != nil {
 		return nil, err
@@ -174,7 +172,6 @@ func (repo *SQLiteEntityRepository) Update(ctx context.Context, toUpdate []*Enti
 		return nil, err
 	}
 	defer stmt.Close()
-
 	for _, entity := range toUpdate {
 		if entity.FieldMask == nil {
 			_, err = stmt.ExecContext(ctx, entity.GetDescription(), entity.GetTags().GetId(), entity.GetId())
@@ -211,7 +208,6 @@ func (repo *SQLiteEntityRepository) Update(ctx context.Context, toUpdate []*Enti
 			return nil, err
 		}
 	}
-
 	err = tx.Commit()
 	if err != nil {
 		return nil, err

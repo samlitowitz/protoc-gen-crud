@@ -64,7 +64,6 @@ func (repo *SQLiteUserRepository) Create(ctx context.Context, toCreate []*User) 
 		return nil, err
 	}
 	defer tx.Rollback()
-
 	noMaskBinds := []any{}
 	noMaskBindsStrs := []string{}
 	for _, user := range toCreate {
@@ -116,7 +115,6 @@ func (repo *SQLiteUserRepository) Create(ctx context.Context, toCreate []*User) 
 			return nil, err
 		}
 	}
-
 	err = tx.Commit()
 	if err != nil {
 		return nil, err
@@ -177,7 +175,6 @@ func (repo *SQLiteUserRepository) Update(ctx context.Context, toUpdate []*User) 
 		return nil, err
 	}
 	defer stmt.Close()
-
 	for _, user := range toUpdate {
 		if user.FieldMask == nil {
 			_, err = stmt.ExecContext(ctx, user.GetUsername(), user.GetPassword(), user.GetRoles().GetId(), user.GetId())
@@ -214,7 +211,6 @@ func (repo *SQLiteUserRepository) Update(ctx context.Context, toUpdate []*User) 
 			return nil, err
 		}
 	}
-
 	err = tx.Commit()
 	if err != nil {
 		return nil, err
@@ -394,7 +390,6 @@ func (repo *SQLiteRoleRepository) Create(ctx context.Context, toCreate []*Role) 
 		return nil, err
 	}
 	defer tx.Rollback()
-
 	noMaskBinds := []any{}
 	noMaskBindsStrs := []string{}
 	for _, role := range toCreate {
@@ -445,7 +440,6 @@ func (repo *SQLiteRoleRepository) Create(ctx context.Context, toCreate []*Role) 
 			return nil, err
 		}
 	}
-
 	err = tx.Commit()
 	if err != nil {
 		return nil, err
@@ -506,7 +500,6 @@ func (repo *SQLiteRoleRepository) Update(ctx context.Context, toUpdate []*Role) 
 		return nil, err
 	}
 	defer stmt.Close()
-
 	for _, role := range toUpdate {
 		if role.FieldMask == nil {
 			_, err = stmt.ExecContext(ctx, role.GetName(), role.GetId())
@@ -543,7 +536,6 @@ func (repo *SQLiteRoleRepository) Update(ctx context.Context, toUpdate []*Role) 
 			return nil, err
 		}
 	}
-
 	err = tx.Commit()
 	if err != nil {
 		return nil, err

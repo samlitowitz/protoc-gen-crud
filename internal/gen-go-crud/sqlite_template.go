@@ -161,11 +161,23 @@ func (repo *SQLite{{.CRUD.Name}}Repository) Create(ctx context.Context, toCreate
 	}
 	defer tx.Rollback()
 
-	{{if eq .CRUD.FieldMaskFieldName "" -}}
+	{{- if eq .CRUD.FieldMaskFieldName "" -}}
+	{{template "sqlite-repository-struct-create-no-field-mask" .}}
+	{{- else -}}
+	{{template "sqlite-repository-struct-create-field-mask" .}}
+	{{- end -}}
+	err = tx.Commit()
+	if err != nil {
+		return nil, err
+	}
+	return toCreate, nil
+	{{- end }}
+}
+`))
+
+	_ = template.Must(repositoryTemplate.New("sqlite-repository-struct-create-no-field-mask").Funcs(funcMap).Funcs(sqliteFuncMap).Parse(`
 	binds := []any{}
 	bindsStrs := []string{}
-	{{range $i, $field := .CRUD.RelatesToManyFields -}}
-	{{- end}}
 	for _, {{toLowerCamel $.CRUD.GetName}} := range toCreate {
 		{{- range $field := .CRUD.DataFields}}
 		binds = append(binds, {{toLowerCamel $.CRUD.GetName}}.{{sqliteMemberAccessor $field}})
@@ -189,7 +201,9 @@ func (repo *SQLite{{.CRUD.Name}}Repository) Create(ctx context.Context, toCreate
 	if err != nil {
 		return nil, err
 	}
-	{{- else -}}
+`))
+
+	_ = template.Must(repositoryTemplate.New("sqlite-repository-struct-create-field-mask").Funcs(funcMap).Funcs(sqliteFuncMap).Parse(`
 	noMaskBinds := []any{}
 	noMaskBindsStrs := []string{}
 	for _, {{toLowerCamel $.CRUD.GetName}} := range toCreate {
@@ -247,14 +261,6 @@ func (repo *SQLite{{.CRUD.Name}}Repository) Create(ctx context.Context, toCreate
 			return nil, err
 		}
 	}
-	{{ end }}
-	err = tx.Commit()
-	if err != nil {
-		return nil, err
-	}
-	return toCreate, nil
-	{{- end }}
-}
 `))
 
 	_ = template.Must(repositoryTemplate.New("sqlite-repository-struct-read").Funcs(funcMap).Funcs(sqliteFuncMap).Parse(`
@@ -331,8 +337,23 @@ func (repo *SQLite{{.CRUD.Name}}Repository) Update(ctx context.Context, toUpdate
 		return nil, err
 	}
 	defer stmt.Close()
-	{{ if eq .CRUD.FieldMaskFieldName ""}}
-	for _, {{toLowerCamel $.CRUD.GetName}} := range toUpdate {
+	{{- if eq .CRUD.FieldMaskFieldName "" -}}
+	{{template "sqlite-repository-struct-update-no-field-mask" .}}
+	{{- else -}}
+	{{template "sqlite-repository-struct-update-field-mask" .}}
+	{{- end -}}
+
+	err = tx.Commit()
+	if err != nil {
+		return nil, err
+	}
+	return toUpdate, nil
+	{{end}}
+}
+`))
+
+	_ = template.Must(repositoryTemplate.New("sqlite-repository-struct-update-no-field-mask").Funcs(funcMap).Funcs(sqliteFuncMap).Parse(`
+for _, {{toLowerCamel $.CRUD.GetName}} := range toUpdate {
 		_, err = stmt.ExecContext(ctx, {{ range $i, $field := .CRUD.NonMinimalUIDDataFields -}}
 		{{if $i}},{{end}}{{toLowerCamel $.CRUD.GetName}}.{{sqliteMemberAccessor $field}}
 		{{- end }},{{ range $i, $field := .CRUD.MinimalUIDFields -}}
@@ -342,8 +363,10 @@ func (repo *SQLite{{.CRUD.Name}}Repository) Update(ctx context.Context, toUpdate
 			return nil, err
 		}
 	}
-	{{else}}
-	for _, {{toLowerCamel $.CRUD.GetName}} := range toUpdate {
+`))
+
+	_ = template.Must(repositoryTemplate.New("sqlite-repository-struct-update-field-mask").Funcs(funcMap).Funcs(sqliteFuncMap).Parse(`
+for _, {{toLowerCamel $.CRUD.GetName}} := range toUpdate {
 		if {{toLowerCamel $.CRUD.GetName}}.{{camelIdentifier $.CRUD.FieldMaskFieldName}} == nil {
 			_, err = stmt.ExecContext(ctx, {{ range $i, $field := .CRUD.NonMinimalUIDDataFields -}}
 			{{if $i}},{{end}}{{toLowerCamel $.CRUD.GetName}}.{{sqliteMemberAccessor $field}}
@@ -387,15 +410,6 @@ func (repo *SQLite{{.CRUD.Name}}Repository) Update(ctx context.Context, toUpdate
 			return nil, err
 		}
 	}
-	{{ end }}
-
-	err = tx.Commit()
-	if err != nil {
-		return nil, err
-	}
-	return toUpdate, nil
-	{{end}}
-}
 `))
 
 	_ = template.Must(repositoryTemplate.New("sqlite-repository-struct-delete").Funcs(funcMap).Funcs(sqliteFuncMap).Parse(`

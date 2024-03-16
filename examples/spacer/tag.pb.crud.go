@@ -60,7 +60,6 @@ func (repo *SQLiteTagRepository) Create(ctx context.Context, toCreate []*Tag) ([
 		return nil, err
 	}
 	defer tx.Rollback()
-
 	noMaskBinds := []any{}
 	noMaskBindsStrs := []string{}
 	for _, tag := range toCreate {
@@ -111,7 +110,6 @@ func (repo *SQLiteTagRepository) Create(ctx context.Context, toCreate []*Tag) ([
 			return nil, err
 		}
 	}
-
 	err = tx.Commit()
 	if err != nil {
 		return nil, err
@@ -172,7 +170,6 @@ func (repo *SQLiteTagRepository) Update(ctx context.Context, toUpdate []*Tag) ([
 		return nil, err
 	}
 	defer stmt.Close()
-
 	for _, tag := range toUpdate {
 		if tag.FieldMask == nil {
 			_, err = stmt.ExecContext(ctx, tag.GetName(), tag.GetId())
@@ -209,7 +206,6 @@ func (repo *SQLiteTagRepository) Update(ctx context.Context, toUpdate []*Tag) ([
 			return nil, err
 		}
 	}
-
 	err = tx.Commit()
 	if err != nil {
 		return nil, err
