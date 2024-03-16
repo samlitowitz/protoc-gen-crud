@@ -103,6 +103,7 @@ var (
 		"sqliteColumnName":              gen_go_crud.SQLiteColumnName,
 		"sqliteColumnNameFromFieldName": gen_go_crud.SQLiteColumnNameFromFieldName,
 		"sqliteRelatesToManyTableName":  gen_go_crud.SQLiteRelatesToManyTableName,
+		"sqliteRelatesToManyCableName":  gen_go_crud.SQLiteRelatesToManyColumnName,
 		"sqliteType":                    sqliteType,
 
 		"sprintf": fmt.Sprintf,
@@ -114,10 +115,10 @@ var (
 DROP TABLE IF EXISTS {{sqliteIdent (sqliteRelatesToManyTableName $field)}};
 CREATE TABLE IF NOT EXISTS {{sqliteIdent (sqliteRelatesToManyTableName $field)}} (
     {{ range $j, $minUIDField := $.CRUD.MinimalUIDFields -}}
-    {{if $j}},{{end}}{{sqliteIdent (sprintf "%s_%s" (sqliteColumnName $.CRUD.GetName) (sqliteColumnNameFromFieldName $minUIDField))}} {{sqliteType $minUIDField}}
+    {{if $j}},{{end}}{{sqliteIdent (sqliteRelatesToManyCableName $minUIDField)}} {{sqliteType $minUIDField}}
     {{- end }}
     {{ range $j, $minUIDField := $field.GetFieldMessageMinimalUIDFields -}}
-    {{if $j}},{{end}}{{sqliteIdent (sprintf "%s_%s" (sqliteColumnName $field.FieldMessage.CRUD.GetName) (sqliteColumnNameFromFieldName $minUIDField))}} {{sqliteType $minUIDField}}
+    {{if $j}},{{end}}{{sqliteIdent (sqliteRelatesToManyCableName $minUIDField)}} {{sqliteType $minUIDField}}
     {{- end }}
 );
 

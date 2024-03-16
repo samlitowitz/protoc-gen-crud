@@ -64,6 +64,16 @@ func SQLiteRelatesToManyTableName(f *descriptor.Field) string {
 	)
 }
 
+func SQLiteRelatesToManyColumnName(f *descriptor.Field) string {
+	return SQLiteTableName(
+		fmt.Sprintf(
+			"%s_%s",
+			SQLiteColumnName(f.Message.CRUD.GetName()),
+			SQLiteColumnNameFromFieldName(f),
+		),
+	)
+}
+
 func SQLiteIdent(s string) string {
 	return "\"" + s + "\""
 }
@@ -131,6 +141,8 @@ func (repo *SQLite{{.CRUD.Name}}Repository) Create(ctx context.Context, toCreate
 	{{if eq .CRUD.FieldMaskFieldName "" -}}
 	binds := []any{}
 	bindsStrs := []string{}
+	{{range $i, $field := .CRUD.RelatesToManyFields -}}
+	{{- end}}
 	for _, {{toLowerCamel $.CRUD.GetName}} := range toCreate {
 		{{- range $field := .CRUD.DataFields}}
 		binds = append(binds, {{toLowerCamel $.CRUD.GetName}}.{{sqliteMemberAccessor $field}})

@@ -61,6 +61,7 @@ func (repo *SQLiteUserRepository) Create(ctx context.Context, toCreate []*User) 
 
 	binds := []any{}
 	bindsStrs := []string{}
+
 	for _, user := range toCreate {
 		binds = append(binds, user.GetId())
 		binds = append(binds, user.GetUsername())
