@@ -8,4 +8,5 @@ enum Type {
   ONE_TO_ONE = 0;
   ONE_TO_MANY = 1;
   MANY_TO_ONE = 2;
+  MANY_TO_MANY = 3;
 }
