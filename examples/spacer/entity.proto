@@ -1,0 +1,31 @@
+syntax = "proto3";
+
+package protoc_gen_crud.examples.spacer;
+
+option go_package = "github.com/samlitowitz/protoc-gen-crud/examples/spacer";
+
+import "google/protobuf/field_mask.proto";
+import "protoc-gen-crud/options/annotations.proto";
+import "protoc-gen-crud/examples/spacer/tag.proto";
+
+message Entity {
+  option (protoc_gen_crud.options.crud_message_options) = {
+    operations: [CREATE, READ, UPDATE, DELETE]
+    implementations: [SQLITE]
+    fieldMaskField: "fieldMask"
+  };
+  google.protobuf.FieldMask fieldMask = 1;
+  string id = 2 [
+    (protoc_gen_crud.options.crud_field_options) = {
+      uids: ["id"]
+    }
+  ];
+  repeated Tag tags = 3 [
+    (protoc_gen_crud.options.crud_field_options) = {
+      relationship: {
+        direction: UNIDIRECTIONAL
+        type: MANY_TO_MANY
+      }
+    }
+  ];
+}
