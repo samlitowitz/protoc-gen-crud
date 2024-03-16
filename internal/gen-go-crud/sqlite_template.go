@@ -83,6 +83,8 @@ var (
 		"toLowerCamel":                  strcase.ToLowerCamel,
 	}
 
+	// TODO: Add support for many to many relationships, account for field type, i.e. array
+
 	_ = template.Must(repositoryTemplate.New("repository-sqlite").Funcs(funcMap).Funcs(sqliteFuncMap).Parse(`
 // InMemory{{.CRUD.Name}}Repository is an in memory implementation of the {{.CRUD.Name}}Repository interface.
 type SQLite{{.CRUD.Name}}Repository struct {

@@ -105,6 +105,8 @@ var (
 		"sqliteType":                    sqliteType,
 	}
 
+	// TODO: Add support for many to many relationships
+
 	// https://www.sqlite.org/lang_createtable.html
 	createTableTemplate = template.Must(template.New("create-table").Funcs(funcMap).Parse(`
 DROP TABLE IF EXISTS {{sqliteIdent (sqliteTableName .CRUD.GetName)}};
