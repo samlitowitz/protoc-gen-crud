@@ -33,4 +33,5 @@ message ServiceOptions {}
 message FieldOptions {
   repeated string uids = 1;
   Relationship relationship = 2;
+  bool ignore = 3;
 }
