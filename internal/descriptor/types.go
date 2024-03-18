@@ -125,6 +125,9 @@ func (def *CRUD) NonMinimalUIDDataFields() []*Field {
 		if field.IsMetaData() {
 			continue
 		}
+		if field.Ignore {
+			continue
+		}
 		if _, ok := minUIDFieldNames[field.GetName()]; ok {
 			continue
 		}
@@ -140,6 +143,9 @@ func (def *CRUD) DataFields() []*Field {
 		if field.IsMetaData() {
 			continue
 		}
+		if field.Ignore {
+			continue
+		}
 		if field.RelatesToMany() {
 			continue
 		}
@@ -152,6 +158,9 @@ func (def *CRUD) RelatesToManyFields() []*Field {
 	var fields []*Field
 	for _, field := range def.Fields {
 		if field.IsMetaData() {
+			continue
+		}
+		if field.Ignore {
 			continue
 		}
 		if !field.RelatesToMany() {
@@ -291,6 +300,8 @@ type Field struct {
 	IsFieldMaskField bool
 	// Relationship contains meta-data defining the relationship with a non-scalar field
 	Relationship *Relationship
+
+	Ignore bool
 }
 
 func (f *Field) GetFieldMessageMinimalUIDFields() []*Field {

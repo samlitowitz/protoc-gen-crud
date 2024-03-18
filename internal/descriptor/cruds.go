@@ -32,6 +32,7 @@ func (r *Registry) loadCRUDs(file *File) error {
 			if fieldOpts == nil {
 				continue
 			}
+			field.Ignore = fieldOpts.Ignore
 			err = assignUniqueIdentifiers(def, field, fieldOpts)
 			if err != nil {
 				return err
