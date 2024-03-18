@@ -23,10 +23,7 @@ message User {
   string password = 4;
   repeated Role roles = 5 [
     (protoc_gen_crud.options.crud_field_options) = {
-      relationship: {
-        direction: UNIDIRECTIONAL
-        type: MANY_TO_MANY
-      }
+      ignore: true
     }
   ];
 }

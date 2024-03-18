@@ -19,7 +19,7 @@ const (
 	User_FieldMask_Field expressions.FieldID = "7efcc4b1e37ccfd27abf0900cfc133cb96e6eeb09c785a67cbab74c701acb02c"
 	User_Id_Field        expressions.FieldID = "441df8206d64f0e4cf6ad874026ceab109b6b0d2262387c2273ed1d80973589f"
 	User_Password_Field  expressions.FieldID = "fcf0b45269d1e8a2cc0c5c9d3d6013283791fb304e4022200c908dfb41da4019"
-	User_Roles_Id_Field  expressions.FieldID = "94333b18d37b942091c6addbb256507f76eda9b4dadf12d8bf5026fd42b798d7"
+	User_Roles_Field     expressions.FieldID = "0879210ba5b0caa6e1bf1ff5b091cb59237f952327247f48b61cd922a431fe8d"
 	User_Username_Field  expressions.FieldID = "3a893c049a89f5736a021eebc001470079160c4bb5e213e8913b73108d67ba6a"
 )
 
@@ -27,7 +27,7 @@ var validUserFields = map[expressions.FieldID]struct{}{
 	User_FieldMask_Field: struct{}{},
 	User_Id_Field:        struct{}{},
 	User_Password_Field:  struct{}{},
-	User_Roles_Id_Field:  struct{}{},
+	User_Roles_Field:     struct{}{},
 	User_Username_Field:  struct{}{},
 }
 

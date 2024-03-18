@@ -153,7 +153,7 @@ func (repo *SQLiteUserRepository) Update(ctx context.Context, toUpdate []*User) 
 	defer tx.Rollback()
 
 	stmt, err := tx.Prepare(
-		"UPDATE \"user\" SET \"username\" = ?,\"password\" = ?,\"roles_id\" = ? WHERE \"id\" = ?",
+		"UPDATE \"user\" SET \"username\" = ?,\"password\" = ? WHERE \"id\" = ?",
 	)
 	if err != nil {
 		return nil, err
@@ -161,7 +161,7 @@ func (repo *SQLiteUserRepository) Update(ctx context.Context, toUpdate []*User) 
 	defer stmt.Close()
 	for _, user := range toUpdate {
 		if user.FieldMask == nil {
-			_, err = stmt.ExecContext(ctx, user.GetUsername(), user.GetPassword(), user.GetRoles().GetId(), user.GetId())
+			_, err = stmt.ExecContext(ctx, user.GetUsername(), user.GetPassword(), user.GetId())
 			if err != nil {
 				return nil, err
 			}
@@ -228,7 +228,7 @@ var sqliteUserColumnNameByFieldID = map[expressions.FieldID]string{
 	User_FieldMask_Field: "field_mask",
 	User_Id_Field:        "id",
 	User_Password_Field:  "password",
-	User_Roles_Id_Field:  "roles",
+	User_Roles_Field:     "roles",
 	User_Username_Field:  "username",
 }
 

@@ -1,9 +1,3 @@
-DROP TABLE IF EXISTS "user_roles";
-CREATE TABLE IF NOT EXISTS "user_roles" (
-    "user_id" TEXT
-    "role_id" TEXT
-);
-
 DROP TABLE IF EXISTS "user";
 CREATE TABLE IF NOT EXISTS "user" (
     "id" TEXT,
