@@ -6,6 +6,8 @@ import (
 	"sort"
 	"strings"
 
+	"google.golang.org/protobuf/reflect/protoreflect"
+
 	_ "google.golang.org/genproto/googleapis/api/annotations"
 	"google.golang.org/protobuf/compiler/protogen"
 	"google.golang.org/protobuf/types/descriptorpb"
@@ -40,7 +42,15 @@ func (r *Registry) LoadFromPlugin(gen *protogen.Plugin) error {
 
 func (r *Registry) load(gen *protogen.Plugin) error {
 	filePaths := make([]string, 0, len(gen.FilesByPath))
-	for filePath := range gen.FilesByPath {
+	for filePath, file := range gen.FilesByPath {
+		if file.Desc.Syntax() != protoreflect.Proto3 {
+			return fmt.Errorf(
+				`%s: unsupported syntax "%s", must be "proto3"`,
+				filePath,
+				file.Desc.Syntax(),
+			)
+		}
+
 		filePaths = append(filePaths, filePath)
 	}
 	sort.Strings(filePaths)
