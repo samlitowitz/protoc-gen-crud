@@ -143,13 +143,13 @@ func (r *Registry) registerEnum(file *File, outerPath []string, enums []*descrip
 func (r *Registry) fixupFieldFieldMessage(file *File) error {
 	for _, msg := range file.Messages {
 		for _, field := range msg.Fields {
-			if field.TypeName == nil {
+			if field.GetType() != descriptorpb.FieldDescriptorProto_TYPE_MESSAGE {
 				continue
 			}
-			if *field.TypeName == "" {
+			if field.GetTypeName() == "" {
 				continue
 			}
-			fieldMessage, err := r.LookupMsg("", *field.TypeName)
+			fieldMessage, err := r.LookupMsg("", field.GetTypeName())
 			if err != nil {
 				return fmt.Errorf(
 					"failed to fix up field %s on message %s",

@@ -1,0 +1,31 @@
+syntax = "proto3";
+
+package protoc_gen_crud.examples.spacer;
+
+option go_package = "github.com/samlitowitz/protoc-gen-crud/examples/flying_flute";
+//
+//import "google/protobuf/field_mask.proto";
+//import "protoc-gen-crud/options/annotations.proto";
+
+enum Position {
+  UNKNOWN = 0;
+  ONE = 1;
+  TWO = 2;
+  THREE = 3;
+  FOUR = 4;
+  FIVE = 5;
+  SIX = 6;
+  SEVEN = 7;
+  EIGHT = 8;
+};
+
+message Tile {
+  string id = 1;
+
+  repeated AdjacentTile adjacentTiles = 2;
+}
+
+message AdjacentTile {
+  Tile tile = 1;
+  Position position = 2;
+};

@@ -1,0 +1,21 @@
+syntax = "proto3";
+
+package protoc_gen_crud.examples.link_via_unique_id_single;
+
+option go_package = "github.com/samlitowitz/protoc-gen-crud/examples/many-to-many-relationship";
+
+import "protoc-gen-crud/options/annotations.proto";
+
+message UserRole {
+  option (protoc_gen_crud.options.crud_message_options) = {
+    operations: [CREATE, READ, UPDATE, DELETE]
+    implementations: [SQLITE]
+  };
+  string id = 1 [
+    (protoc_gen_crud.options.crud_field_options) = {
+      uids: ["id"]
+    }
+  ];
+  string user_id = 2;
+  string role_id = 3;
+}
