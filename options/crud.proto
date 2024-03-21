@@ -6,16 +6,11 @@ import "protoc-gen-crud/options/relationship.proto";
 
 option go_package = "github.com/samlitowitz/protoc-gen-crud/options";
 
-enum Implementation {
-  NONE = 0;
-  SQLITE = 1;
-}
+// TODO: Document this file, enum, enum values, message, and fields
 
-enum Operation {
-  CREATE = 0;
-  READ = 1;
-  UPDATE = 2;
-  DELETE = 3;
+enum Implementation {
+  UNKNOWN = 0;
+  SQLITE = 1;
 }
 
 message FileOptions {}
@@ -23,15 +18,14 @@ message FileOptions {}
 message MethodOptions {}
 
 message MessageOptions {
-  repeated Operation operations = 1;
-  repeated Implementation implementations = 2;
-  string fieldMaskField = 3;
+  repeated Implementation implementations = 1;
+  string fieldMask = 2;
+  repeated string candidateKey = 3;
 }
 
 message ServiceOptions {}
 
 message FieldOptions {
-  repeated string uids = 1;
-  Relationship relationship = 2;
-  bool ignore = 3;
+  Relationship relationship = 1;
+  bool ignore = 2;
 }

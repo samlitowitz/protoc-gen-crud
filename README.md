@@ -5,6 +5,12 @@ TODO: Implement proto linter
 https://github.com/ghostiam/protogetter
 https://golangci-lint.run/usage/linters/#protogetter
 
+
+
+1. Remove operation specification
+2. always generate all options
+3.
+
 1. Implement IR layer?
     1. Entity-Relationship
         1. Entity

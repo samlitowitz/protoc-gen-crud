@@ -1,0 +1,15 @@
+syntax = "proto3";
+
+package protoc_gen_crud.test_cases.with_only_unknown_implementation_set;
+
+option go_package = "github.com/samlitowitz/protoc-gen-crud/test-cases/with-only-unknown-implementation-set";
+
+import "protoc-gen-crud/options/annotations.proto";
+
+message OnlyUnknownImplementation {
+  option (protoc_gen_crud.options.crud_message_options) = {
+    implementations: [UNKNOWN]
+    candidateKey: ["id"]
+  };
+  string id = 1;
+}

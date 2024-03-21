@@ -19,6 +19,23 @@ func init() {
 	strcase.ConfigureAcronym("UID", "uid")
 }
 
+func FieldIDConstantName(def *descriptor.Field) string {
+	return fmt.Sprintf(
+		"%s_%s_Field",
+		strcase.ToCamel(def.Message.GetName()),
+		strcase.ToCamel(def.GetName()),
+	)
+}
+
+func FieldIDConstantValue(def *descriptor.Field) string {
+	h := sha256.New()
+	_, err := h.Write([]byte(def.GetName()))
+	if err != nil {
+		panic(err)
+	}
+	return hex.EncodeToString(h.Sum(nil))
+}
+
 type param struct {
 	*descriptor.File
 	Imports []descriptor.GoPackage
@@ -29,48 +46,8 @@ type field struct {
 	Hash string
 }
 
-type crud struct {
-	*descriptor.CRUD
-	Registry *descriptor.Registry
-
-	fieldByFieldConstants map[string]*field
-}
-
-func (crud *crud) FieldByFieldConstants() map[string]*field {
-	if crud.fieldByFieldConstants != nil {
-		return crud.fieldByFieldConstants
-	}
-
-	crud.fieldByFieldConstants = make(map[string]*field)
-	for _, fieldDef := range crud.CRUD.Fields {
-		name := fmt.Sprintf(
-			"%s_%s_Field",
-			strcase.ToCamel(crud.CRUD.GetName()),
-			strcase.ToCamel(fieldDef.GetName()),
-		)
-		if fieldDef.HasRelationship() {
-			minUIDFields := fieldDef.Relationship.CRUD.MinimalUIDFields()
-			if len(minUIDFields) != 1 {
-				panic(fmt.Errorf("message type must have unique identifier with exactly one field defined on field %s", fieldDef.GetName()))
-			}
-			name = fmt.Sprintf(
-				"%s_%s_Id_Field",
-				strcase.ToCamel(crud.CRUD.GetName()),
-				strcase.ToCamel(fieldDef.GetName()),
-			)
-		}
-
-		h := sha256.New()
-		_, err := h.Write([]byte(name))
-		if err != nil {
-			panic(err)
-		}
-		crud.fieldByFieldConstants[name] = &field{
-			Def:  fieldDef,
-			Hash: hex.EncodeToString(h.Sum(nil)),
-		}
-	}
-	return crud.fieldByFieldConstants
+type message struct {
+	*descriptor.Message
 }
 
 func applyTemplate(p param, reg *descriptor.Registry) (string, error) {
@@ -80,15 +57,10 @@ func applyTemplate(p param, reg *descriptor.Registry) (string, error) {
 	}
 
 	for _, msg := range p.Messages {
-		msgName := casing.Camel(*msg.Name)
-		msg.Name = &msgName
-	}
-	for _, def := range p.CRUDs {
-		inject := &crud{
-			CRUD:     def,
-			Registry: reg,
+		if !msg.GenerateCRUD {
+			continue
 		}
-		if err := repositoryTemplate.Execute(w, inject); err != nil {
+		if err := repositoryConstantsAndInterfaceTemplate.Execute(w, &message{msg}); err != nil {
 			return "", nil
 		}
 	}
@@ -117,51 +89,39 @@ import (
 {{end}}
 `))
 
-	repositoryTemplate = template.Must(template.New("repository").Parse(`
-{{if .CRUD.Read}}
-{{if .FieldByFieldConstants}}
-const (
-{{- range $name, $data := .FieldByFieldConstants}}
-	{{$name}} expressions.FieldID = "{{$data.Hash}}"
-{{- end}}
-)
-{{end}}
-var valid{{.CRUD.Name}}Fields = map[expressions.FieldID]struct{}{
-{{- range $name, $data := .FieldByFieldConstants}}
-	{{$name}}: struct{}{},
-{{- end}}
-}
-{{end}}
-
-{{template "repository-interface" .}}
-`))
-
 	funcMap template.FuncMap = map[string]interface{}{
-		"camelIdentifier": casing.CamelIdentifier,
-		"toLower":         strings.ToLower,
+		"camelIdentifier":      casing.CamelIdentifier,
+		"toLower":              strings.ToLower,
+		"fieldIDConstantName":  FieldIDConstantName,
+		"fieldIDConstantValue": FieldIDConstantValue,
 	}
 
-	_ = template.Must(repositoryTemplate.New("repository-interface").Funcs(funcMap).Parse(`
-type {{.CRUD.Name}}Repository interface {
-	{{if .CRUD.Create}}// Create creates new {{.CRUD.Name}}s.
-	// Successfully created {{.CRUD.Name}}s are returned along with any errors that may have occurred.
-	Create(context.Context, []*{{.CRUD.GoType .CRUD.File.GoPkg.Path}}) ([]*{{.CRUD.GoType .CRUD.File.GoPkg.Path}}, error)
-	{{end}}
-	{{if .CRUD.Read}}
-	// Read returns a set of {{.CRUD.Name}}s matching the provided criteria
-	// Read is incomplete and it should be considered unstable
-	Read(context.Context, expressions.Expression) ([]*{{.CRUD.GoType .CRUD.File.GoPkg.Path}}, error)
-	{{end}}
-	{{if .CRUD.Update}}
-	// Update modifies existing {{.CRUD.Name}}s based on the defined unique identifiers.
-	// Successfully modified {{.CRUD.Name}}s are returned along with any errors that may have occurred.
-	Update(context.Context, []*{{.CRUD.GoType .CRUD.File.GoPkg.Path}}) ([]*{{.CRUD.GoType .CRUD.File.GoPkg.Path}}, error)
-	{{end}}
-	{{if .CRUD.Delete}}
-	// Delete deletes {{.CRUD.Name}}s matching the provided criteria
-	// Delete is incomplete and it should be considered unstable
+	repositoryConstantsAndInterfaceTemplate = template.Must(template.New("repository-constants-and-interface").Funcs(funcMap).Parse(`
+const (
+{{- range $field := .Fields}}
+	{{fieldIDConstantName $field}} expressions.FieldID = "{{fieldIDConstantValue $field}}"
+{{- end}}
+)
+var valid{{camelIdentifier .GetName}}Fields = map[expressions.FieldID]struct{}{
+{{- range $field := .Fields}}
+	{{fieldIDConstantName $field}}: struct{}{},
+{{- end}}
+}
+
+type {{.GetName}}Repository interface {
+	// Create creates new {{.GetName}}s.
+	// Successfully created {{.GetName}}s are returned along with any errors that may have occurred.
+	Create(context.Context, []*{{.GoType .File.GoPkg.Path}}) ([]*{{.GoType .File.GoPkg.Path}}, error)
+
+	// Read returns a set of {{.GetName}}s matching the provided criteria
+	Read(context.Context, expressions.Expression) ([]*{{.GoType .File.GoPkg.Path}}, error)
+
+	// Update modifies existing {{.GetName}}s based on the defined unique identifiers.
+	// Successfully modified {{.GetName}}s are returned along with any errors that may have occurred.
+	Update(context.Context, []*{{.GoType .File.GoPkg.Path}}) ([]*{{.GoType .File.GoPkg.Path}}, error)
+
+	// Delete deletes {{.GetName}}s matching the provided criteria
 	Delete(context.Context,  expressions.Expression) error
-	{{end}}
 }
 `))
 )

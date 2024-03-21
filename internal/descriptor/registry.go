@@ -6,8 +6,6 @@ import (
 	"sort"
 	"strings"
 
-	"google.golang.org/protobuf/reflect/protoreflect"
-
 	_ "google.golang.org/genproto/googleapis/api/annotations"
 	"google.golang.org/protobuf/compiler/protogen"
 	"google.golang.org/protobuf/types/descriptorpb"
@@ -20,8 +18,6 @@ type Registry struct {
 	enums map[string]*Enum
 	// files is a mapping from file path to descriptor
 	files map[string]*File
-	// cruds is a mapping from fully-qualified message name to its CRUD
-	cruds map[string]*CRUD
 	// pkgAliases is a mapping from package aliases to package paths in go which are already taken.
 	pkgAliases map[string]string
 }
@@ -31,7 +27,6 @@ func NewRegistry() *Registry {
 		msgs:       make(map[string]*Message),
 		enums:      make(map[string]*Enum),
 		files:      make(map[string]*File),
-		cruds:      make(map[string]*CRUD),
 		pkgAliases: make(map[string]string),
 	}
 }
@@ -42,15 +37,7 @@ func (r *Registry) LoadFromPlugin(gen *protogen.Plugin) error {
 
 func (r *Registry) load(gen *protogen.Plugin) error {
 	filePaths := make([]string, 0, len(gen.FilesByPath))
-	for filePath, file := range gen.FilesByPath {
-		if file.Desc.Syntax() != protoreflect.Proto3 {
-			return fmt.Errorf(
-				`%s: unsupported syntax "%s", must be "proto3"`,
-				filePath,
-				file.Desc.Syntax(),
-			)
-		}
-
+	for filePath := range gen.FilesByPath {
 		filePaths = append(filePaths, filePath)
 	}
 	sort.Strings(filePaths)
@@ -74,11 +61,6 @@ func (r *Registry) load(gen *protogen.Plugin) error {
 		}
 		file := r.files[filePath]
 		if err := r.loadCRUDs(file); err != nil {
-			return err
-		}
-	}
-	for _, crud := range r.cruds {
-		if err := r.fixupCRUDRelationships(crud); err != nil {
 			return err
 		}
 	}

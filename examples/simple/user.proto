@@ -8,14 +8,10 @@ import "protoc-gen-crud/options/annotations.proto";
 
 message User {
   option (protoc_gen_crud.options.crud_message_options) = {
-    operations: [CREATE, READ, UPDATE, DELETE]
     implementations: [SQLITE]
+    candidateKey: ["id"]
   };
-  string id = 1 [
-    (protoc_gen_crud.options.crud_field_options) = {
-      uids: ["id"]
-    }
-  ];
+  string id = 1;
   string username = 2;
   string password = 3;
 }

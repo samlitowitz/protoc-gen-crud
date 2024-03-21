@@ -5,8 +5,9 @@ package protoc_gen_crud.options.relationships;
 option go_package = "github.com/samlitowitz/protoc-gen-crud/options/relationships";
 
 enum Type {
-  ONE_TO_ONE = 0;
-  ONE_TO_MANY = 1;
-  MANY_TO_ONE = 2;
-  MANY_TO_MANY = 3;
+  UNKNOWN_TYPE = 0;
+  ONE_TO_ONE = 1;
+  ONE_TO_MANY = 2;
+  MANY_TO_ONE = 3;
+  MANY_TO_MANY = 4;
 }

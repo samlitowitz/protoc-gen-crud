@@ -12,14 +12,30 @@ import (
 	"google.golang.org/protobuf/types/pluginpb"
 )
 
+const (
+	defaultFormatOutput = true
+)
+
 type generator struct {
 	reg         *descriptor.Registry
 	baseImports []descriptor.GoPackage
+
+	formatOutput bool
 }
 
-func New(reg *descriptor.Registry) gen.Generator {
+func New(reg *descriptor.Registry, opts ...Option) gen.Generator {
+	options := options{
+		formatOutput: defaultFormatOutput,
+	}
+	for _, o := range opts {
+		o.apply(&options)
+	}
+
 	var imports []descriptor.GoPackage
-	for _, pkgpath := range []string{} {
+	for _, pkgpath := range []string{
+		"context",
+		"github.com/samlitowitz/protoc-gen-crud/expressions",
+	} {
 		pkg := descriptor.GoPackage{
 			Path: pkgpath,
 			Name: path.Base(pkgpath),
@@ -39,6 +55,8 @@ func New(reg *descriptor.Registry) gen.Generator {
 	return &generator{
 		reg:         reg,
 		baseImports: imports,
+
+		formatOutput: options.formatOutput,
 	}
 }
 
@@ -49,14 +67,18 @@ func (g *generator) Generate(targets []*descriptor.File) ([]*descriptor.Response
 		if err != nil {
 			return nil, err
 		}
-		formatted, err := format.Source([]byte(code))
-		if err != nil {
-			return nil, err
+		output := code
+		if g.formatOutput {
+			formatted, err := format.Source([]byte(code))
+			if err != nil {
+				return nil, err
+			}
+			output = string(formatted)
 		}
 		files = append(files, &descriptor.ResponseFile{
 			CodeGeneratorResponse_File: &pluginpb.CodeGeneratorResponse_File{
 				Name:    proto.String(file.GeneratedFilenamePrefix + ".pb.crud.go"),
-				Content: proto.String(string(formatted)),
+				Content: proto.String(output),
 			},
 			GoPkg: file.GoPkg,
 		})
@@ -72,9 +94,9 @@ func (g *generator) generate(file *descriptor.File) (string, error) {
 		imports = append(imports, pkg)
 	}
 
-	for _, crud := range file.CRUDs {
-		imports = append(imports, g.addCrudPathParamImports(crud, pkgSeen)...)
-	}
+	//for _, crud := range file.CRUDs {
+	//	imports = append(imports, g.addCrudPathParamImports(crud, pkgSeen)...)
+	//}
 
 	params := param{
 		File:    file,
@@ -84,20 +106,21 @@ func (g *generator) generate(file *descriptor.File) (string, error) {
 	return applyTemplate(params, g.reg)
 }
 
-func (g *generator) addCrudPathParamImports(crud *descriptor.CRUD, pkgSeen map[string]bool) []descriptor.GoPackage {
-	var imports []descriptor.GoPackage
-
-	hasAnyCRUDOperations := len(crud.Operations) > 0
-
-	if hasAnyCRUDOperations && !pkgSeen["context"] {
-		pkgSeen["context"] = true
-		imports = append(imports, descriptor.GoPackage{Path: "context", Name: "context"})
-	}
-
-	if crud.Read() && !pkgSeen["github.com/samlitowitz/protoc-gen-crud/expressions"] {
-		pkgSeen["github.com/samlitowitz/protoc-gen-crud/expressions"] = true
-		imports = append(imports, descriptor.GoPackage{Path: "github.com/samlitowitz/protoc-gen-crud/expressions", Name: "expressions"})
-	}
-
-	return imports
-}
+//
+//func (g *generator) addCrudPathParamImports(crud *descriptor.CRUD, pkgSeen map[string]bool) []descriptor.GoPackage {
+//	var imports []descriptor.GoPackage
+//
+//	hasAnyCRUDOperations := len(crud.Operations) > 0
+//
+//	if hasAnyCRUDOperations && !pkgSeen["context"] {
+//		pkgSeen["context"] = true
+//		imports = append(imports, descriptor.GoPackage{Path: "context", Name: "context"})
+//	}
+//
+//	if crud.Read() && !pkgSeen["github.com/samlitowitz/protoc-gen-crud/expressions"] {
+//		pkgSeen["github.com/samlitowitz/protoc-gen-crud/expressions"] = true
+//		imports = append(imports, descriptor.GoPackage{Path: "github.com/samlitowitz/protoc-gen-crud/expressions", Name: "expressions"})
+//	}
+//
+//	return imports
+//}

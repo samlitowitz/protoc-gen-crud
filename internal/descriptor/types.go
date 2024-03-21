@@ -60,8 +60,6 @@ type File struct {
 	Messages []*Message
 	// Enums is the list of enums defined in this file.
 	Enums []*Enum
-	// CRUDs is a list of CRUDs for messages defined in this file
-	CRUDs []*CRUD
 }
 
 // Pkg returns package name or alias if it's present
@@ -78,124 +76,6 @@ func (f *File) proto2() bool {
 	return f.Syntax == nil || f.GetSyntax() == "proto2"
 }
 
-// CRUD describes the operations and implementations to be generated.
-type CRUD struct {
-	*Message
-
-	// Message Options
-	// Operations is a set of CRUD operations to implement
-	Operations map[options.Operation]struct{}
-	// Implementations is a set of implementations generate for CRUD operations
-	Implementations map[options.Implementation]struct{}
-	// FieldMaskFieldName is the name of the field to use as the field mask for creates and updates
-	FieldMaskFieldName string
-	// FieldMaskField is the field definition of the field mask
-	FieldMaskField *Field
-
-	// Field Options
-	UniqueIdentifiers map[string][]*Field
-}
-
-// MinimalUIDFields returns the unique identifier with the least number of fields
-func (def *CRUD) MinimalUIDFields() []*Field {
-	var minUIDFields []*Field
-	for _, fields := range def.UniqueIdentifiers {
-		if minUIDFields == nil {
-			minUIDFields = fields
-			continue
-		}
-		if len(minUIDFields) > len(fields) {
-			minUIDFields = fields
-		}
-	}
-	return minUIDFields
-}
-
-// NonMinimalUIDDataFields returns all fields which do not contain meta-data and which are not part of the minimal UID
-func (def *CRUD) NonMinimalUIDDataFields() []*Field {
-	minUIDFields := def.MinimalUIDFields()
-
-	minUIDFieldNames := make(map[string]struct{}, 0)
-	for _, field := range minUIDFields {
-		minUIDFieldNames[field.GetName()] = struct{}{}
-	}
-
-	var fields []*Field
-	for _, field := range def.Fields {
-		if field.IsMetaData() {
-			continue
-		}
-		if field.Ignore {
-			continue
-		}
-		if _, ok := minUIDFieldNames[field.GetName()]; ok {
-			continue
-		}
-		fields = append(fields, field)
-	}
-	return fields
-}
-
-// DataFields returns all fields which do not contain meta-data
-func (def *CRUD) DataFields() []*Field {
-	var fields []*Field
-	for _, field := range def.Fields {
-		if field.IsMetaData() {
-			continue
-		}
-		if field.Ignore {
-			continue
-		}
-		if field.RelatesToMany() {
-			continue
-		}
-		fields = append(fields, field)
-	}
-	return fields
-}
-
-func (def *CRUD) RelatesToManyFields() []*Field {
-	var fields []*Field
-	for _, field := range def.Fields {
-		if field.IsMetaData() {
-			continue
-		}
-		if field.Ignore {
-			continue
-		}
-		if !field.RelatesToMany() {
-			continue
-		}
-		fields = append(fields, field)
-	}
-	return fields
-}
-
-func (def *CRUD) Create() bool {
-	_, ok := def.Operations[options.Operation_CREATE]
-	return ok
-}
-
-func (def *CRUD) Read() bool {
-	_, ok := def.Operations[options.Operation_READ]
-	return ok
-}
-
-func (def *CRUD) Update() bool {
-	_, ok := def.Operations[options.Operation_UPDATE]
-	return ok
-}
-
-func (def *CRUD) Delete() bool {
-	_, ok := def.Operations[options.Operation_DELETE]
-	return ok
-}
-
-func (def *CRUD) SQLiteImplementation() bool {
-	_, ok := def.Implementations[options.Implementation_SQLITE]
-	return ok
-}
-
 // Message describes a protocol buffer message types.
 type Message struct {
 	*descriptorpb.DescriptorProto
@@ -209,15 +89,19 @@ type Message struct {
 	Index int
 	// ForcePrefixedName when set to true, prefixes a type with a package prefix.
 	ForcePrefixedName bool
-	// CRUD associated with this message, nil if none are associated
-	CRUD *CRUD
+
+	// CRUD Message Options
+	// GenerateCRUD is true if CRUD code should be generated for this Message
+	GenerateCRUD bool
+	// Implementations is a set of implementations generate for CRUD operations
+	Implementations map[options.Implementation]struct{}
+	// FieldMask is the field definition of the field mask
+	FieldMask *Field
+	// CandidateKey is an array of field definitions for all fields defining the candidate key
+	CandidateKey []*Field
 
 	// TODO: CRUD options/functionality should probably be a child of Message directly or via struct pointer
 	// TODO: Build implementations by hand as models for the template, then use the template to drive the rest
-}
-
-func (m *Message) HasCRUD() bool {
-	return m.CRUD != nil
 }
 
 func (m *Message) FQMN() string {
@@ -243,6 +127,24 @@ func (m *Message) GoType(currentPackage string) string {
 		return name
 	}
 	return fmt.Sprintf("%s.%s", m.File.Pkg(), name)
+}
+
+func (m *Message) LookupField(fieldName string) (*Field, error) {
+	notFoundErr := fmt.Errorf(
+		"on message type %s: no field `%s` found",
+		m.GetName(),
+		fieldName,
+	)
+
+	if m.Fields == nil {
+		return nil, notFoundErr
+	}
+	for _, field := range m.Fields {
+		if field.GetName() == fieldName {
+			return field, nil
+		}
+	}
+	return nil, notFoundErr
 }
 
 // Enum describes a protocol buffer enum types.
@@ -287,7 +189,8 @@ func (e *Enum) GoType(currentPackage string) string {
 type Relationship struct {
 	*options.Relationship
 
-	CRUD *CRUD
+	DefinedOn *Message
+	With      *Message
 }
 
 // Field wraps descriptorpb.FieldDescriptorProto for richer features.
@@ -305,27 +208,6 @@ type Field struct {
 	Relationship *Relationship
 
 	Ignore bool
-}
-
-func (f *Field) GetFieldMessageMinimalUIDFields() []*Field {
-	if f.FieldMessage == nil {
-		panic(
-			fmt.Sprintf(
-				"field named %s: expected field to be of type message got field of type %s instead",
-				f.GetName(),
-				f.FieldDescriptorProto.GetType().String(),
-			),
-		)
-	}
-	if f.FieldMessage.CRUD == nil {
-		panic(
-			fmt.Sprintf(
-				"field named %s: expected field have CRUD defining at least one UID",
-				f.GetName(),
-			),
-		)
-	}
-	return f.FieldMessage.CRUD.MinimalUIDFields()
 }
 
 func (f *Field) IsMetaData() bool {
@@ -401,19 +283,13 @@ func (f *Field) GoType() string {
 		return "string"
 
 	case descriptorpb.FieldDescriptorProto_TYPE_MESSAGE:
-		if !f.HasRelationship() {
-			panic(fmt.Errorf("message type without relationship defined on field %s", f.GetName()))
-		}
-		minUIDFields := f.Relationship.CRUD.MinimalUIDFields()
-		if len(minUIDFields) != 1 {
-			panic(fmt.Errorf("message type must have unique identifier with exactly one field defined on field %s", f.GetName()))
-		}
-		return minUIDFields[0].GoType()
+		// Figure this out
+		fallthrough
 
 	case descriptorpb.FieldDescriptorProto_TYPE_GROUP:
 		fallthrough
 	default:
-		panic(fmt.Errorf("non-scalar type on field %s", f.GetName()))
+		panic(fmt.Sprintf("non-scalar type on field %s", f.GetName()))
 	}
 }
 

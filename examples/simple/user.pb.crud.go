@@ -16,15 +16,15 @@ import (
 )
 
 const (
-	User_Id_Field       expressions.FieldID = "441df8206d64f0e4cf6ad874026ceab109b6b0d2262387c2273ed1d80973589f"
-	User_Password_Field expressions.FieldID = "fcf0b45269d1e8a2cc0c5c9d3d6013283791fb304e4022200c908dfb41da4019"
-	User_Username_Field expressions.FieldID = "3a893c049a89f5736a021eebc001470079160c4bb5e213e8913b73108d67ba6a"
+	User_Id_Field       expressions.FieldID = "a56145270ce6b3bebd1dd012b73948677dd618d496488bc608a3cb43ce3547dd"
+	User_Username_Field expressions.FieldID = "16f78a7d6317f102bbd95fc9a4f3ff2e3249287690b8bdad6b7810f82b34ace3"
+	User_Password_Field expressions.FieldID = "5e884898da28047151d0e56f8dc6292773603d0d6aabbdd62a11ef721d1542d8"
 )
 
 var validUserFields = map[expressions.FieldID]struct{}{
 	User_Id_Field:       struct{}{},
-	User_Password_Field: struct{}{},
 	User_Username_Field: struct{}{},
+	User_Password_Field: struct{}{},
 }
 
 type UserRepository interface {
@@ -33,7 +33,6 @@ type UserRepository interface {
 	Create(context.Context, []*User) ([]*User, error)
 
 	// Read returns a set of Users matching the provided criteria
-	// Read is incomplete and it should be considered unstable
 	Read(context.Context, expressions.Expression) ([]*User, error)
 
 	// Update modifies existing Users based on the defined unique identifiers.
@@ -41,6 +40,5 @@ type UserRepository interface {
 	Update(context.Context, []*User) ([]*User, error)
 
 	// Delete deletes Users matching the provided criteria
-	// Delete is incomplete and it should be considered unstable
 	Delete(context.Context, expressions.Expression) error
 }

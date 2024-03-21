@@ -5,6 +5,7 @@ package protoc_gen_crud.options.relationships;
 option go_package = "github.com/samlitowitz/protoc-gen-crud/options/relationships";
 
 enum Direction {
-  BIDIRECTIONAL = 0;
+  UNKNOWN_DIRECTION = 0;
+  BIDIRECTIONAL = 1;
   UNIDIRECTIONAL = 2;
 }
