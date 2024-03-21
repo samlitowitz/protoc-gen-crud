@@ -211,6 +211,9 @@ type Message struct {
 	ForcePrefixedName bool
 	// CRUD associated with this message, nil if none are associated
 	CRUD *CRUD
+
+	// TODO: CRUD options/functionality should probably be a child of Message directly or via struct pointer
+	// TODO: Build implementations by hand as models for the template, then use the template to drive the rest
 }
 
 func (m *Message) HasCRUD() bool {
