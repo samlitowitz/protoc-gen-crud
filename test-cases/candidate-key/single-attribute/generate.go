@@ -1,3 +1,5 @@
 //go:build generate
 
-package simple
+//go:generate sh -c "protoc -I $PROTOC_INCLUDE -I $PROJECT_PROTO_INCLUDE  --go_out=$PROJECT_PROTO_OUT --go-crud_out=$PROJECT_PROTO_OUT $PROJECT_PROTO_INCLUDE/protoc-gen-crud/test-cases/{{TC_DIR}}/*.proto"
+
+package {{TC_PACKAGE}}
