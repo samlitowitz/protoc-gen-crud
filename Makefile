@@ -20,5 +20,4 @@ debug:
 	go build ${LDFLAGS_DEB} -o ${TARGETDIR}/protoc-gen-go-crud ./cmd/protoc-gen-go-crud
 
 generate:
-	echo ${PROJECT_PROTO_INCLUDE}
 	PROJECT_PROTO_INCLUDE=${PROJECT_PROTO_INCLUDE} PROJECT_PROTO_OUT=${PROJECT_PROTO_OUT} go generate -v $(go list ./... | grep -v examples)
