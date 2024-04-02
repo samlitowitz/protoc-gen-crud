@@ -20,7 +20,7 @@ message MethodOptions {}
 message MessageOptions {
   repeated Implementation implementations = 1;
   string fieldMask = 2;
-  repeated string candidateKey = 3;
+  repeated string primaryKey = 3;
 }
 
 message ServiceOptions {}

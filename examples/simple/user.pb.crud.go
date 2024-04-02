@@ -16,9 +16,9 @@ import (
 )
 
 const (
-	User_Id_Field       expressions.FieldID = "a56145270ce6b3bebd1dd012b73948677dd618d496488bc608a3cb43ce3547dd"
-	User_Username_Field expressions.FieldID = "16f78a7d6317f102bbd95fc9a4f3ff2e3249287690b8bdad6b7810f82b34ace3"
-	User_Password_Field expressions.FieldID = "5e884898da28047151d0e56f8dc6292773603d0d6aabbdd62a11ef721d1542d8"
+	User_Id_Field       expressions.FieldID = "e66cd51b53d910504930342d8914167360943cde721dcce6b7d04da141963606"
+	User_Username_Field expressions.FieldID = "ddcea16f13a187d0a13b0ecbef2f8022e53cb25aa174511a8d07f01cf8aa8971"
+	User_Password_Field expressions.FieldID = "c2cd813c44efeccb1bef4ba98b1dcd352629976569f8e15057563e78ca6e45db"
 )
 
 var validUserFields = map[expressions.FieldID]struct{}{

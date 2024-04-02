@@ -94,10 +94,6 @@ func (g *generator) generate(file *descriptor.File) (string, error) {
 		imports = append(imports, pkg)
 	}
 
-	//for _, crud := range file.CRUDs {
-	//	imports = append(imports, g.addCrudPathParamImports(crud, pkgSeen)...)
-	//}
-
 	params := param{
 		File:    file,
 		Imports: imports,
@@ -105,22 +101,3 @@ func (g *generator) generate(file *descriptor.File) (string, error) {
 
 	return applyTemplate(params, g.reg)
 }
-
-//
-//func (g *generator) addCrudPathParamImports(crud *descriptor.CRUD, pkgSeen map[string]bool) []descriptor.GoPackage {
-//	var imports []descriptor.GoPackage
-//
-//	hasAnyCRUDOperations := len(crud.Operations) > 0
-//
-//	if hasAnyCRUDOperations && !pkgSeen["context"] {
-//		pkgSeen["context"] = true
-//		imports = append(imports, descriptor.GoPackage{Path: "context", Name: "context"})
-//	}
-//
-//	if crud.Read() && !pkgSeen["github.com/samlitowitz/protoc-gen-crud/expressions"] {
-//		pkgSeen["github.com/samlitowitz/protoc-gen-crud/expressions"] = true
-//		imports = append(imports, descriptor.GoPackage{Path: "github.com/samlitowitz/protoc-gen-crud/expressions", Name: "expressions"})
-//	}
-//
-//	return imports
-//}

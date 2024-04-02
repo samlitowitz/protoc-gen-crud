@@ -1,0 +1,113 @@
+syntax = "proto3";
+
+package protoc_gen_crud.test_cases.field_mask;
+
+option go_package = "github.com/samlitowitz/protoc-gen-crud/test-cases/field-mask";
+
+import "google/protobuf/field_mask.proto";
+import "protoc-gen-crud/options/annotations.proto";
+
+enum PrimaryKeyEnum {
+  ZERO = 0;
+  ONE = 1;
+  TWO = 2;
+  THREE = 3;
+}
+
+
+message SAEnum {
+  option (protoc_gen_crud.options.crud_message_options) = {
+    implementations: [SQLITE]
+    primaryKey: ["id"]
+    fieldMask: "fieldMask"
+  };
+  google.protobuf.FieldMask fieldMask = 10;
+
+  PrimaryKeyEnum id = 1;
+
+  string data = 2;
+}
+
+message SAInt32 {
+  option (protoc_gen_crud.options.crud_message_options) = {
+    implementations: [SQLITE]
+    primaryKey: ["id"]
+    fieldMask: "fieldMask"
+  };
+  google.protobuf.FieldMask fieldMask = 10;
+
+  int32 id = 1;
+
+  string data = 2;
+}
+
+message SAInt64 {
+  option (protoc_gen_crud.options.crud_message_options) = {
+    implementations: [SQLITE]
+    primaryKey: ["id"]
+    fieldMask: "fieldMask"
+  };
+  google.protobuf.FieldMask fieldMask = 10;
+
+  int64 id = 1;
+
+  string data = 2;
+}
+
+message SAUint32 {
+  option (protoc_gen_crud.options.crud_message_options) = {
+    implementations: [SQLITE]
+    primaryKey: ["id"]
+    fieldMask: "fieldMask"
+  };
+  google.protobuf.FieldMask fieldMask = 10;
+
+  uint32 id = 1;
+
+  string data = 2;
+}
+
+message SAUint64 {
+  option (protoc_gen_crud.options.crud_message_options) = {
+    implementations: [SQLITE]
+    primaryKey: ["id"]
+    fieldMask: "fieldMask"
+  };
+  google.protobuf.FieldMask fieldMask = 10;
+
+  uint64 id = 1;
+
+  string data = 2;
+}
+
+message SAString {
+  option (protoc_gen_crud.options.crud_message_options) = {
+    implementations: [SQLITE]
+    primaryKey: ["id"]
+    fieldMask: "fieldMask"
+  };
+  google.protobuf.FieldMask fieldMask = 10;
+
+  string id = 1;
+
+  string data = 2;
+}
+
+message MAAll {
+  option (protoc_gen_crud.options.crud_message_options) = {
+    implementations: [SQLITE]
+    primaryKey: ["id_enum", "id_int32", "id_int64", "id_uint32", "id_uint64", "id_string"]
+    fieldMask: "fieldMask"
+  };
+
+  google.protobuf.FieldMask fieldMask = 10;
+
+  PrimaryKeyEnum id_enum = 1;
+  int32 id_int32 = 2;
+  int64 id_int64 = 3;
+  uint32 id_uint32 = 4;
+  uint64 id_uint64 = 5;
+  string id_string = 6;
+
+  string data = 7;
+}

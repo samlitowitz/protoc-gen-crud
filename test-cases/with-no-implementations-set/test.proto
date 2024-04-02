@@ -8,7 +8,7 @@ import "protoc-gen-crud/options/annotations.proto";
 
 message NoImplementations {
   option (protoc_gen_crud.options.crud_message_options) = {
-    candidateKey: ["id"]
+    primaryKey: ["id"]
   };
   string id = 1;
 }
@@ -16,7 +16,7 @@ message NoImplementations {
 message EmptyImplementations {
   option (protoc_gen_crud.options.crud_message_options) = {
     implementations: []
-    candidateKey: ["id"]
+    primaryKey: ["id"]
   };
   string id = 1;
 }

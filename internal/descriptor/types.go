@@ -5,8 +5,6 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/samlitowitz/protoc-gen-crud/options/relationships"
-
 	"github.com/samlitowitz/protoc-gen-crud/options"
 
 	"github.com/samlitowitz/protoc-gen-crud/internal/casing"
@@ -60,6 +58,8 @@ type File struct {
 	Messages []*Message
 	// Enums is the list of enums defined in this file.
 	Enums []*Enum
+	// Relationships is the list of relationships defined in this
+	Relationships []*Relationship
 }
 
 // Pkg returns package name or alias if it's present
@@ -97,11 +97,54 @@ type Message struct {
 	Implementations map[options.Implementation]struct{}
 	// FieldMask is the field definition of the field mask
 	FieldMask *Field
-	// CandidateKey is an array of field definitions for all fields defining the candidate key
-	CandidateKey []*Field
+	// PrimaryKeyByFQFN is a map of the fully qualified field names of minimal set of attributes that uniquely identify a specific message of this type to the fields
+	PrimaryKeyByFQFN map[string]*Field
+	// NonPrimeAttributesByFQFN is a map of the fully qualified field names of all fields not part of the primary to key to the fields
+	NonPrimeAttributesByFQFN map[string]*Field
+	// IsRelationship is true if this message represents a relationship and was generated
+	IsRelationship bool
+
+	// primaryKey is a local cache
+	primaryKey []*Field
+	// nonPrimeAttributes is a local cache
+	nonPrimeAttributes []*Field
 
 	// TODO: CRUD options/functionality should probably be a child of Message directly or via struct pointer
 	// TODO: Build implementations by hand as models for the template, then use the template to drive the rest
+}
+
+// PrimaryKeyBy is a minimal set of attributes that uniquely identify a specific message of this type
+func (m *Message) PrimaryKey() []*Field {
+	if m.primaryKey != nil {
+		return m.primaryKey
+	}
+	m.primaryKey = make([]*Field, 0, len(m.PrimaryKeyByFQFN))
+	for _, field := range m.PrimaryKeyByFQFN {
+		m.primaryKey = append(m.primaryKey, field)
+	}
+	return m.primaryKey
+}
+
+// NonPrimeAttributes is all fields not part of the primary key
+func (m *Message) NonPrimeAttributes() []*Field {
+	if m.nonPrimeAttributes != nil {
+		return m.nonPrimeAttributes
+	}
+	m.nonPrimeAttributes = make([]*Field, 0, len(m.NonPrimeAttributesByFQFN))
+	for _, field := range m.NonPrimeAttributesByFQFN {
+		if m.HasFieldMask() && field.FQFN() == m.FieldMask.FQFN() {
+			continue
+		}
+		if field.HasRelationship() {
+			continue
+		}
+		m.nonPrimeAttributes = append(m.nonPrimeAttributes, field)
+	}
+	return m.nonPrimeAttributes
+}
+
+func (m *Message) HasFieldMask() bool {
+	return m.FieldMask != nil
 }
 
 func (m *Message) FQMN() string {
@@ -130,12 +173,7 @@ func (m *Message) GoType(currentPackage string) string {
 }
 
 func (m *Message) LookupField(fieldName string) (*Field, error) {
-	notFoundErr := fmt.Errorf(
-		"on message type %s: no field `%s` found",
-		m.GetName(),
-		fieldName,
-	)
-
+	notFoundErr := fmt.Errorf("field not found")
 	if m.Fields == nil {
 		return nil, notFoundErr
 	}
@@ -198,20 +236,22 @@ type Field struct {
 	*descriptorpb.FieldDescriptorProto
 	// Message is the message type which this field belongs to.
 	Message *Message
+	// FieldEnum is the enum type of the field.
+	FieldEnum *Enum
 	// FieldMessage is the message type of the field.
 	FieldMessage *Message
 	// ForcePrefixedName when set to true, prefixes a type with a package prefix.
 	ForcePrefixedName bool
-	// IsFieldMaskField when set to true, indicates this field is the field mask field for the message it belongs to
-	IsFieldMaskField bool
-	// Relationship contains meta-data defining the relationship with a non-scalar field
-	Relationship *Relationship
 
+	// CRUD Field Options
+	// Ignore when set to true indicated this field is not to be used for or by and generated CRUD code
 	Ignore bool
-}
+	// Relationships contains meta-data defining the relationships with a non-scalar field
+	Relationships []*Relationship
 
-func (f *Field) IsMetaData() bool {
-	return f.IsFieldMaskField
+	// CRUD Derived Values
+	// IsPrimeAttribute is true if this field is a prime attribute, i.e. part of the primary key for the message it belongs to
+	IsPrimeAttribute bool
 }
 
 // FQFN returns a fully qualified field name of this field.
@@ -224,30 +264,11 @@ func (f *Field) IsScalarGoType() bool {
 }
 
 func (f *Field) HasRelationship() bool {
-	return f.Relationship != nil
-}
-
-func (f *Field) RelatesToMany() bool {
-	if !f.HasRelationship() {
-		return false
-	}
-	switch f.Relationship.GetType() {
-	case relationships.Type_MANY_TO_MANY:
-		fallthrough
-	case relationships.Type_ONE_TO_MANY:
-		return true
-
-	case relationships.Type_MANY_TO_ONE:
-		fallthrough
-	case relationships.Type_ONE_TO_ONE:
-		fallthrough
-	default:
-		return false
-	}
+	return f.Relationships != nil && len(f.Relationships) > 0
 }
 
 func (f *Field) GoType() string {
-	switch *f.Type {
+	switch f.GetType() {
 	case descriptorpb.FieldDescriptorProto_TYPE_DOUBLE:
 		return "float64"
 	case descriptorpb.FieldDescriptorProto_TYPE_FLOAT:

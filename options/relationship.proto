@@ -2,12 +2,10 @@ syntax = "proto3";
 
 package protoc_gen_crud.options;
 
-import "protoc-gen-crud/options/relationships/direction.proto";
 import "protoc-gen-crud/options/relationships/type.proto";
 
 option go_package = "github.com/samlitowitz/protoc-gen-crud/options";
 
 message Relationship {
-  relationships.Direction direction = 1;
-  relationships.Type type = 2;
+  relationships.Type type = 1;
 }

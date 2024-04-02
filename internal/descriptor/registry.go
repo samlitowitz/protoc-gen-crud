@@ -51,7 +51,12 @@ func (r *Registry) load(gen *protogen.Plugin) error {
 		}
 		err := r.fixupFieldFieldMessage(r.files[filePath])
 		if err != nil {
-			return err
+			return fmt.Errorf("%s: %v", filePath, err)
+		}
+
+		err = r.fixupFieldFieldEnum(r.files[filePath])
+		if err != nil {
+			return fmt.Errorf("%s: %v", filePath, err)
 		}
 	}
 
@@ -61,7 +66,7 @@ func (r *Registry) load(gen *protogen.Plugin) error {
 		}
 		file := r.files[filePath]
 		if err := r.loadCRUDs(file); err != nil {
-			return err
+			return fmt.Errorf("%s: %v", file.GetName(), err)
 		}
 	}
 	return nil
@@ -155,6 +160,26 @@ func (r *Registry) fixupFieldFieldMessage(file *File) error {
 	return nil
 }
 
+func (r *Registry) fixupFieldFieldEnum(file *File) error {
+	for _, msg := range file.Messages {
+		for _, field := range msg.Fields {
+			if field.GetType() != descriptorpb.FieldDescriptorProto_TYPE_ENUM {
+				continue
+			}
+			fieldEnum, err := r.LookupEnum("", field.GetTypeName())
+			if err != nil {
+				return fmt.Errorf(
+					"failed to fix up field %s on message %s",
+					*field.Name,
+					*msg.Name,
+				)
+			}
+			field.FieldEnum = fieldEnum
+		}
+	}
+	return nil
+}
+
 func (r *Registry) LookupMsg(location, name string) (*Message, error) {
 	if strings.HasPrefix(name, ".") {
 		m, ok := r.msgs[name]
@@ -175,6 +200,28 @@ func (r *Registry) LookupMsg(location, name string) (*Message, error) {
 		components = components[:len(components)-1]
 	}
 	return nil, fmt.Errorf("no message found: %s", name)
+}
+
+func (r *Registry) LookupEnum(location, name string) (*Enum, error) {
+	if strings.HasPrefix(name, ".") {
+		e, ok := r.enums[name]
+		if !ok {
+			return nil, fmt.Errorf("no enum found: %s", name)
+		}
+		return e, nil
+	}
+	if !strings.HasPrefix(location, ".") {
+		location = fmt.Sprintf(".%s", location)
+	}
+	components := strings.Split(location, ".")
+	for len(components) > 0 {
+		fqen := strings.Join(append(components, name), ".")
+		if m, ok := r.enums[fqen]; ok {
+			return m, nil
+		}
+		components = components[:len(components)-1]
+	}
+	return nil, fmt.Errorf("no enum found: %s", name)
 }
 
 func (r *Registry) LookupFile(name string) (*File, error) {

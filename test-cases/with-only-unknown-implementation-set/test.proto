@@ -9,7 +9,7 @@ import "protoc-gen-crud/options/annotations.proto";
 message OnlyUnknownImplementation {
   option (protoc_gen_crud.options.crud_message_options) = {
     implementations: [UNKNOWN]
-    candidateKey: ["id"]
+    primaryKey: ["id"]
   };
   string id = 1;
 }

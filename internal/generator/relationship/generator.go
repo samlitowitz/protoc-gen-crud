@@ -1,8 +1,7 @@
-package sql
+// REFURL: https://github.com/grpc-ecosystem/grpc-gateway/blob/main/protoc-gen-grpc-gateway/internal/gengateway/generator.go
+package relationship
 
 import (
-	"fmt"
-
 	"github.com/samlitowitz/protoc-gen-crud/internal/descriptor"
 	gen "github.com/samlitowitz/protoc-gen-crud/internal/generator"
 	"google.golang.org/protobuf/proto"
@@ -13,7 +12,12 @@ type generator struct {
 	reg *descriptor.Registry
 }
 
-func New(reg *descriptor.Registry) gen.Generator {
+func New(reg *descriptor.Registry, opts ...Option) gen.Generator {
+	options := options{}
+	for _, o := range opts {
+		o.apply(&options)
+	}
+
 	return &generator{
 		reg: reg,
 	}
@@ -22,13 +26,19 @@ func New(reg *descriptor.Registry) gen.Generator {
 func (g *generator) Generate(targets []*descriptor.File) ([]*descriptor.ResponseFile, error) {
 	var files []*descriptor.ResponseFile
 	for _, file := range targets {
+		if len(file.Relationships) == 0 {
+			continue
+		}
 		code, err := g.generate(file)
 		if err != nil {
-			return nil, fmt.Errorf("sqlite: generate: %s: %v", file.GetName(), err)
+			return nil, err
+		}
+		if code == "" {
+			continue
 		}
 		files = append(files, &descriptor.ResponseFile{
 			CodeGeneratorResponse_File: &pluginpb.CodeGeneratorResponse_File{
-				Name:    proto.String(file.GeneratedFilenamePrefix + ".sqlite.sql"),
+				Name:    proto.String(file.GeneratedFilenamePrefix + ".crud.proto"),
 				Content: proto.String(code),
 			},
 			GoPkg: file.GoPkg,
@@ -38,8 +48,9 @@ func (g *generator) Generate(targets []*descriptor.File) ([]*descriptor.Response
 }
 
 func (g *generator) generate(file *descriptor.File) (string, error) {
-	param := param{
+	params := param{
 		File: file,
 	}
-	return applyTemplate(param, g.reg)
+
+	return applyTemplate(params, g.reg)
 }

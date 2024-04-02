@@ -2,11 +2,10 @@ package descriptor
 
 import (
 	"fmt"
-	"strings"
 
-	"github.com/samlitowitz/protoc-gen-crud/options/relationships"
+	relationshipOptions "github.com/samlitowitz/protoc-gen-crud/options/relationships"
 
-	"github.com/samlitowitz/protoc-gen-crud/options"
+	crudOptions "github.com/samlitowitz/protoc-gen-crud/options"
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/descriptorpb"
 )
@@ -18,7 +17,7 @@ func (r *Registry) loadCRUDs(file *File) error {
 	for _, msg := range file.Messages {
 		msgOpts, err := extractMessageOptions(msg.DescriptorProto)
 		if err != nil {
-			return err
+			return fmt.Errorf("%s: %v", msg.FQMN(), err)
 		}
 		// No CRUD message options defined, skip it
 		if msgOpts == nil {
@@ -29,31 +28,47 @@ func (r *Registry) loadCRUDs(file *File) error {
 
 		err = assignMessageOptions(msg, msgOpts)
 		if err != nil {
-			return err
+			return fmt.Errorf("%s: %v", msg.FQMN(), err)
 		}
 
 		for _, field := range msg.Fields {
+			_, isPrimeAttribute := msg.PrimaryKeyByFQFN[field.FQFN()]
+			field.IsPrimeAttribute = isPrimeAttribute
+
+			isFieldMaskField := msg.HasFieldMask() && msg.FieldMask.FQFN() == field.FQFN()
+			if !isPrimeAttribute && !isFieldMaskField {
+				msg.NonPrimeAttributesByFQFN[field.FQFN()] = field
+			}
+
 			fieldOpts, err := extractFieldOptions(field.FieldDescriptorProto)
 			if err != nil {
-				return err
+				return fmt.Errorf("%s: %v", field.FQFN(), err)
 			}
 			if fieldOpts == nil {
 				continue
 			}
-			field.Ignore = fieldOpts.Ignore
+			err = assignFieldOptions(field, fieldOpts)
+			if err != nil {
+				return fmt.Errorf("%s: assign field options: %v", field.GetName(), err)
+			}
+			if field.Ignore && field.IsPrimeAttribute {
+				return fmt.Errorf("%s: ignored field cannot be part of a primary key", field.FQFN())
+			}
 
 			err = assignRelationships(r, msg, field, fieldOpts)
 			if err != nil {
-				return err
+				return fmt.Errorf("%s: assign relationship: %v", field.FQFN(), err)
 			}
+			file.Relationships = append(file.Relationships, field.Relationships...)
 		}
 	}
 	return nil
 }
 
-func assignMessageOptions(msg *Message, msgOpts *options.MessageOptions) error {
-	msg.Implementations = make(map[options.Implementation]struct{})
-	msg.CandidateKey = make([]*Field, 0)
+func assignMessageOptions(msg *Message, msgOpts *crudOptions.MessageOptions) error {
+	msg.Implementations = make(map[crudOptions.Implementation]struct{})
+	msg.PrimaryKeyByFQFN = make(map[string]*Field)
+	msg.NonPrimeAttributesByFQFN = make(map[string]*Field)
 
 	if msgOpts.GetImplementations() != nil {
 		for _, implementation := range msgOpts.Implementations {
@@ -69,12 +84,14 @@ func assignMessageOptions(msg *Message, msgOpts *options.MessageOptions) error {
 		msg.FieldMask = field
 	}
 
-	if msgOpts.GetCandidateKey() != nil {
-		msg.CandidateKey = make([]*Field, 0, len(msgOpts.GetCandidateKey()))
-		for _, fieldName := range msgOpts.GetCandidateKey() {
+	if msgOpts.GetPrimaryKey() != nil {
+		msg.PrimaryKeyByFQFN = make(map[string]*Field, len(msgOpts.GetPrimaryKey()))
+
+		for _, fieldName := range msgOpts.GetPrimaryKey() {
+
 			field, err := msg.LookupField(fieldName)
 			if err != nil {
-				return err
+				return fmt.Errorf("%s: field `%s`: %v", msg.GetName(), fieldName, err)
 			}
 			switch *field.Type {
 			case descriptorpb.FieldDescriptorProto_TYPE_DOUBLE:
@@ -83,97 +100,89 @@ func assignMessageOptions(msg *Message, msgOpts *options.MessageOptions) error {
 				fallthrough
 			case descriptorpb.FieldDescriptorProto_TYPE_BOOL:
 				fallthrough
-			case descriptorpb.FieldDescriptorProto_TYPE_ENUM:
-				fallthrough
 			case descriptorpb.FieldDescriptorProto_TYPE_GROUP:
 				fallthrough
 			case descriptorpb.FieldDescriptorProto_TYPE_MESSAGE:
 				return fmt.Errorf(
-					"on message type %s: unsupported candidate key field type of %s from field %s",
-					msg.GetName(),
+					"%s: unsupported candidate key field type %s",
+					field.FQFN(),
 					field.GetType(),
-					field.GetName(),
 				)
 			}
-			msg.CandidateKey = append(msg.CandidateKey, field)
+			msg.PrimaryKeyByFQFN[field.FQFN()] = field
 		}
 	}
 
 	return nil
 }
 
-func assignRelationships(r *Registry, msg *Message, field *Field, fieldOpts *options.FieldOptions) error {
+func assignRelationships(r *Registry, msg *Message, field *Field, fieldOpts *crudOptions.FieldOptions) error {
 	if fieldOpts.Relationship == nil {
 		return nil
 	}
-
-	typeName := field.GetTypeName()
+	if field.Ignore {
+		return fmt.Errorf("ignored field cannot be part of a relationship")
+	}
+	if field.FieldMessage == nil {
+		return fmt.Errorf("only fields with a message type may be part of a relationship")
+	}
 
 	var err error
 	var fieldType *Message
-	switch typeName[0] {
-	case '.':
-		i := strings.LastIndex(typeName, ".")
-		fieldType, err = r.LookupMsg(typeName[1:i-1], typeName[i+1:])
-		if err != nil {
-			return err
-		}
+	fieldType, err = r.LookupMsg("", field.FieldMessage.FQMN())
+	if err != nil {
+		return err
+	}
+
+	switch fieldOpts.GetRelationship().GetType() {
+	case relationshipOptions.Type_MANY_TO_ONE:
+	case relationshipOptions.Type_MANY_TO_MANY:
+	case relationshipOptions.Type_ONE_TO_MANY:
+	case relationshipOptions.Type_ONE_TO_ONE:
+
+	case relationshipOptions.Type_UNKNOWN_TYPE:
+		fallthrough
 	default:
-		fieldType, err = r.LookupMsg("", typeName)
-		if err != nil {
-			return err
-		}
+		return fmt.Errorf("unsupported relationship type %s", fieldOpts.GetRelationship().GetType().String())
 	}
-
-	if fieldOpts.Relationship.GetType() == relationships.Type_UNKNOWN_TYPE {
-		return fmt.Errorf(
-			"on message %s: unknown relationship type defined on field %s",
-			msg.GetName(),
-			field.GetName(),
-		)
-	}
-
-	switch fieldOpts.Relationship.GetType() {
-	case relationships.Type_MANY_TO_ONE:
-	case relationships.Type_MANY_TO_MANY:
-	case relationships.Type_ONE_TO_MANY:
-	case relationships.Type_ONE_TO_ONE:
-
-	default:
-		return fmt.Errorf("unknown relationships type")
-	}
-	field.Relationship = &Relationship{
-		Relationship: fieldOpts.Relationship,
+	field.Relationships = append(field.Relationships, &Relationship{
+		Relationship: fieldOpts.GetRelationship(),
 		DefinedOn:    msg,
 		With:         fieldType,
-	}
+	})
+
 	return nil
 }
 
-func extractMessageOptions(msg *descriptorpb.DescriptorProto) (*options.MessageOptions, error) {
+func assignFieldOptions(field *Field, fieldOpts *crudOptions.FieldOptions) error {
+	field.Ignore = fieldOpts.Ignore
+	return nil
+}
+
+func extractMessageOptions(msg *descriptorpb.DescriptorProto) (*crudOptions.MessageOptions, error) {
 	if msg.Options == nil {
 		return nil, nil
 	}
-	if !proto.HasExtension(msg.Options, options.E_CrudMessageOptions) {
+	if !proto.HasExtension(msg.Options, crudOptions.E_CrudMessageOptions) {
 		return nil, nil
 	}
-	ext := proto.GetExtension(msg.Options, options.E_CrudMessageOptions)
-	opts, ok := ext.(*options.MessageOptions)
+	ext := proto.GetExtension(msg.Options, crudOptions.E_CrudMessageOptions)
+	opts, ok := ext.(*crudOptions.MessageOptions)
 	if !ok {
 		return nil, fmt.Errorf("extension is %T; want MessageOptions", ext)
 	}
 	return opts, nil
 }
 
-func extractFieldOptions(fd *descriptorpb.FieldDescriptorProto) (*options.FieldOptions, error) {
+func extractFieldOptions(fd *descriptorpb.FieldDescriptorProto) (*crudOptions.FieldOptions, error) {
 	if fd.Options == nil {
 		return nil, nil
 	}
-	if !proto.HasExtension(fd.Options, options.E_CrudFieldOptions) {
+	if !proto.HasExtension(fd.Options, crudOptions.E_CrudFieldOptions) {
 		return nil, nil
 	}
-	ext := proto.GetExtension(fd.Options, options.E_CrudFieldOptions)
-	opts, ok := ext.(*options.FieldOptions)
+	ext := proto.GetExtension(fd.Options, crudOptions.E_CrudFieldOptions)
+	opts, ok := ext.(*crudOptions.FieldOptions)
 	if !ok {
 		return nil, fmt.Errorf("extension is %T; want CRUD", ext)
 	}

@@ -29,7 +29,7 @@ func FieldIDConstantName(def *descriptor.Field) string {
 
 func FieldIDConstantValue(def *descriptor.Field) string {
 	h := sha256.New()
-	_, err := h.Write([]byte(def.GetName()))
+	_, err := h.Write([]byte(def.Message.GetName() + "." + def.GetName()))
 	if err != nil {
 		panic(err)
 	}
@@ -39,11 +39,6 @@ func FieldIDConstantValue(def *descriptor.Field) string {
 type param struct {
 	*descriptor.File
 	Imports []descriptor.GoPackage
-}
-
-type field struct {
-	Def  *descriptor.Field
-	Hash string
 }
 
 type message struct {

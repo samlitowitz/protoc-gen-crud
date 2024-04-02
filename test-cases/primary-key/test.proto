@@ -1,12 +1,12 @@
 syntax = "proto3";
 
-package protoc_gen_crud.test_cases.candidate_key;
+package protoc_gen_crud.test_cases.primary_key;
 
-option go_package = "github.com/samlitowitz/protoc-gen-crud/test-cases/candidate-key";
+option go_package = "github.com/samlitowitz/protoc-gen-crud/test-cases/primary-key";
 
 import "protoc-gen-crud/options/annotations.proto";
 
-enum CandidateKeyEnum {
+enum PrimaryKeyEnum {
   ZERO = 0;
   ONE = 1;
   TWO = 2;
@@ -16,17 +16,18 @@ enum CandidateKeyEnum {
 message SAEnum {
   option (protoc_gen_crud.options.crud_message_options) = {
     implementations: [SQLITE]
-    candidateKey: ["id"]
+    primaryKey: ["id"]
   };
 
-  CandidateKeyEnum id = 1;
+  PrimaryKeyEnum id = 1;
 
   string data = 2;
 }
 
 message SAInt32 {
   option (protoc_gen_crud.options.crud_message_options) = {
-    candidateKey: ["id"]
+    implementations: [SQLITE]
+    primaryKey: ["id"]
   };
   int32 id = 1;
 
@@ -35,7 +36,8 @@ message SAInt32 {
 
 message SAInt64 {
   option (protoc_gen_crud.options.crud_message_options) = {
-    candidateKey: ["id"]
+    implementations: [SQLITE]
+    primaryKey: ["id"]
   };
   int64 id = 1;
 
@@ -44,7 +46,8 @@ message SAInt64 {
 
 message SAUint32 {
   option (protoc_gen_crud.options.crud_message_options) = {
-    candidateKey: ["id"]
+    implementations: [SQLITE]
+    primaryKey: ["id"]
   };
   uint32 id = 1;
 
@@ -53,7 +56,8 @@ message SAUint32 {
 
 message SAUint64 {
   option (protoc_gen_crud.options.crud_message_options) = {
-    candidateKey: ["id"]
+    implementations: [SQLITE]
+    primaryKey: ["id"]
   };
   uint64 id = 1;
 
@@ -62,19 +66,21 @@ message SAUint64 {
 
 message SAString {
   option (protoc_gen_crud.options.crud_message_options) = {
-    candidateKey: ["id"]
+    implementations: [SQLITE]
+    primaryKey: ["id"]
   };
   string id = 1;
 
   string data = 2;
 }
 
-message MA {
+message MAAll {
   option (protoc_gen_crud.options.crud_message_options) = {
-    candidateKey: ["id_enum", "id_int32", "id_int64", "id_uint32", "id_uint64", "id_string"]
+    implementations: [SQLITE]
+    primaryKey: ["id_enum", "id_int32", "id_int64", "id_uint32", "id_uint64", "id_string"]
   };
 
-  CandidateKeyEnum id_enum = 1;
+  PrimaryKeyEnum id_enum = 1;
   int32 id_int32 = 2;
   int64 id_int64 = 3;
   uint32 id_uint32 = 4;

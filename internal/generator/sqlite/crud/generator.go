@@ -6,18 +6,33 @@ import (
 	"go/format"
 	"path"
 
+	crudOptions "github.com/samlitowitz/protoc-gen-crud/options"
+
 	"github.com/samlitowitz/protoc-gen-crud/internal/descriptor"
 	gen "github.com/samlitowitz/protoc-gen-crud/internal/generator"
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/pluginpb"
 )
 
+const (
+	defaultFormatOutput = true
+)
+
 type generator struct {
 	reg         *descriptor.Registry
 	baseImports []descriptor.GoPackage
+
+	formatOutput bool
 }
 
-func New(reg *descriptor.Registry) gen.Generator {
+func New(reg *descriptor.Registry, opts ...Option) gen.Generator {
+	options := options{
+		formatOutput: defaultFormatOutput,
+	}
+	for _, o := range opts {
+		o.apply(&options)
+	}
+
 	var imports []descriptor.GoPackage
 	for _, pkgpath := range []string{} {
 		pkg := descriptor.GoPackage{
@@ -47,16 +62,22 @@ func (g *generator) Generate(targets []*descriptor.File) ([]*descriptor.Response
 	for _, file := range targets {
 		code, err := g.generate(file)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("sqlite: generate: %s: %v", file.GetName(), err)
 		}
-		formatted, err := format.Source([]byte(code))
-		if err != nil {
-			return nil, err
+
+		output := code
+		if g.formatOutput {
+			formatted, err := format.Source([]byte(code))
+			if err != nil {
+				return nil, fmt.Errorf("sqlite: format: %s: %v", file.GetName(), err)
+			}
+			output = string(formatted)
 		}
+
 		files = append(files, &descriptor.ResponseFile{
 			CodeGeneratorResponse_File: &pluginpb.CodeGeneratorResponse_File{
 				Name:    proto.String(file.GeneratedFilenamePrefix + ".pb.crud.sqlite.go"),
-				Content: proto.String(string(formatted)),
+				Content: proto.String(output),
 			},
 			GoPkg: file.GoPkg,
 		})
@@ -74,9 +95,7 @@ func (g *generator) generate(file *descriptor.File) (string, error) {
 
 	for _, msg := range file.Messages {
 		imports = append(imports, g.addMessagePathParamImports(file, msg, pkgSeen)...)
-	}
-	for _, crud := range file.CRUDs {
-		imports = append(imports, g.addCrudPathParamImports(crud, pkgSeen)...)
+		imports = append(imports, g.addCrudPathParamImports(msg, pkgSeen)...)
 	}
 
 	params := param{
@@ -88,9 +107,9 @@ func (g *generator) generate(file *descriptor.File) (string, error) {
 }
 
 // addMessagePathParamImports handles adding import of message path parameter go packages
-func (g *generator) addMessagePathParamImports(file *descriptor.File, m *descriptor.Message, pkgSeen map[string]bool) []descriptor.GoPackage {
+func (g *generator) addMessagePathParamImports(file *descriptor.File, msg *descriptor.Message, pkgSeen map[string]bool) []descriptor.GoPackage {
 	var imports []descriptor.GoPackage
-	for _, f := range m.Fields {
+	for _, f := range msg.Fields {
 		t, err := g.reg.LookupMsg("", f.GetTypeName())
 		if err != nil {
 			continue
@@ -104,54 +123,46 @@ func (g *generator) addMessagePathParamImports(file *descriptor.File, m *descrip
 	}
 	return imports
 }
-
-func (g *generator) addCrudPathParamImports(crud *descriptor.CRUD, pkgSeen map[string]bool) []descriptor.GoPackage {
+func (g *generator) addCrudPathParamImports(msg *descriptor.Message, pkgSeen map[string]bool) []descriptor.GoPackage {
+	if !msg.GenerateCRUD {
+		return []descriptor.GoPackage{}
+	}
 	var imports []descriptor.GoPackage
 
-	hasAnyCRUDOperations := len(crud.Operations) > 0
-
-	if hasAnyCRUDOperations && !pkgSeen["context"] {
-		pkgSeen["context"] = true
-		imports = append(imports, descriptor.GoPackage{Path: "context", Name: "context"})
-	}
-
-	if crud.SQLiteImplementation() && !pkgSeen["database/sql"] {
-		pkgSeen["database/sql"] = true
-		imports = append(imports, descriptor.GoPackage{Path: "database/sql", Name: "sql"})
-	}
-
-	if crud.SQLiteImplementation() && !pkgSeen["modernc.org/sqlite"] {
-		pkgSeen["modernc.org/sqlite"] = true
-		imports = append(imports, descriptor.GoPackage{Path: "modernc.org/sqlite", Name: "sqlite"})
-	}
-
-	if crud.SQLiteImplementation() && hasAnyCRUDOperations && !pkgSeen["strings"] {
-		pkgSeen["strings"] = true
-		imports = append(imports, descriptor.GoPackage{Path: "strings", Name: "strings"})
-	}
-
-	if crud.SQLiteImplementation() && crud.FieldMaskFieldName != "" && (crud.Create() || crud.Update()) && !pkgSeen["github.com/mennanov/fmutils"] {
-		pkgSeen["github.com/mennanov/fmutils"] = true
-		imports = append(imports, descriptor.GoPackage{Path: "github.com/mennanov/fmutils", Name: "fmutils"})
-	}
-
-	if crud.Read() && !pkgSeen["github.com/samlitowitz/protoc-gen-crud/expressions"] {
-		pkgSeen["github.com/samlitowitz/protoc-gen-crud/expressions"] = true
-		imports = append(imports, descriptor.GoPackage{Path: "github.com/samlitowitz/protoc-gen-crud/expressions", Name: "expressions"})
-	}
-	if crud.Read() && !pkgSeen["fmt"] {
-		pkgSeen["fmt"] = true
-		imports = append(imports, descriptor.GoPackage{Path: "fmt", Name: "fmt"})
-	}
-
-	for _, fields := range crud.UniqueIdentifiers {
-		if len(fields) <= 1 {
-			continue
+	if _, ok := msg.Implementations[crudOptions.Implementation_SQLITE]; ok {
+		if !pkgSeen["context"] {
+			pkgSeen["context"] = true
+			imports = append(imports, descriptor.GoPackage{Path: "context", Name: "context"})
 		}
-		if !pkgSeen["crypto/sha256"] {
-			pkgSeen["crypto/sha256"] = true
-			imports = append(imports, descriptor.GoPackage{Path: "crypto/sha256", Name: "sha256"})
+		if !pkgSeen["database/sql"] {
+			pkgSeen["database/sql"] = true
+			imports = append(imports, descriptor.GoPackage{Path: "database/sql", Name: "sql"})
+		}
+		if !pkgSeen["fmt"] {
+			pkgSeen["fmt"] = true
+			imports = append(imports, descriptor.GoPackage{Path: "fmt", Name: "fmt"})
+		}
+		if !pkgSeen["strings"] {
+			pkgSeen["strings"] = true
+			imports = append(imports, descriptor.GoPackage{Path: "strings", Name: "strings"})
+		}
+		if msg.HasFieldMask() && !pkgSeen["github.com/mennanov/fmutils"] {
+			pkgSeen["github.com/mennanov/fmutils"] = true
+			imports = append(imports, descriptor.GoPackage{Path: "github.com/mennanov/fmutils", Name: "fmutils"})
+		}
+		if msg.HasFieldMask() && !pkgSeen["google.golang.org/protobuf/types/known/fieldmaskpb"] {
+			pkgSeen["google.golang.org/protobuf/types/known/fieldmaskpb"] = true
+			imports = append(imports, descriptor.GoPackage{Path: "google.golang.org/protobuf/types/known/fieldmaskpb", Name: "fieldmaskpb"})
+		}
+		if !pkgSeen["modernc.org/sqlite"] {
+			pkgSeen["modernc.org/sqlite"] = true
+			imports = append(imports, descriptor.GoPackage{Path: "modernc.org/sqlite", Name: "sqlite"})
+		}
+		if !pkgSeen["github.com/samlitowitz/protoc-gen-crud/expressions"] {
+			pkgSeen["github.com/samlitowitz/protoc-gen-crud/expressions"] = true
+			imports = append(imports, descriptor.GoPackage{Path: "github.com/samlitowitz/protoc-gen-crud/expressions", Name: "expressions"})
 		}
 	}
+
 	return imports
 }
