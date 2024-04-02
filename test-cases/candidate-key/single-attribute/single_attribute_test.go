@@ -1,1 +1,0 @@
-package single_attribute_test

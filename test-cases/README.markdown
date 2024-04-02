@@ -25,14 +25,17 @@ Prime attributes may be an enum, any integer type, or a string.
 All candidate key tests _**MUST**_ cover all allowed attribute types.
 
 1. Create
-   1. A new entity with no prime attributes set **MUST** have them generated
+   1. A new entity with no prime attributes set **MUST** fail
    2. A new entity with a non-duplicate candidate key **MUST** succeed
-   3. A new entity with a duplicate candidate key **MUST** fail
-1. Read
-   1. TBD
-2. Update
-   3. Updating an entity with a non-existent candidate key **MUST** fail
-   4. Updating an entity with an existing candidate key **MUST** succeed
+   3. [FEATURE] A new entity with no prime attributes set **MUST** have them generated
+2. Read
+   1. Not applicable
+3. Update
+   1. Updating an entity with an un-locatable candidate key **MUST** fail
+   2. Updating an entity with a locatable candidate key **MUST** succeed
+4. Delete
+   1. Deleting an entity with an un-locatable candidate key **MUST** fail
+   2. Deleting an entity with a locatable candidate key **MUST** succeed
 
 ##### Single Attribute
 
