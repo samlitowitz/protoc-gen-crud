@@ -21,12 +21,18 @@ func init() {
 	strcase.ConfigureAcronym("UID", "uid")
 }
 
-func protoFieldAccessorFn(f *descriptor.Field) string {
-	return fmt.Sprintf("Get%s()", casing.CamelIdentifier(f.GetName()))
+func protoFieldAccessorFn(col *genSQLite.Column) string {
+	if col.IsInlined {
+		return fmt.Sprintf("Get%s().Get%s()", casing.CamelIdentifier(col.Parent.GetName()), casing.CamelIdentifier(col.Field.GetName()))
+	}
+	return fmt.Sprintf("Get%s()", casing.CamelIdentifier(col.GetName()))
 }
 
-func protoFieldField(f *descriptor.Field) string {
-	return casing.CamelIdentifier(f.GetName())
+func protoFieldField(col *genSQLite.Column) string {
+	if col.IsInlined {
+		return fmt.Sprintf("Get%s().%s", casing.CamelIdentifier(col.Parent.GetName()), casing.CamelIdentifier(col.Field.GetName()))
+	}
+	return casing.CamelIdentifier(col.GetName())
 }
 
 type param struct {
@@ -36,6 +42,10 @@ type param struct {
 
 type message struct {
 	*descriptor.Message
+
+	QueryableCols         []*genSQLite.Column
+	PrimaryKeyCols        []*genSQLite.Column
+	NonPrimeAttributeCols []*genSQLite.Column
 }
 
 func applyTemplate(p param, reg *descriptor.Registry) (string, error) {
@@ -52,7 +62,13 @@ func applyTemplate(p param, reg *descriptor.Registry) (string, error) {
 			continue
 		}
 
-		if err := repositoryTemplate.Execute(w, &message{msg}); err != nil {
+		injected := &message{
+			Message:               msg,
+			QueryableCols:         genSQLite.ColumnsFromFields(crud.QueryableFieldsFromMessage(msg)),
+			PrimaryKeyCols:        genSQLite.ColumnsFromFields(crud.QueryableFieldsFromFields(msg.PrimaryKey())),
+			NonPrimeAttributeCols: genSQLite.ColumnsFromFields(crud.QueryableFieldsFromFields(msg.NonPrimeAttributes())),
+		}
+		if err := repositoryTemplate.Execute(w, injected); err != nil {
 			return "", fmt.Errorf(" message %s: repository: %v", msg.GetName(), err)
 		}
 	}
@@ -82,18 +98,18 @@ import (
 `))
 
 	repositoryTemplate = template.Must(template.New("repository").Parse(`
-{{template "repository-struct" .}}
+	{{template "repository-struct" .}}
 
-{{template "repository-create" .}}
+	{{template "repository-create" .}}
 
-{{template "repository-read" .}}
+	{{template "repository-read" .}}
 
-{{template "repository-update" .}}
+	{{template "repository-update" .}}
 
-{{template "repository-delete" .}}
+	{{template "repository-delete" .}}
 
-{{template "repository-misc" .}}
-`))
+	{{template "repository-misc" .}}
+	`))
 
 	_ = template.Must(repositoryTemplate.New("repository-struct").Parse(`
 // InMemory{{.GetName}}Repository is an in memory implementation of the {{.GetName}}Repository interface.
@@ -121,8 +137,8 @@ func NewSQLite{{.GetName}}Repository(db *sql.DB) (*SQLite{{.GetName}}Repository,
 		"fieldIDConstantValue": crud.FieldIDConstantValue,
 		"protoFieldAccessor":   protoFieldAccessorFn,
 		"protoFieldField":      protoFieldField,
-		"sqlQuotedIdent":       genSQLite.SQLiteQuotedIdent,
-		"sqlIdent":             genSQLite.SQLiteIdent,
+		"sqlQuotedIdent":       genSQLite.QuotedIdent,
+		"sqlIdent":             genSQLite.Ident,
 	}
 
 	_ = template.Must(repositoryTemplate.New("repository-create").Funcs(funcMap).Parse(`
@@ -152,22 +168,16 @@ func (repo *SQLite{{.GetName}}Repository) Create(ctx context.Context, toCreate [
 }
 `))
 
+	// TODO: Add support for in-line message types to these pieces
 	_ = template.Must(repositoryTemplate.New("repository-create-no-field-mask").Funcs(funcMap).Parse(`
 	binds := []any{}
 	bindsStrs := []string{}
 	for _, {{toLowerCamel .GetName}} := range toCreate {
-		{{- range $field := .PrimaryKey}}
-		binds = append(binds, {{toLowerCamel $.GetName}}.{{protoFieldAccessor $field}})
-		{{- end}}
-		{{- range $field := .NonPrimeAttributes}}
-		binds = append(binds, {{toLowerCamel $.GetName}}.{{protoFieldAccessor $field}})
+		{{- range $col := .QueryableCols}}
+		binds = append(binds, {{toLowerCamel $.GetName}}.{{protoFieldAccessor $col}})
 		{{- end}}
 		bindsStrs = append(bindsStrs, "(
-			{{- range $i, $field := .PrimaryKey -}}
-			{{if $i}},{{end}}?
-			{{- end -}}
-			{{- if and (gt (len .PrimaryKey) 0) (gt (len .NonPrimeAttributes) 0) -}},{{- end -}}
-			{{- range $i, $field := .NonPrimeAttributes -}}
+			{{- range $i, $col := .QueryableCols -}}
 			{{if $i}},{{end}}?
 			{{- end -}}
 		)")
@@ -176,13 +186,10 @@ func (repo *SQLite{{.GetName}}Repository) Create(ctx context.Context, toCreate [
 		ctx,
 		fmt.Sprintf(
 			` + "`" + `INSERT INTO {{sqlQuotedIdent .GetName}} (
-			{{- range $i, $field := .PrimaryKey -}}
-				{{- if $i}},{{end}}{{sqlQuotedIdent $field.GetName}}
+			{{- range $i, $col := .QueryableCols -}}
+				{{- if $i}},{{end}}{{sqlQuotedIdent $col.GetName}}
 			{{- end -}}
-			{{- if and (gt (len .PrimaryKey) 0) (gt (len .NonPrimeAttributes) 0) -}},{{- end -}}
-			{{- range $i, $field := .NonPrimeAttributes -}}
-				{{- if $i}},{{end}}{{sqlQuotedIdent $field.GetName}}
-			{{- end -}}) VALUES
+			) VALUES
 			%s` + "`" + `,
 			strings.Join(bindsStrs, ",\n"),
 		),
@@ -198,18 +205,11 @@ func (repo *SQLite{{.GetName}}Repository) Create(ctx context.Context, toCreate [
 	noMaskBindsStrs := []string{}
 	for _, {{toLowerCamel $.GetName}} := range toCreate {
 		if {{toLowerCamel $.GetName}}.{{camelIdentifier $.FieldMask.GetName}} == nil {
-			{{- range $field := .PrimaryKey}}
-			noMaskBinds = append(noMaskBinds, {{toLowerCamel $.GetName}}.{{protoFieldAccessor $field}})
-			{{- end}}
-			{{- range $field := .NonPrimeAttributes}}
-			noMaskBinds = append(noMaskBinds, {{toLowerCamel $.GetName}}.{{protoFieldAccessor $field}})
+			{{- range $col := .QueryableCols}}
+			noMaskBinds = append(noMaskBinds, {{toLowerCamel $.GetName}}.{{protoFieldAccessor $col}})
 			{{- end}}
 			noMaskBindsStrs = append(noMaskBindsStrs, "(
-			{{- range $i, $field := .PrimaryKey -}}
-			{{if $i}},{{end}}?
-			{{- end -}}
-			{{- if and (gt (len .PrimaryKey) 0) (gt (len .NonPrimeAttributes) 0) -}},{{- end -}}
-			{{- range $i, $field := .NonPrimeAttributes -}}
+			{{- range $i, $col := .QueryableCols -}}
 			{{if $i}},{{end}}?
 			{{- end -}}
 			)")
@@ -241,12 +241,8 @@ func (repo *SQLite{{.GetName}}Repository) Create(ctx context.Context, toCreate [
 	}
 	if len(noMaskBinds) > 0 {
 		query := fmt.Sprintf(` + "`" + `INSERT INTO {{sqlQuotedIdent .GetName}} (
-			{{- range $i, $field := .PrimaryKey -}}
-			{{if $i}},{{end}}{{sqlQuotedIdent $field.GetName}}
-			{{- end -}}
-			{{- if and (gt (len .PrimaryKey) 0) (gt (len .NonPrimeAttributes) 0) -}},{{- end -}}
-			{{- range $i, $field := .NonPrimeAttributes -}}
-			{{if $i}},{{end}}{{sqlQuotedIdent $field.GetName}}
+			{{- range $i, $col := .QueryableCols -}}
+			{{if $i}},{{end}}{{sqlQuotedIdent $col.GetName}}
 			{{- end -}}
 			) VALUES %s` + "`" + `,
 			strings.Join(noMaskBindsStrs, ",\n"),
@@ -262,14 +258,10 @@ func (repo *SQLite{{.GetName}}Repository) Create(ctx context.Context, toCreate [
 // Read returns a set of {{.GetName}}s matching the provided criteria
 // Read is incomplete and it should be considered unstable
 func (repo *SQLite{{.GetName}}Repository) Read(ctx context.Context, expr expressions.Expression) ([]*{{.GoType .File.GoPkg.Path}}, error) {
-	query := ` + "`" + `SELECT {{ range $i, $field := .PrimaryKey -}}
-		{{if $i}},{{end}}{{sqlQuotedIdent $field.GetName}}
-		{{- end -}}
-		{{- if and (gt (len .PrimaryKey) 0) (gt (len .NonPrimeAttributes) 0) -}},{{- end -}}
-		{{- range $i, $field := .NonPrimeAttributes -}}
-		{{if $i}},{{end}}{{sqlQuotedIdent $field.GetName}}
-		{{- end }}
-		FROM {{sqlQuotedIdent .GetName}}
+	query := ` + "`" + `SELECT {{ range $i, $col := .QueryableCols -}}
+		{{if $i}},{{end}}{{sqlQuotedIdent $col.GetName}}
+		{{- end}}
+		FROM {{sqlQuotedIdent .GetName -}}
 ` + "`" + `
 	clauses, binds, err := whereClauseFromExpressionFor{{.GetName}}(expr)
 	if err != nil {
@@ -292,15 +284,12 @@ func (repo *SQLite{{.GetName}}Repository) Read(ctx context.Context, expr express
 		{{toLowerCamel .GetName}} := &{{.GoType .File.GoPkg.Path}}{
 			{{range $i, $field := .NonPrimeAttributes -}}
 			{{if $field.HasRelationship}}{{camelIdentifier $field.GetName}}: &{{$field.FieldMessage.GoType $.File.GoPkg.Path}}{},{{end}}
+			{{if $field.Inline}}{{camelIdentifier $field.GetName}}: &{{$field.FieldMessage.GoType $.File.GoPkg.Path}}{},{{end}}
 			{{- end}}
 		}
 		if err = rows.Scan(
-		{{- range $i, $field := .PrimaryKey -}}
-		{{if $i}},{{end}} &{{toLowerCamel $.GetName}}.{{protoFieldField $field}}
-		{{- end -}}
-		{{- if and (gt (len .PrimaryKey) 0) (gt (len .NonPrimeAttributes) 0) -}},{{- end -}}
-		{{- range $i, $field := .NonPrimeAttributes -}}
-		{{if $i}},{{end}} &{{toLowerCamel $.GetName}}.{{protoFieldField $field}}
+		{{- range $i, $col := .QueryableCols -}}
+		{{if $i}},{{end}} &{{toLowerCamel $.GetName}}.{{protoFieldField $col}}
 		{{- end -}}
 		); err != nil {
 			return nil, err
@@ -330,10 +319,10 @@ func (repo *SQLite{{.GetName}}Repository) Update(ctx context.Context, toUpdate [
 	defer tx.Rollback()
 
 	stmt, err := tx.Prepare(
-		` + "`" + `UPDATE {{sqlQuotedIdent .GetName}} SET {{range $i, $field := .NonPrimeAttributes -}}
-		{{if $i}},{{end}}{{sqlQuotedIdent $field.GetName}} = ?
-		{{- end }} WHERE {{ range $i, $field := .PrimaryKey -}}
-		{{if $i}} AND {{end}}{{sqlQuotedIdent $field.GetName}} = ?
+		` + "`" + `UPDATE {{sqlQuotedIdent .GetName}} SET {{range $i, $col := .NonPrimeAttributeCols -}}
+		{{if $i}},{{end}}{{sqlQuotedIdent $col.GetName}} = ?
+		{{- end }} WHERE {{ range $i, $cols := .PrimaryKeyCols -}}
+		{{if $i}} AND {{end}}{{sqlQuotedIdent $cols.GetName}} = ?
 		{{- end }}` + "`" + `,
 	)
 	if err != nil {
@@ -358,10 +347,10 @@ func (repo *SQLite{{.GetName}}Repository) Update(ctx context.Context, toUpdate [
 
 	_ = template.Must(repositoryTemplate.New("repository-update-no-field-mask").Funcs(funcMap).Parse(`
 	for _, {{toLowerCamel .GetName}} := range toUpdate {
-		_, err = stmt.ExecContext(ctx, {{ range $i, $field := .NonPrimeAttributes -}}
-		{{if $i}},{{end}}{{toLowerCamel $.GetName}}.{{protoFieldAccessor $field}}
-		{{- end }},{{ range $i, $field := .PrimaryKey -}}
-		{{if $i}},{{end}}{{toLowerCamel $.GetName}}.{{protoFieldAccessor $field}}
+		_, err = stmt.ExecContext(ctx, {{ range $i, $col := .NonPrimeAttributeCols -}}
+		{{if $i}},{{end}}{{toLowerCamel $.GetName}}.{{protoFieldAccessor $col}}
+		{{- end }},{{ range $i, $col := .PrimaryKeyCols -}}
+		{{if $i}},{{end}}{{toLowerCamel $.GetName}}.{{protoFieldAccessor $col}}
 		{{- end }})
 		if err != nil {
 			return nil, err
@@ -372,10 +361,10 @@ func (repo *SQLite{{.GetName}}Repository) Update(ctx context.Context, toUpdate [
 	_ = template.Must(repositoryTemplate.New("repository-update-field-mask").Funcs(funcMap).Parse(`
 	for _, {{toLowerCamel .GetName}} := range toUpdate {
 		if {{toLowerCamel .GetName}}.{{camelIdentifier .FieldMask.GetName}} == nil {
-			_, err = stmt.ExecContext(ctx, {{ range $i, $field := .NonPrimeAttributes -}}
-			{{if $i}},{{end}}{{toLowerCamel $.GetName}}.{{protoFieldAccessor $field}}
-			{{- end }},{{ range $i, $field := .PrimaryKey -}}
-			{{if $i}},{{end}}{{toLowerCamel $.GetName}}.{{protoFieldAccessor $field}}
+			_, err = stmt.ExecContext(ctx, {{ range $i, $col := .NonPrimeAttributeCols -}}
+			{{if $i}},{{end}}{{toLowerCamel $.GetName}}.{{protoFieldAccessor $col}}
+			{{- end }},{{ range $i, $col := .PrimaryKeyCols -}}
+			{{if $i}},{{end}}{{toLowerCamel $.GetName}}.{{protoFieldAccessor $col}}
 			{{- end }})
 			if err != nil {
 				return nil, err
@@ -398,14 +387,14 @@ func (repo *SQLite{{.GetName}}Repository) Update(ctx context.Context, toUpdate [
 		_, err = tx.ExecContext(
 			ctx,
 			fmt.Sprintf(
-				` + "`" + `UPDATE {{sqlQuotedIdent .GetName}} SET %s WHERE {{ range $i, $field := .PrimaryKey -}}
-				{{if $i}} AND {{end}}{{sqlQuotedIdent $field.GetName}} = ?
+				` + "`" + `UPDATE {{sqlQuotedIdent .GetName}} SET %s WHERE {{ range $i, $col := .PrimaryKeyCols -}}
+				{{if $i}} AND {{end}}{{sqlQuotedIdent $col.GetName}} = ?
 				{{- end }}` + "`" + `,
 				strings.Join(setStmts, ", "),
 			),
 			append(
 				binds,
-				{{ range $i, $field := .PrimaryKey -}}
+				{{ range $i, $field := .PrimaryKeyCols -}}
 				{{if $i}},{{end}}{{toLowerCamel $.GetName}}.Get{{camelIdentifier $field.GetName}}()
 				{{- end }},
 			)...
@@ -441,8 +430,8 @@ func (repo *SQLite{{.GetName}}Repository) Delete(ctx context.Context, expr expre
 
 	_ = template.Must(repositoryTemplate.New("repository-misc").Funcs(funcMap).Parse(`
 var sqlite{{.GetName}}ColumnNameByFieldID = map[expressions.FieldID]string{
-{{- range $field := .Fields}}
-	{{fieldIDConstantName $field}}: "{{sqlIdent $field.GetName}}",
+{{- range $col := .QueryableCols}}
+	{{fieldIDConstantName $col.QueryableField}}: "{{sqlIdent $col.GetName}}",
 {{- end}}
 }
 
@@ -514,17 +503,17 @@ func sqlite{{.GetName}}GetCreateValuesByColumnName(def *{{.GoType .File.GoPkg.Pa
 	{{toLowerCamel $.GetName}} := &{{.GoType .File.GoPkg.Path}}{}
 	valuesByColumnName := make(map[string]any, 0)
 	nestedMask := fmutils.NestedMaskFromPaths(fieldMask.Paths)
-	{{ range $i, $field := .PrimaryKey -}}
-	if _, ok := nestedMask["{{$field.GetName}}"]; !ok {
-		return nil, fmt.Errorf("primary key field excluded by field mask: {{$field.GetName}}")
+	{{ range $i, $col := .PrimaryKeyCols -}}
+	if _, ok := nestedMask["{{$col.Field.GetName}}"]; !ok {
+		return nil, fmt.Errorf("primary key field excluded by field mask: {{$col.Field.GetName}}")
 	}
-	valuesByColumnName["{{sqlIdent $field.GetName}}"] = def.{{protoFieldAccessor $field}}
+	valuesByColumnName["{{sqlIdent $col.Field.GetName}}"] = def.{{protoFieldAccessor $col}}
 	{{end -}}
-	{{ range $i, $field := .NonPrimeAttributes -}}
-	if _, ok := nestedMask["{{$field.GetName}}"]; ok {
-		valuesByColumnName["{{sqlIdent $field.GetName}}"] = def.{{protoFieldAccessor $field}}
+	{{ range $i, $col := .NonPrimeAttributeCols -}}
+	if _, ok := nestedMask["{{$col.Field.GetName}}"]; ok {
+		valuesByColumnName["{{sqlIdent $col.Field.GetName}}"] = def.{{protoFieldAccessor $col}}
 	} else {
-		valuesByColumnName["{{sqlIdent $field.GetName}}"] = {{toLowerCamel $.GetName}}.{{protoFieldAccessor $field}}
+		valuesByColumnName["{{sqlIdent $col.Field.GetName}}"] = {{toLowerCamel $.GetName}}.{{protoFieldAccessor $col}}
 	}
 	{{end -}}
 	return valuesByColumnName, nil
@@ -535,14 +524,14 @@ func sqlite{{.GetName}}GetUpdateValuesByColumnName(def *{{.GoType .File.GoPkg.Pa
 	}
 	valuesByColumnName := make(map[string]any, 0)
 	nestedMask := fmutils.NestedMaskFromPaths(fieldMask.Paths)
-	{{ range $i, $field := .PrimaryKey -}}
-	if _, ok := nestedMask["{{$field.GetName}}"]; !ok {
-		return nil, fmt.Errorf("primary key field excluded by field mask: {{$field.GetName}}")
+	{{ range $i, $col := .PrimaryKeyCols -}}
+	if _, ok := nestedMask["{{$col.Field.GetName}}"]; !ok {
+		return nil, fmt.Errorf("primary key field excluded by field mask: {{$col.Field.GetName}}")
 	}
 	{{end -}}
-	{{ range $i, $field := .NonPrimeAttributes -}}
-	if _, ok := nestedMask["{{$field.GetName}}"]; ok {
-		valuesByColumnName["{{sqlIdent $field.GetName}}"] = def.{{protoFieldAccessor $field}}
+	{{ range $i, $col := .NonPrimeAttributeCols -}}
+	if _, ok := nestedMask["{{$col.Field.GetName}}"]; ok {
+		valuesByColumnName["{{sqlIdent $col.GetName}}"] = def.{{protoFieldAccessor $col}}
 	}
 	{{end -}}
 	return valuesByColumnName, nil

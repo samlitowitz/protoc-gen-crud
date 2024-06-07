@@ -1,0 +1,22 @@
+syntax = "proto3";
+
+package protoc_gen_crud.test_cases.ignore_field;
+
+option go_package = "github.com/samlitowitz/protoc-gen-crud/test-cases/ignore-field";
+
+import "protoc-gen-crud/options/annotations.proto";
+import "google/protobuf/timestamp.proto";
+
+message Test {
+  option (protoc_gen_crud.options.crud_message_options) = {
+    implementations: [SQLITE]
+    primaryKey: ["id"]
+  };
+  string id = 1;
+  string data = 2;
+  google.protobuf.Timestamp timestamp = 3 [
+    (protoc_gen_crud.options.crud_field_options) = {
+      ignore: true
+    }
+  ];
+}

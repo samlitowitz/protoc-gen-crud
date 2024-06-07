@@ -19,17 +19,25 @@ func init() {
 	strcase.ConfigureAcronym("UID", "uid")
 }
 
-func FieldIDConstantName(def *descriptor.Field) string {
+func FieldIDConstantName(f *QueryableField) string {
+	if !f.IsInlined {
+		return fmt.Sprintf(
+			"%s_%s_Field",
+			strcase.ToCamel(f.Message.GetName()),
+			strcase.ToCamel(f.GetName()),
+		)
+	}
 	return fmt.Sprintf(
-		"%s_%s_Field",
-		strcase.ToCamel(def.Message.GetName()),
-		strcase.ToCamel(def.GetName()),
+		"%s_%s_%s_Field",
+		strcase.ToCamel(f.Parent.Message.GetName()),
+		strcase.ToCamel(f.Parent.GetName()),
+		strcase.ToCamel(f.GetName()),
 	)
 }
 
-func FieldIDConstantValue(def *descriptor.Field) string {
+func FieldIDConstantValue(f *QueryableField) string {
 	h := sha256.New()
-	_, err := h.Write([]byte(def.Message.GetName() + "." + def.GetName()))
+	_, err := h.Write([]byte(FieldIDConstantName(f)))
 	if err != nil {
 		panic(err)
 	}
@@ -56,7 +64,7 @@ func applyTemplate(p param, reg *descriptor.Registry) (string, error) {
 			continue
 		}
 		if err := repositoryConstantsAndInterfaceTemplate.Execute(w, &message{msg}); err != nil {
-			return "", nil
+			return "", err
 		}
 	}
 
@@ -85,20 +93,23 @@ import (
 `))
 
 	funcMap template.FuncMap = map[string]interface{}{
-		"camelIdentifier":      casing.CamelIdentifier,
-		"toLower":              strings.ToLower,
-		"fieldIDConstantName":  FieldIDConstantName,
-		"fieldIDConstantValue": FieldIDConstantValue,
+		"camelIdentifier":            casing.CamelIdentifier,
+		"toLower":                    strings.ToLower,
+		"fieldIDConstantName":        FieldIDConstantName,
+		"fieldIDConstantValue":       FieldIDConstantValue,
+		"queryableFieldsFromMessage": QueryableFieldsFromMessage,
 	}
 
 	repositoryConstantsAndInterfaceTemplate = template.Must(template.New("repository-constants-and-interface").Funcs(funcMap).Parse(`
+// These constants are used to specify fields in expressions
 const (
-{{- range $field := .Fields}}
+{{- range $field := queryableFieldsFromMessage .Message}}
 	{{fieldIDConstantName $field}} expressions.FieldID = "{{fieldIDConstantValue $field}}"
 {{- end}}
 )
+
 var valid{{camelIdentifier .GetName}}Fields = map[expressions.FieldID]struct{}{
-{{- range $field := .Fields}}
+{{- range $field := queryableFieldsFromMessage .Message}}
 	{{fieldIDConstantName $field}}: struct{}{},
 {{- end}}
 }

@@ -5,15 +5,16 @@ import (
 	"fmt"
 	"os"
 
+	genGoRelationship "github.com/samlitowitz/protoc-gen-crud/internal/generator/relationship"
+	genSQLiteCRUD "github.com/samlitowitz/protoc-gen-crud/internal/generator/sqlite/crud"
+	genSQLiteSQL "github.com/samlitowitz/protoc-gen-crud/internal/generator/sqlite/sql"
+
 	"google.golang.org/protobuf/compiler/protogen"
 	"google.golang.org/protobuf/reflect/protoreflect"
 
 	"github.com/samlitowitz/protoc-gen-crud/internal/descriptor"
-	gen_go_crud "github.com/samlitowitz/protoc-gen-crud/internal/generator/crud"
-	gen_gen "github.com/samlitowitz/protoc-gen-crud/internal/generator/generator"
-	gen_go_relationship "github.com/samlitowitz/protoc-gen-crud/internal/generator/relationship"
-	gen_sqlite_crud "github.com/samlitowitz/protoc-gen-crud/internal/generator/sqlite/crud"
-	gen_sqlite_sql "github.com/samlitowitz/protoc-gen-crud/internal/generator/sqlite/sql"
+	genGoCRUD "github.com/samlitowitz/protoc-gen-crud/internal/generator/crud"
+	genGen "github.com/samlitowitz/protoc-gen-crud/internal/generator/generator"
 )
 
 var (
@@ -40,12 +41,12 @@ func main() {
 	}.Run(func(gen *protogen.Plugin) error {
 		reg := descriptor.NewRegistry()
 
-		crudGen := gen_go_crud.New(reg, gen_go_crud.WithFormatOutput(*formatOutput))
-		relationshipGen := gen_go_relationship.New(reg)
-		sqliteCRUDGen := gen_sqlite_crud.New(reg)
-		sqliteSQLGen := gen_sqlite_sql.New(reg)
+		crudGen := genGoCRUD.New(reg, genGoCRUD.WithFormatOutput(*formatOutput))
+		relationshipGen := genGoRelationship.New(reg)
+		sqliteCRUDGen := genSQLiteCRUD.New(reg)
+		sqliteSQLGen := genSQLiteSQL.New(reg)
 
-		genGen := gen_gen.New(crudGen, relationshipGen, sqliteCRUDGen, sqliteSQLGen)
+		gg := genGen.New(crudGen, relationshipGen, sqliteCRUDGen, sqliteSQLGen)
 
 		if err := reg.LoadFromPlugin(gen); err != nil {
 			return err
@@ -68,7 +69,7 @@ func main() {
 			targets = append(targets, f)
 		}
 
-		files, err := genGen.Generate(targets)
+		files, err := gg.Generate(targets)
 		for _, f := range files {
 			genFile := gen.NewGeneratedFile(f.GetName(), protogen.GoImportPath(f.GoPkg.Path))
 			if _, err := genFile.Write([]byte(f.GetContent())); err != nil {

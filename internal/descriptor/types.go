@@ -109,6 +109,26 @@ type Message struct {
 	// nonPrimeAttributes is a local cache
 	nonPrimeAttributes []*Field
 
+	// !!!!!!!!!!!!!!!!!!
+	// Why inline? flatten nested structures in storage.
+	// storage side, all flattened (inlined fields)
+	// outside of storage, all nested protobuf structs
+
+	// FieldIDs -> protobuf
+	// Expressions -> protobuf
+	// [protobuf -> sqlite]
+	// [protobuf -> pgsql]
+	// [protobuf -> in memory]
+
+	// FieldIDs : protobuf
+	// Expressions : protobuf
+
+	// CREATE, UPDATE, DELETE : protobuf -> storage
+
+	// READ : storage -> protobuf
+
+	// TODO: Should the message itself track inlined attributes here? ~Probably yes...~ no
+
 	// TODO: CRUD options/functionality should probably be a child of Message directly or via struct pointer
 	// TODO: Build implementations by hand as models for the template, then use the template to drive the rest
 }
@@ -132,6 +152,9 @@ func (m *Message) NonPrimeAttributes() []*Field {
 	}
 	m.nonPrimeAttributes = make([]*Field, 0, len(m.NonPrimeAttributesByFQFN))
 	for _, field := range m.NonPrimeAttributesByFQFN {
+		if field.Ignore {
+			continue
+		}
 		if m.HasFieldMask() && field.FQFN() == m.FieldMask.FQFN() {
 			continue
 		}
@@ -140,6 +163,7 @@ func (m *Message) NonPrimeAttributes() []*Field {
 		}
 		m.nonPrimeAttributes = append(m.nonPrimeAttributes, field)
 	}
+
 	return m.nonPrimeAttributes
 }
 
@@ -244,8 +268,10 @@ type Field struct {
 	ForcePrefixedName bool
 
 	// CRUD Field Options
-	// Ignore when set to true indicated this field is not to be used for or by and generated CRUD code
+	// Ignore when set to true indicates this field is not to be used for or by and generated CRUD code
 	Ignore bool
+	// Inline when set to true indicates all scalar value fields on the message type associated with this field will be treated as if they were on the parent message
+	Inline bool
 	// Relationships contains meta-data defining the relationships with a non-scalar field
 	Relationships []*Relationship
 

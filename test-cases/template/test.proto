@@ -8,7 +8,9 @@ import "protoc-gen-crud/options/annotations.proto";
 
 message Test {
   option (protoc_gen_crud.options.crud_message_options) = {
-    candidateKey: ["id"]
+    implementations: [SQLITE]
+    primaryKey: ["id"]
   };
   string id = 1;
+  string data = 2;
 }

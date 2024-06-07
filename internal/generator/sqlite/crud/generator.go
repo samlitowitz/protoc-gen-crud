@@ -110,6 +110,9 @@ func (g *generator) generate(file *descriptor.File) (string, error) {
 func (g *generator) addMessagePathParamImports(file *descriptor.File, msg *descriptor.Message, pkgSeen map[string]bool) []descriptor.GoPackage {
 	var imports []descriptor.GoPackage
 	for _, f := range msg.Fields {
+		if f.Ignore {
+			continue
+		}
 		t, err := g.reg.LookupMsg("", f.GetTypeName())
 		if err != nil {
 			continue

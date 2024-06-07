@@ -15,13 +15,13 @@ import "protoc-gen-crud/test-cases/relationships/test.proto";
 message SAInt32MAAll {
   option (protoc_gen_crud.options.crud_message_options) = {
     implementations: [SQLITE]
-    primaryKey: ["saint32_id", "maall_id_enum", "maall_id_int32", "maall_id_int64", "maall_id_uint32", "maall_id_uint64", "maall_id_string"]
+    primaryKey: ["saint32_id", "maall_id_uint32", "maall_id_uint64", "maall_id_string", "maall_id_enum", "maall_id_int32", "maall_id_int64"]
   };
   int32 saint32_id = 1;
-  protoc_gen_crud.test_cases.relationships.PrimaryKeyEnum maall_id_enum = 2;
-  int32 maall_id_int32 = 3;
-  int64 maall_id_int64 = 4;
-  uint32 maall_id_uint32 = 5;
-  uint64 maall_id_uint64 = 6;
-  string maall_id_string = 7;
+  uint32 maall_id_uint32 = 2;
+  uint64 maall_id_uint64 = 3;
+  string maall_id_string = 4;
+  protoc_gen_crud.test_cases.relationships.PrimaryKeyEnum maall_id_enum = 5;
+  int32 maall_id_int32 = 6;
+  int64 maall_id_int64 = 7;
 }

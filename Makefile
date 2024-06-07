@@ -1,4 +1,4 @@
-.PHONY: clean debug release generate
+.PHONY: clean debug release generate generate-options generate-test-cases
 
 VERSION=`git describe --tags|sed -e "s/\-/\./g"`
 BUILD=`date +%FT%T%z`
@@ -19,6 +19,13 @@ release:
 debug:
 	go build ${LDFLAGS_DEB} -o ${TARGETDIR}/protoc-gen-go-crud ./cmd/protoc-gen-go-crud
 
-generate:
+generate: generate-options generate-test-cases
+
+generate-options:
 	PROJECT_PROTO_INCLUDE=${PROJECT_PROTO_INCLUDE} PROJECT_PROTO_OUT=${PROJECT_PROTO_OUT} go generate -v ./options/...
+
+generate-test-cases:
 	PROJECT_PROTO_INCLUDE=${PROJECT_PROTO_INCLUDE} PROJECT_PROTO_OUT=${PROJECT_PROTO_OUT} go generate -v ./test-cases/...
+
+generate-tmp:
+	PROJECT_PROTO_INCLUDE=${PROJECT_PROTO_INCLUDE} PROJECT_PROTO_OUT=${PROJECT_PROTO_OUT} go generate -v ./test-cases/inline-field

@@ -54,6 +54,9 @@ func (r *Registry) loadCRUDs(file *File) error {
 			if field.Ignore && field.IsPrimeAttribute {
 				return fmt.Errorf("%s: ignored field cannot be part of a primary key", field.FQFN())
 			}
+			if field.Inline && field.GetType() != descriptorpb.FieldDescriptorProto_TYPE_MESSAGE {
+				return fmt.Errorf("%s: inlined field must be of type message", field.FQFN())
+			}
 
 			err = assignRelationships(r, msg, field, fieldOpts)
 			if err != nil {
@@ -156,6 +159,7 @@ func assignRelationships(r *Registry, msg *Message, field *Field, fieldOpts *cru
 
 func assignFieldOptions(field *Field, fieldOpts *crudOptions.FieldOptions) error {
 	field.Ignore = fieldOpts.Ignore
+	field.Inline = fieldOpts.Inline
 	return nil
 }
 

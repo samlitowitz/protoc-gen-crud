@@ -28,4 +28,5 @@ message ServiceOptions {}
 message FieldOptions {
   Relationship relationship = 1;
   bool ignore = 2;
+  bool inline = 3;
 }

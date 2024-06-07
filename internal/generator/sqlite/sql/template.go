@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"text/template"
 
+	"github.com/samlitowitz/protoc-gen-crud/internal/generator/crud"
+
 	"github.com/samlitowitz/protoc-gen-crud/options"
 
 	"github.com/samlitowitz/protoc-gen-crud/internal/generator/sqlite"
@@ -20,101 +22,13 @@ type param struct {
 
 type message struct {
 	*descriptor.Message
+
+	PrimaryKeyCols        []*sqlite.Column
+	NonPrimeAttributeCols []*sqlite.Column
 }
 
 type enum struct {
 	*descriptor.Enum
-}
-
-func fieldColType(f *descriptor.Field) string {
-	switch f.GetType() {
-	case descriptorpb.FieldDescriptorProto_TYPE_DOUBLE:
-		fallthrough
-	case descriptorpb.FieldDescriptorProto_TYPE_FLOAT:
-		return "REAL"
-
-	case descriptorpb.FieldDescriptorProto_TYPE_BOOL:
-		return "INTEGER"
-
-	case descriptorpb.FieldDescriptorProto_TYPE_UINT32:
-		fallthrough
-	case descriptorpb.FieldDescriptorProto_TYPE_UINT64:
-		fallthrough
-	case descriptorpb.FieldDescriptorProto_TYPE_INT32:
-		fallthrough
-	case descriptorpb.FieldDescriptorProto_TYPE_FIXED32:
-		fallthrough
-	case descriptorpb.FieldDescriptorProto_TYPE_SINT32:
-		fallthrough
-	case descriptorpb.FieldDescriptorProto_TYPE_INT64:
-		fallthrough
-	case descriptorpb.FieldDescriptorProto_TYPE_FIXED64:
-		fallthrough
-	case descriptorpb.FieldDescriptorProto_TYPE_SINT64:
-		return "INTEGER"
-
-	case descriptorpb.FieldDescriptorProto_TYPE_BYTES:
-		return "BLOB"
-
-	case descriptorpb.FieldDescriptorProto_TYPE_STRING:
-		return "TEXT"
-
-	case descriptorpb.FieldDescriptorProto_TYPE_ENUM:
-		// Enums will reference a look-up table
-		return "INTEGER"
-
-	case descriptorpb.FieldDescriptorProto_TYPE_MESSAGE:
-		fallthrough
-	case descriptorpb.FieldDescriptorProto_TYPE_GROUP:
-		fallthrough
-	default:
-		panic(fmt.Errorf("sqlite: sql: field %s: unsupported type %s", f.GetName(), f.GetType()))
-	}
-}
-
-func fieldColComment(f *descriptor.Field) string {
-	switch f.GetType() {
-	case descriptorpb.FieldDescriptorProto_TYPE_DOUBLE:
-		fallthrough
-	case descriptorpb.FieldDescriptorProto_TYPE_FLOAT:
-		fallthrough
-	case descriptorpb.FieldDescriptorProto_TYPE_BOOL:
-		fallthrough
-	case descriptorpb.FieldDescriptorProto_TYPE_UINT32:
-		fallthrough
-	case descriptorpb.FieldDescriptorProto_TYPE_UINT64:
-		fallthrough
-	case descriptorpb.FieldDescriptorProto_TYPE_INT32:
-		fallthrough
-	case descriptorpb.FieldDescriptorProto_TYPE_FIXED32:
-		fallthrough
-	case descriptorpb.FieldDescriptorProto_TYPE_SINT32:
-		fallthrough
-	case descriptorpb.FieldDescriptorProto_TYPE_INT64:
-		fallthrough
-	case descriptorpb.FieldDescriptorProto_TYPE_FIXED64:
-		fallthrough
-	case descriptorpb.FieldDescriptorProto_TYPE_SINT64:
-		fallthrough
-	case descriptorpb.FieldDescriptorProto_TYPE_BYTES:
-		fallthrough
-	case descriptorpb.FieldDescriptorProto_TYPE_STRING:
-		return ""
-
-	case descriptorpb.FieldDescriptorProto_TYPE_ENUM:
-		return fmt.Sprintf(
-			" /* references %s.%s */",
-			sqlite.SQLiteQuotedIdent(f.FieldEnum.GetName()),
-			sqlite.SQLiteQuotedIdent("id"),
-		)
-
-	case descriptorpb.FieldDescriptorProto_TYPE_MESSAGE:
-		fallthrough
-	case descriptorpb.FieldDescriptorProto_TYPE_GROUP:
-		fallthrough
-	default:
-		panic(fmt.Errorf("sqlite: sql: field %s: unsupported type %s", f.GetName(), f.GetType()))
-	}
 }
 
 func applyTemplate(p param, reg *descriptor.Registry) (string, error) {
@@ -148,7 +62,12 @@ func applyTemplate(p param, reg *descriptor.Registry) (string, error) {
 			}
 		}
 
-		if err := createTableForMessageTemplate.Execute(w, &message{msg}); err != nil {
+		injected := &message{
+			Message:               msg,
+			PrimaryKeyCols:        sqlite.ColumnsFromFields(crud.QueryableFieldsFromFields(msg.PrimaryKey())),
+			NonPrimeAttributeCols: sqlite.ColumnsFromFields(crud.QueryableFieldsFromFields(msg.NonPrimeAttributes())),
+		}
+		if err := createTableForMessageTemplate.Execute(w, injected); err != nil {
 			return "", fmt.Errorf("%s: create message table: %v", msg.GetName(), err)
 		}
 	}
@@ -157,36 +76,38 @@ func applyTemplate(p param, reg *descriptor.Registry) (string, error) {
 
 var (
 	funcMap template.FuncMap = map[string]interface{}{
-		"quotedIdent":     sqlite.SQLiteQuotedIdent,
-		"fieldColComment": fieldColComment,
-		"fieldColType":    fieldColType,
+		"quotedIdent": sqlite.QuotedIdent,
 	}
 
 	// https://www.sqlite.org/lang_createtable.html
 	createTableForMessageTemplate = template.Must(template.New("create-table-for-message").Funcs(funcMap).Parse(`
 DROP TABLE IF EXISTS {{quotedIdent .GetName}};
 CREATE TABLE IF NOT EXISTS {{quotedIdent .GetName}} (
-{{- range $i, $field := .PrimaryKey -}}
+{{- range $i, $col := .PrimaryKeyCols -}}
     {{- if $i}},{{end}}
-    {{quotedIdent $field.GetName}} {{fieldColType $field}}{{fieldColComment $field}}
+    {{- template "column-definition" $col}}
 {{- end -}}
-{{- if gt (len .NonPrimeAttributes) 0 -}},{{- end -}}
+{{- if gt (len .NonPrimeAttributeCols) 0 -}},{{- end -}}
 
-{{- range $i, $field := .NonPrimeAttributes -}}
+{{- range $i, $col := .NonPrimeAttributeCols -}}
     {{- if $i}},{{end}}
-    {{quotedIdent $field.GetName}} {{fieldColType $field}}{{fieldColComment $field}}
+    {{template "column-definition" $col}}
 {{- end }}
 {{- if gt (len .PrimaryKey) 0 -}}
         ,
 
     PRIMARY KEY (
-    {{- range $i, $field := .PrimaryKey -}}
+    {{- range $i, $col := .PrimaryKeyCols -}}
         {{- if $i}},{{end}}
-        {{quotedIdent $field.GetName}}
+        {{quotedIdent $col.GetName}}
     {{- end}}
     )
     {{- end}}
 );
+`))
+
+	_ = template.Must(createTableForMessageTemplate.New("column-definition").Funcs(funcMap).Parse(`
+    {{- quotedIdent .GetName}} {{.GetType}}{{.GetComment -}}
 `))
 
 	createTableForEnumTemplate = template.Must(template.New("create-table-for-enum").Funcs(funcMap).Parse(`
