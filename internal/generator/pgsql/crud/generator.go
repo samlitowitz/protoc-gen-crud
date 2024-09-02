@@ -65,21 +65,21 @@ func (g *generator) Generate(targets []*descriptor.File) ([]*descriptor.Response
 		}
 		code, err := g.generate(file)
 		if err != nil {
-			return nil, fmt.Errorf("sqlite: generate: %s: %v", file.GetName(), err)
+			return nil, fmt.Errorf("pgsql: generate: %s: %v", file.GetName(), err)
 		}
 
 		output := code
 		if g.formatOutput {
 			formatted, err := format.Source([]byte(code))
 			if err != nil {
-				return nil, fmt.Errorf("sqlite: format: %s: %v", file.GetName(), err)
+				return nil, fmt.Errorf("pgsql: format: %s: %v", file.GetName(), err)
 			}
 			output = string(formatted)
 		}
 
 		files = append(files, &descriptor.ResponseFile{
 			CodeGeneratorResponse_File: &pluginpb.CodeGeneratorResponse_File{
-				Name:    proto.String(file.GeneratedFilenamePrefix + ".pb.crud.sqlite.go"),
+				Name:    proto.String(file.GeneratedFilenamePrefix + ".pb.crud.pgsql.go"),
 				Content: proto.String(output),
 			},
 			GoPkg: file.GoPkg,
@@ -135,7 +135,7 @@ func (g *generator) addCrudPathParamImports(msg *descriptor.Message, pkgSeen map
 	}
 	var imports []descriptor.GoPackage
 
-	if _, ok := msg.Implementations[crudOptions.Implementation_SQLITE]; ok {
+	if _, ok := msg.Implementations[crudOptions.Implementation_PGSQL]; ok {
 		if !pkgSeen["context"] {
 			pkgSeen["context"] = true
 			imports = append(imports, descriptor.GoPackage{Path: "context", Name: "context"})
@@ -160,9 +160,9 @@ func (g *generator) addCrudPathParamImports(msg *descriptor.Message, pkgSeen map
 			pkgSeen["google.golang.org/protobuf/types/known/fieldmaskpb"] = true
 			imports = append(imports, descriptor.GoPackage{Path: "google.golang.org/protobuf/types/known/fieldmaskpb", Name: "fieldmaskpb"})
 		}
-		if !pkgSeen["modernc.org/sqlite"] {
-			pkgSeen["modernc.org/sqlite"] = true
-			imports = append(imports, descriptor.GoPackage{Path: "modernc.org/sqlite", Name: "sqlite"})
+		if !pkgSeen["github.com/jackc/pgx/v5/stdlib"] {
+			pkgSeen["github.com/jackc/pgx/v5/stdlib"] = true
+			imports = append(imports, descriptor.GoPackage{Path: "github.com/jackc/pgx/v5/stdlib", Name: "stdlib", Alias: "pgxstdlib"})
 		}
 		if !pkgSeen["github.com/samlitowitz/protoc-gen-crud/expressions"] {
 			pkgSeen["github.com/samlitowitz/protoc-gen-crud/expressions"] = true

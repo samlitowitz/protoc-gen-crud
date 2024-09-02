@@ -6,6 +6,8 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/samlitowitz/protoc-gen-crud/options"
+
 	_ "google.golang.org/genproto/googleapis/api/annotations"
 	"google.golang.org/protobuf/compiler/protogen"
 	"google.golang.org/protobuf/types/descriptorpb"
@@ -90,6 +92,7 @@ func (r *Registry) loadFile(filePath string, file *protogen.File) {
 		FileDescriptorProto:     file.Proto,
 		GoPkg:                   pkg,
 		GeneratedFilenamePrefix: file.GeneratedFilenamePrefix,
+		Implementations:         make(map[options.Implementation]struct{}),
 	}
 
 	r.files[filePath] = f

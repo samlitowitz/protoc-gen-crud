@@ -27,11 +27,11 @@ func (g *generator) Generate(targets []*descriptor.File) ([]*descriptor.Response
 		}
 		code, err := g.generate(file)
 		if err != nil {
-			return nil, fmt.Errorf("sqlite: generate: %s: %v", file.GetName(), err)
+			return nil, fmt.Errorf("pgsql: generate: %s: %v", file.GetName(), err)
 		}
 		files = append(files, &descriptor.ResponseFile{
 			CodeGeneratorResponse_File: &pluginpb.CodeGeneratorResponse_File{
-				Name:    proto.String(file.GeneratedFilenamePrefix + ".sqlite.sql"),
+				Name:    proto.String(file.GeneratedFilenamePrefix + ".pgsql.sql"),
 				Content: proto.String(code),
 			},
 			GoPkg: file.GoPkg,

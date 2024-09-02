@@ -5,4 +5,4 @@
 
 !generate.go
 !*_test.go
-!*.proto
+!test.proto

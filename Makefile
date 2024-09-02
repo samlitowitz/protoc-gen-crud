@@ -31,4 +31,7 @@ generate-tmp:
 	PROJECT_PROTO_INCLUDE=${PROJECT_PROTO_INCLUDE} PROJECT_PROTO_OUT=${PROJECT_PROTO_OUT} go generate -v ./test-cases/inline-field
 
 docker-test:
-	docker-compose run --rm go-test
+	docker-compose run --rm --build go-test
+
+docker-test-dlv:
+	docker-compose up -d --build go-test-dlv

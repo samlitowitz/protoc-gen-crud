@@ -12,7 +12,7 @@ import (
 	"github.com/samlitowitz/protoc-gen-crud/internal/casing"
 	"github.com/samlitowitz/protoc-gen-crud/internal/descriptor"
 
-	genSQLite "github.com/samlitowitz/protoc-gen-crud/internal/generator/sqlite"
+	genPgSQL "github.com/samlitowitz/protoc-gen-crud/internal/generator/pgsql"
 
 	"github.com/iancoleman/strcase"
 )
@@ -21,18 +21,22 @@ func init() {
 	strcase.ConfigureAcronym("UID", "uid")
 }
 
-func protoFieldAccessorFn(col *genSQLite.Column) string {
+func protoFieldAccessorFn(col *genPgSQL.Column) string {
 	if col.IsInlined {
 		return fmt.Sprintf("Get%s().Get%s()", casing.CamelIdentifier(col.Parent.GetName()), casing.CamelIdentifier(col.Field.GetName()))
 	}
 	return fmt.Sprintf("Get%s()", casing.CamelIdentifier(col.GetName()))
 }
 
-func protoFieldField(col *genSQLite.Column) string {
+func protoFieldField(col *genPgSQL.Column) string {
 	if col.IsInlined {
 		return fmt.Sprintf("Get%s().%s", casing.CamelIdentifier(col.Parent.GetName()), casing.CamelIdentifier(col.Field.GetName()))
 	}
 	return casing.CamelIdentifier(col.GetName())
+}
+
+func addI(a, b int) int {
+	return a + b
 }
 
 type param struct {
@@ -43,9 +47,9 @@ type param struct {
 type message struct {
 	*descriptor.Message
 
-	QueryableCols         []*genSQLite.Column
-	PrimaryKeyCols        []*genSQLite.Column
-	NonPrimeAttributeCols []*genSQLite.Column
+	QueryableCols         []*genPgSQL.Column
+	PrimaryKeyCols        []*genPgSQL.Column
+	NonPrimeAttributeCols []*genPgSQL.Column
 }
 
 func applyTemplate(p param, reg *descriptor.Registry) (string, error) {
@@ -58,15 +62,15 @@ func applyTemplate(p param, reg *descriptor.Registry) (string, error) {
 		if !msg.GenerateCRUD {
 			continue
 		}
-		if _, ok := msg.Implementations[crudOptions.Implementation_SQLITE]; !ok {
+		if _, ok := msg.Implementations[crudOptions.Implementation_PGSQL]; !ok {
 			continue
 		}
 
 		injected := &message{
 			Message:               msg,
-			QueryableCols:         genSQLite.ColumnsFromFields(crud.QueryableFieldsFromMessage(msg)),
-			PrimaryKeyCols:        genSQLite.ColumnsFromFields(crud.QueryableFieldsFromFields(msg.PrimaryKey())),
-			NonPrimeAttributeCols: genSQLite.ColumnsFromFields(crud.QueryableFieldsFromFields(msg.NonPrimeAttributes())),
+			QueryableCols:         genPgSQL.ColumnsFromFields(crud.QueryableFieldsFromMessage(msg)),
+			PrimaryKeyCols:        genPgSQL.ColumnsFromFields(crud.QueryableFieldsFromFields(msg.PrimaryKey())),
+			NonPrimeAttributeCols: genPgSQL.ColumnsFromFields(crud.QueryableFieldsFromFields(msg.NonPrimeAttributes())),
 		}
 		if err := repositoryTemplate.Execute(w, injected); err != nil {
 			return "", fmt.Errorf(" message %s: repository: %v", msg.GetName(), err)
@@ -84,7 +88,7 @@ var (
 /*
 Package {{.GoPkg.Name}} is a repository.
 
-SQLite implementation.
+PgSQL implementation.
 */
 
 package {{.GoPkg.Name}}
@@ -113,23 +117,24 @@ import (
 
 	_ = template.Must(repositoryTemplate.New("repository-struct").Parse(`
 // InMemory{{.GetName}}Repository is an in memory implementation of the {{.GetName}}Repository interface.
-type SQLite{{.GetName}}Repository struct {
+type PgSQL{{.GetName}}Repository struct {
 	db *sql.DB
 }
 
 // NewInMemory creates a new InMemory{{.GetName}}Repository to be used.
-func NewSQLite{{.GetName}}Repository(db *sql.DB) (*SQLite{{.GetName}}Repository, error) {
-	_, ok := db.Driver().(*sqlite.Driver)
+func NewPgSQL{{.GetName}}Repository(db *sql.DB) (*PgSQL{{.GetName}}Repository, error) {
+	_, ok := db.Driver().(*pgxstdlib.Driver)
 	if !ok {
-		return nil, fmt.Errorf("invalid driver, must be of type *modernc.org/sqlite.Driver")
+		return nil, fmt.Errorf("invalid driver, must be of type *github.com/jackc/pgx/v5/stdlib/Driver")
 	}
-	return &SQLite{{.GetName}}Repository{
+	return &PgSQL{{.GetName}}Repository{
 		db: db,
 	}, nil
 }
 `))
 
 	funcMap template.FuncMap = map[string]interface{}{
+		"addI":            addI,
 		"camelIdentifier": casing.CamelIdentifier,
 		"toLowerCamel":    strcase.ToLowerCamel,
 
@@ -137,14 +142,14 @@ func NewSQLite{{.GetName}}Repository(db *sql.DB) (*SQLite{{.GetName}}Repository,
 		"fieldIDConstantValue": crud.FieldIDConstantValue,
 		"protoFieldAccessor":   protoFieldAccessorFn,
 		"protoFieldField":      protoFieldField,
-		"sqlQuotedIdent":       genSQLite.QuotedIdent,
-		"sqlIdent":             genSQLite.Ident,
+		"sqlQuotedIdent":       genPgSQL.QuotedIdent,
+		"sqlIdent":             genPgSQL.Ident,
 	}
 
 	_ = template.Must(repositoryTemplate.New("repository-create").Funcs(funcMap).Parse(`
 // Create creates new {{.GetName}}s.
 // Successfully created {{.GetName}}s are returned along with any errors that may have occurred.
-func (repo *SQLite{{.GetName}}Repository) Create(ctx context.Context, toCreate []*{{.GoType .File.GoPkg.Path}}) ([]*{{.GoType .File.GoPkg.Path}}, error) {
+func (repo *PgSQL{{.GetName}}Repository) Create(ctx context.Context, toCreate []*{{.GoType .File.GoPkg.Path}}) ([]*{{.GoType .File.GoPkg.Path}}, error) {
 	if len(toCreate) == 0 {
 		return nil, nil
 	}
@@ -172,15 +177,21 @@ func (repo *SQLite{{.GetName}}Repository) Create(ctx context.Context, toCreate [
 	_ = template.Must(repositoryTemplate.New("repository-create-no-field-mask").Funcs(funcMap).Parse(`
 	binds := []any{}
 	bindsStrs := []string{}
+	bindsIdx := 1
 	for _, {{toLowerCamel .GetName}} := range toCreate {
 		{{- range $col := .QueryableCols}}
 		binds = append(binds, {{toLowerCamel $.GetName}}.{{protoFieldAccessor $col}})
 		{{- end}}
-		bindsStrs = append(bindsStrs, "(
+		bindsStrs = append(bindsStrs, fmt.Sprintf("(
 			{{- range $i, $col := .QueryableCols -}}
-			{{if $i}},{{end}}?
+			{{if $i}}, {{end}}$%d
 			{{- end -}}
-		)")
+		)",
+			{{- range $i, $col := .QueryableCols -}}
+			{{if $i}},{{end}}bindsIdx + {{$i}}
+			{{- end -}}
+		))
+		bindsIdx += {{len .QueryableCols}}
 	}
 	_, err = tx.ExecContext(
 		ctx,
@@ -203,19 +214,25 @@ func (repo *SQLite{{.GetName}}Repository) Create(ctx context.Context, toCreate [
 	_ = template.Must(repositoryTemplate.New("repository-create-field-mask").Funcs(funcMap).Parse(`
 	noMaskBinds := []any{}
 	noMaskBindsStrs := []string{}
+	noMaskBindsIdx := 1
 	for _, {{toLowerCamel $.GetName}} := range toCreate {
 		if {{toLowerCamel $.GetName}}.{{camelIdentifier $.FieldMask.GetName}} == nil {
 			{{- range $col := .QueryableCols}}
 			noMaskBinds = append(noMaskBinds, {{toLowerCamel $.GetName}}.{{protoFieldAccessor $col}})
 			{{- end}}
-			noMaskBindsStrs = append(noMaskBindsStrs, "(
-			{{- range $i, $col := .QueryableCols -}}
-			{{if $i}},{{end}}?
-			{{- end -}}
-			)")
+			noMaskBindsStrs = append(noMaskBindsStrs, fmt.Sprintf("(
+				{{- range $i, $col := .QueryableCols -}}
+				{{if $i}}, {{end}}$%d
+				{{- end -}}
+			)",
+				{{- range $i, $col := .QueryableCols -}}
+				{{if $i}},{{end}}noMaskBindsIdx + {{$i}}
+				{{- end -}}
+			))
+			noMaskBindsIdx += {{len .QueryableCols}}
 			continue
 		}
-		valuesByColName, err := sqlite{{.GetName}}GetCreateValuesByColumnName({{toLowerCamel $.GetName}}, {{toLowerCamel $.GetName}}.{{camelIdentifier $.FieldMask.GetName}})
+		valuesByColName, err := pgsql{{.GetName}}GetCreateValuesByColumnName({{toLowerCamel $.GetName}}, {{toLowerCamel $.GetName}}.{{camelIdentifier $.FieldMask.GetName}})
 		if err != nil {
 			return nil, err
 		}
@@ -225,9 +242,11 @@ func (repo *SQLite{{.GetName}}Repository) Create(ctx context.Context, toCreate [
 		var binds []any
 		var cols []string
 		var params []string
+		paramsIdx := 1
 		for colName, value := range valuesByColName {
 			cols = append(cols, "\"" + colName + "\"")
-			params = append(params, "?")
+			params = append(params, fmt.Sprintf("$%d", paramsIdx))
+			paramsIdx += 1
 			binds = append(binds, value)
 		}
 		query := fmt.Sprintf(` + "`" + `INSERT INTO {{sqlQuotedIdent .GetName}} (%s) VALUES (%s)` + "`" + `,
@@ -257,13 +276,13 @@ func (repo *SQLite{{.GetName}}Repository) Create(ctx context.Context, toCreate [
 	_ = template.Must(repositoryTemplate.New("repository-read").Funcs(funcMap).Parse(`
 // Read returns a set of {{.GetName}}s matching the provided criteria
 // Read is incomplete and it should be considered unstable
-func (repo *SQLite{{.GetName}}Repository) Read(ctx context.Context, expr expressions.Expression) ([]*{{.GoType .File.GoPkg.Path}}, error) {
+func (repo *PgSQL{{.GetName}}Repository) Read(ctx context.Context, expr expressions.Expression) ([]*{{.GoType .File.GoPkg.Path}}, error) {
 	query := ` + "`" + `SELECT {{ range $i, $col := .QueryableCols -}}
 		{{if $i}},{{end}}{{sqlQuotedIdent $col.GetName}}
 		{{- end}}
 		FROM {{sqlQuotedIdent .GetName -}}
 ` + "`" + `
-	clauses, binds, err := whereClauseFromExpressionForSQLite{{.GetName}}(expr)
+	clauses, binds, err := whereClauseFromExpressionForPgSQL{{.GetName}}(expr, 1)
 	if err != nil {
 		return nil, err
 	}
@@ -305,7 +324,7 @@ func (repo *SQLite{{.GetName}}Repository) Read(ctx context.Context, expr express
 
 	_ = template.Must(repositoryTemplate.New("repository-update").Funcs(funcMap).Parse(`
 // Update modifies existing {{.GetName}}s based on the defined unique identifiers.
-func (repo *SQLite{{.GetName}}Repository) Update(ctx context.Context, toUpdate []*{{.GoType .File.GoPkg.Path}}) ([]*{{.GoType .File.GoPkg.Path}}, error) {
+func (repo *PgSQL{{.GetName}}Repository) Update(ctx context.Context, toUpdate []*{{.GoType .File.GoPkg.Path}}) ([]*{{.GoType .File.GoPkg.Path}}, error) {
 	{{- if eq (len .NonPrimeAttributes) 0 -}}
 	return nil, nil
 	{{- else -}}
@@ -320,9 +339,9 @@ func (repo *SQLite{{.GetName}}Repository) Update(ctx context.Context, toUpdate [
 
 	stmt, err := tx.Prepare(
 		` + "`" + `UPDATE {{sqlQuotedIdent .GetName}} SET {{range $i, $col := .NonPrimeAttributeCols -}}
-		{{if $i}},{{end}}{{sqlQuotedIdent $col.GetName}} = ?
+		{{if $i}},{{end}}{{sqlQuotedIdent $col.GetName}} = ${{addI $i 1}}
 		{{- end }} WHERE {{ range $i, $cols := .PrimaryKeyCols -}}
-		{{if $i}} AND {{end}}{{sqlQuotedIdent $cols.GetName}} = ?
+		{{if $i}} AND {{end}}{{sqlQuotedIdent $cols.GetName}} = ${{addI (addI $i (len $.NonPrimeAttributeCols)) 1}}
 		{{- end }}` + "`" + `,
 	)
 	if err != nil {
@@ -371,7 +390,7 @@ func (repo *SQLite{{.GetName}}Repository) Update(ctx context.Context, toUpdate [
 			}
 			continue
 		}
-		valuesByColName, err := sqlite{{.GetName}}GetUpdateValuesByColumnName({{toLowerCamel .GetName}}, {{toLowerCamel .GetName}}.{{camelIdentifier .FieldMask.GetName}})
+		valuesByColName, err := pgsql{{.GetName}}GetUpdateValuesByColumnName({{toLowerCamel .GetName}}, {{toLowerCamel .GetName}}.{{camelIdentifier .FieldMask.GetName}})
 		if err != nil {
 			return nil, err
 		}
@@ -379,18 +398,23 @@ func (repo *SQLite{{.GetName}}Repository) Update(ctx context.Context, toUpdate [
 			continue
 		}
 		var binds []any
+		bindsIdx := 1
 		var setStmts []string
 		for colName, value := range valuesByColName {
-			setStmts = append(setStmts, fmt.Sprintf("\"%s\" = ?", colName))
+			setStmts = append(setStmts, fmt.Sprintf("\"%s\" = $%d", colName, bindsIdx))
+			bindsIdx += 1
 			binds = append(binds, value)
 		}
 		_, err = tx.ExecContext(
 			ctx,
 			fmt.Sprintf(
 				` + "`" + `UPDATE {{sqlQuotedIdent .GetName}} SET %s WHERE {{ range $i, $col := .PrimaryKeyCols -}}
-				{{if $i}} AND {{end}}{{sqlQuotedIdent $col.GetName}} = ?
+				{{if $i}} AND {{end}}{{sqlQuotedIdent $col.GetName}} = $%d
 				{{- end }}` + "`" + `,
 				strings.Join(setStmts, ", "),
+				{{ range $i, $col := .PrimaryKeyCols -}}
+				bindsIdx + {{$i}},
+				{{- end }}
 			),
 			append(
 				binds,
@@ -407,9 +431,9 @@ func (repo *SQLite{{.GetName}}Repository) Update(ctx context.Context, toUpdate [
 
 	_ = template.Must(repositoryTemplate.New("repository-delete").Funcs(funcMap).Parse(`
 // Delete deletes {{.GetName}}s based on the defined unique identifiers
-func (repo *SQLite{{.GetName}}Repository) Delete(ctx context.Context, expr expressions.Expression) error {
+func (repo *PgSQL{{.GetName}}Repository) Delete(ctx context.Context, expr expressions.Expression) error {
 	query := ` + "`" + `DELETE FROM {{sqlQuotedIdent .GetName}}` + "`" + `
-	clauses, binds, err := whereClauseFromExpressionForSQLite{{.GetName}}(expr)
+	clauses, binds, err := whereClauseFromExpressionForPgSQL{{.GetName}}(expr, 1)
 	if err != nil {
 		return err
 	}
@@ -429,51 +453,51 @@ func (repo *SQLite{{.GetName}}Repository) Delete(ctx context.Context, expr expre
 `))
 
 	_ = template.Must(repositoryTemplate.New("repository-misc").Funcs(funcMap).Parse(`
-var sqlite{{.GetName}}ColumnNameByFieldID = map[expressions.FieldID]string{
+var pgsql{{.GetName}}ColumnNameByFieldID = map[expressions.FieldID]string{
 {{- range $col := .QueryableCols}}
 	{{fieldIDConstantName $col.QueryableField}}: "{{sqlIdent $col.GetName}}",
 {{- end}}
 }
 
-func whereClauseFromExpressionForSQLite{{.GetName}}(expr expressions.Expression) (string, []any, error) {
+func whereClauseFromExpressionForPgSQL{{.GetName}}(expr expressions.Expression, paramIdx int) (string, []any, error) {
 	if expr == nil {
 		return "", nil, nil
 	}
 	switch expr := expr.(type) {
 		case *expressions.And:
-			left, leftBinds, err := whereClauseFromExpressionForSQLite{{.GetName}}(expr.Left())
+			left, leftBinds, err := whereClauseFromExpressionForPgSQL{{.GetName}}(expr.Left(), paramIdx)
 			if err != nil {
 				return "", nil, err
 			}
-			right, rightBinds, err := whereClauseFromExpressionForSQLite{{.GetName}}(expr.Right())
+			right, rightBinds, err := whereClauseFromExpressionForPgSQL{{.GetName}}(expr.Right(), paramIdx + len(leftBinds))
 			if err != nil {
 				return "", nil, err
 			}
 			return fmt.Sprintf("%s AND %s", left, right), append(leftBinds, rightBinds...), nil
 
 		case *expressions.Or:
-				left, leftBinds, err := whereClauseFromExpressionForSQLite{{.GetName}}(expr.Left())
+				left, leftBinds, err := whereClauseFromExpressionForPgSQL{{.GetName}}(expr.Left(), paramIdx)
 			if err != nil {
 				return "", nil, err
 			}
-			right, rightBinds, err := whereClauseFromExpressionForSQLite{{.GetName}}(expr.Right())
+			right, rightBinds, err := whereClauseFromExpressionForPgSQL{{.GetName}}(expr.Right(), paramIdx + len(leftBinds))
 			if err != nil {
 				return "", nil, err
 			}
 			return fmt.Sprintf("%s OR %s", left, right), append(leftBinds, rightBinds...), nil
 		case *expressions.Not:
-			operand, binds, err := whereClauseFromExpressionForSQLite{{.GetName}}(expr.Operand())
+			operand, binds, err := whereClauseFromExpressionForPgSQL{{.GetName}}(expr.Operand(), paramIdx)
 			if err != nil {
 				return "", nil, err
 			}
 			return fmt.Sprintf("NOT %s", operand), binds, nil
 
 		case *expressions.Equal:
-				left, leftBinds, err := whereClauseFromExpressionForSQLite{{.GetName}}(expr.Left())
+				left, leftBinds, err := whereClauseFromExpressionForPgSQL{{.GetName}}(expr.Left(), paramIdx)
 			if err != nil {
 				return "", nil, err
 			}
-			right, rightBinds, err := whereClauseFromExpressionForSQLite{{.GetName}}(expr.Right())
+			right, rightBinds, err := whereClauseFromExpressionForPgSQL{{.GetName}}(expr.Right(), paramIdx + len(leftBinds))
 			if err != nil {
 				return "", nil, err
 			}
@@ -483,20 +507,20 @@ func whereClauseFromExpressionForSQLite{{.GetName}}(expr expressions.Expression)
 			if _, ok := valid{{.GetName}}Fields[expr.ID()]; !ok {
 				return "", nil, fmt.Errorf("invalid field id: %s", expr.ID())
 			}
-			colName, ok := sqlite{{.GetName}}ColumnNameByFieldID[expr.ID()]
+			colName, ok := pgsql{{.GetName}}ColumnNameByFieldID[expr.ID()]
 			if !ok {
 				return "", nil, fmt.Errorf("missing meta-data: field id: %s", expr.ID())
 			}
 			return fmt.Sprintf(` + "`" + `{{sqlQuotedIdent .GetName}}."%s"` + "`" + `,colName), nil, nil
 		case *expressions.Scalar:
-			return "?", []any{expr.Value()}, nil
+			return fmt.Sprintf("$%d", paramIdx), []any{expr.Value()}, nil
 		default:
 			return "", nil, fmt.Errorf("unknown expression")
 	}
 }
 
 {{if .HasFieldMask}}
-func sqlite{{.GetName}}GetCreateValuesByColumnName(def *{{.GoType .File.GoPkg.Path}}, fieldMask *fieldmaskpb.FieldMask) (map[string]any, error) {
+func pgsql{{.GetName}}GetCreateValuesByColumnName(def *{{.GoType .File.GoPkg.Path}}, fieldMask *fieldmaskpb.FieldMask) (map[string]any, error) {
 	if fieldMask == nil {
 		return nil, fmt.Errorf("no field mask provided")
 	}
@@ -518,7 +542,7 @@ func sqlite{{.GetName}}GetCreateValuesByColumnName(def *{{.GoType .File.GoPkg.Pa
 	{{end -}}
 	return valuesByColumnName, nil
 }
-func sqlite{{.GetName}}GetUpdateValuesByColumnName(def *{{.GoType .File.GoPkg.Path}}, fieldMask *fieldmaskpb.FieldMask) (map[string]any, error) {
+func pgsql{{.GetName}}GetUpdateValuesByColumnName(def *{{.GoType .File.GoPkg.Path}}, fieldMask *fieldmaskpb.FieldMask) (map[string]any, error) {
 	if fieldMask == nil {
 		return nil, fmt.Errorf("no field mask provided")
 	}

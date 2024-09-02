@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"os"
 
+	genPgSQLCRUD "github.com/samlitowitz/protoc-gen-crud/internal/generator/pgsql/crud"
+	genPgSQLSQL "github.com/samlitowitz/protoc-gen-crud/internal/generator/pgsql/sql"
 	genGoRelationship "github.com/samlitowitz/protoc-gen-crud/internal/generator/relationship"
 	genSQLiteCRUD "github.com/samlitowitz/protoc-gen-crud/internal/generator/sqlite/crud"
 	genSQLiteSQL "github.com/samlitowitz/protoc-gen-crud/internal/generator/sqlite/sql"
@@ -43,10 +45,12 @@ func main() {
 
 		crudGen := genGoCRUD.New(reg, genGoCRUD.WithFormatOutput(*formatOutput))
 		relationshipGen := genGoRelationship.New(reg)
+		pgsqlCRUDGen := genPgSQLCRUD.New(reg)
+		pgsqlSQLGen := genPgSQLSQL.New(reg)
 		sqliteCRUDGen := genSQLiteCRUD.New(reg)
 		sqliteSQLGen := genSQLiteSQL.New(reg)
 
-		gg := genGen.New(crudGen, relationshipGen, sqliteCRUDGen, sqliteSQLGen)
+		gg := genGen.New(crudGen, relationshipGen, pgsqlCRUDGen, pgsqlSQLGen, sqliteCRUDGen, sqliteSQLGen)
 
 		if err := reg.LoadFromPlugin(gen); err != nil {
 			return err

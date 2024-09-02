@@ -31,6 +31,10 @@ func (r *Registry) loadCRUDs(file *File) error {
 			return fmt.Errorf("%s: %v", msg.FQMN(), err)
 		}
 
+		for impl := range msg.Implementations {
+			file.Implementations[impl] = struct{}{}
+		}
+
 		for _, field := range msg.Fields {
 			_, isPrimeAttribute := msg.PrimaryKeyByFQFN[field.FQFN()]
 			field.IsPrimeAttribute = isPrimeAttribute

@@ -15,7 +15,7 @@ enum PrimaryKeyEnum {
 
 message SAEnum {
   option (protoc_gen_crud.options.crud_message_options) = {
-    implementations: [SQLITE]
+    implementations: [SQLITE, PGSQL]
     primaryKey: ["id"]
   };
 
@@ -26,7 +26,7 @@ message SAEnum {
 
 message SAInt32 {
   option (protoc_gen_crud.options.crud_message_options) = {
-    implementations: [SQLITE]
+    implementations: [SQLITE, PGSQL]
     primaryKey: ["id"]
   };
   int32 id = 1;
@@ -36,7 +36,7 @@ message SAInt32 {
 
 message SAInt64 {
   option (protoc_gen_crud.options.crud_message_options) = {
-    implementations: [SQLITE]
+    implementations: [SQLITE, PGSQL]
     primaryKey: ["id"]
   };
   int64 id = 1;
@@ -46,7 +46,7 @@ message SAInt64 {
 
 message SAUint32 {
   option (protoc_gen_crud.options.crud_message_options) = {
-    implementations: [SQLITE]
+    implementations: [SQLITE, PGSQL]
     primaryKey: ["id"]
   };
   uint32 id = 1;
@@ -56,7 +56,7 @@ message SAUint32 {
 
 message SAUint64 {
   option (protoc_gen_crud.options.crud_message_options) = {
-    implementations: [SQLITE]
+    implementations: [SQLITE, PGSQL]
     primaryKey: ["id"]
   };
   uint64 id = 1;
@@ -66,7 +66,7 @@ message SAUint64 {
 
 message SAString {
   option (protoc_gen_crud.options.crud_message_options) = {
-    implementations: [SQLITE]
+    implementations: [SQLITE, PGSQL]
     primaryKey: ["id"]
   };
   string id = 1;
@@ -76,7 +76,7 @@ message SAString {
 
 message MAAll {
   option (protoc_gen_crud.options.crud_message_options) = {
-    implementations: [SQLITE]
+    implementations: [SQLITE, PGSQL]
     primaryKey: ["id_enum", "id_int32", "id_int64", "id_uint32", "id_uint64", "id_string"]
   };
 

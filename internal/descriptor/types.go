@@ -54,6 +54,8 @@ type File struct {
 	// For example, the source file "dir/foo.proto" might have a filename prefix
 	// of "dir/foo". Appending ".pb.go" produces an output file of "dir/foo.pb.go".
 	GeneratedFilenamePrefix string
+	// Implementations is a set of implementations used by any message in this file
+	Implementations map[options.Implementation]struct{}
 	// Messages is the list of messages defined in this file.
 	Messages []*Message
 	// Enums is the list of enums defined in this file.

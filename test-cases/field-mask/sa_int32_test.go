@@ -461,6 +461,7 @@ func TestSAInt32Repository_Update_WithNoFieldMaskUsedModifiesAllNonPrimeAttribut
 func saInt32ImplementationsToTest() map[string]saInt32ComponentUnderTest {
 	return map[string]saInt32ComponentUnderTest{
 		"SQLite": sqliteSAInt32ComponentUnderTest,
+		"PgSQL":  pgsqlSAInt32ComponentUnderTest,
 	}
 }
 

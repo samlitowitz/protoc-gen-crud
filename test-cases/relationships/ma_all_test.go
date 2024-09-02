@@ -6,9 +6,11 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/samlitowitz/protoc-gen-crud/expressions"
+	test_cases "github.com/samlitowitz/protoc-gen-crud/test-cases"
 
-	"modernc.org/sqlite"
+	"github.com/samlitowitz/protoc-gen-crud/expressions"
+	"github.com/samlitowitz/protoc-gen-crud/options"
+
 	sqliteLib "modernc.org/sqlite/lib"
 
 	"github.com/google/go-cmp/cmp"
@@ -20,7 +22,8 @@ import (
 func TestMAAllRepository_Create_WithADuplicatePrimaryKeyFails(t *testing.T) {
 	opts := maAllDefaultCmpOpts()
 
-	for repoDesc, componentUnderTest := range maAllImplementationsToTest() {
+	for repoType, componentUnderTest := range maAllImplementationsToTest() {
+		repoDesc := repoType.String()
 		// Call setup function, inject t *testing.T, and use t.Cleanup
 		repoImpl := componentUnderTest(t)
 		if repoImpl == nil {
@@ -147,13 +150,16 @@ func TestMAAllRepository_Create_WithADuplicatePrimaryKeyFails(t *testing.T) {
 			t.Fatalf("%s: Create(): expected error", repoDesc)
 		}
 
-		sqlErr, ok := err.(*sqlite.Error)
-		if !ok {
-			t.Fatalf("%s: Create(): expected *sqlite.Error, got %T", repoDesc, err)
-		}
-		if sqlErr.Code() != sqliteLib.SQLITE_CONSTRAINT_PRIMARYKEY {
-			t.Fatalf("%s: Create(): expected duplicate error code, got %d", repoDesc, sqlErr.Code())
-		}
+		test_cases.AssertSQLErrorCode(
+			t,
+			repoType,
+			map[options.Implementation]any{
+				options.Implementation_PGSQL:  "23505",
+				options.Implementation_SQLITE: sqliteLib.SQLITE_CONSTRAINT_PRIMARYKEY,
+			},
+			err,
+			fmt.Sprintf("%s: Create(): ", repoDesc),
+		)
 
 		res, err = repoImpl.Read(context.Background(), nil)
 		if err != nil {
@@ -180,7 +186,8 @@ func TestMAAllRepository_Create_WithADuplicatePrimaryKeyFails(t *testing.T) {
 func TestMAAllRepository_Create_WithANonDuplicatePrimaryKeySucceeds(t *testing.T) {
 	opts := maAllDefaultCmpOpts()
 
-	for repoDesc, componentUnderTest := range maAllImplementationsToTest() {
+	for repoType, componentUnderTest := range maAllImplementationsToTest() {
+		repoDesc := repoType.String()
 		// Call setup function, inject t *testing.T, and use t.Cleanup
 		repoImpl := componentUnderTest(t)
 		if repoImpl == nil {
@@ -287,7 +294,8 @@ func TestMAAllRepository_Create_WithANonDuplicatePrimaryKeySucceeds(t *testing.T
 }
 
 func TestMAAllRepository_Update_WithUnLocatablePrimaryKeyUpdatesNothing(t *testing.T) {
-	for repoDesc, componentUnderTest := range maAllImplementationsToTest() {
+	for repoType, componentUnderTest := range maAllImplementationsToTest() {
+		repoDesc := repoType.String()
 		// Call setup function, inject t *testing.T, and use t.Cleanup
 		repoImpl := componentUnderTest(t)
 		if repoImpl == nil {
@@ -382,7 +390,8 @@ func TestMAAllRepository_Update_WithUnLocatablePrimaryKeyUpdatesNothing(t *testi
 func TestMAAllRepository_Update_WithLocatablePrimaryKeySucceeds(t *testing.T) {
 	opts := maAllDefaultCmpOpts()
 
-	for repoDesc, componentUnderTest := range maAllImplementationsToTest() {
+	for repoType, componentUnderTest := range maAllImplementationsToTest() {
+		repoDesc := repoType.String()
 		// Call setup function, inject t *testing.T, and use t.Cleanup
 		repoImpl := componentUnderTest(t)
 		if repoImpl == nil {
@@ -674,7 +683,8 @@ func TestMAAllRepository_Delete_WithLocatablePrimaryKeySucceeds(t *testing.T) {
 	}
 
 	for testDesc, testCase := range testCases {
-		for repoDesc, componentUnderTest := range maAllImplementationsToTest() {
+		for repoType, componentUnderTest := range maAllImplementationsToTest() {
+			repoDesc := repoType.String()
 			// Call setup function, inject t *testing.T, and use t.Cleanup
 			repoImpl := componentUnderTest(t)
 			if repoImpl == nil {
@@ -782,9 +792,10 @@ func TestMAAllRepository_Delete_WithLocatablePrimaryKeySucceeds(t *testing.T) {
 	}
 }
 
-func maAllImplementationsToTest() map[string]maAllComponentUnderTest {
-	return map[string]maAllComponentUnderTest{
-		"SQLite": sqliteMAAllComponentUnderTest,
+func maAllImplementationsToTest() map[options.Implementation]maAllComponentUnderTest {
+	return map[options.Implementation]maAllComponentUnderTest{
+		options.Implementation_SQLITE: sqliteMAAllComponentUnderTest,
+		options.Implementation_PGSQL:  pgsqlMAAllComponentUnderTest,
 	}
 }
 

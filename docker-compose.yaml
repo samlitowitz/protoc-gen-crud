@@ -1,8 +1,10 @@
 services:
   go-test:
-    image: golang:1.23-alpine
-    entrypoint: [ "go" ]
-    command: [ "test","-v","./test-cases/..." ]
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: "go-test"
+    command: [ "go", "test", "-v", "./test-cases/relationships/..." ]
     environment:
       - DB_HOST=go-test-db:5432
       - DB_USER_FILE=/run/secrets/go-test-db-user
@@ -14,9 +16,29 @@ services:
     secrets:
       - go-test-db-user
       - go-test-db-password
-    working_dir: "/app"
-    volumes:
-      - "./:/app:ro"
+
+  go-test-dlv:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: "go-test-dlv"
+    image: go-test-dlv
+    command: [ "dlv", "test", "--listen=:40000", "--headless=true", "--api-version=2", "--accept-multiclient", "./test-cases/primary-key", "--", "-test.v", "-test.run", "^TestSAEnumRepository_Create_WithADuplicatePrimaryKeyFails" ]
+    environment:
+      - DB_HOST=go-test-db:5432
+      - DB_USER_FILE=/run/secrets/go-test-db-user
+      - DB_PASSWORD_FILE=/run/secrets/go-test-db-password
+    expose:
+      - 40000
+    ports:
+      - "127.0.0.1:40000:40000"
+    depends_on:
+      - go-test-db
+    networks:
+      - test
+    secrets:
+      - go-test-db-user
+      - go-test-db-password
 
   go-test-db:
     image: postgres:16-alpine
@@ -24,13 +46,18 @@ services:
       - PGDATA=/var/lib/postgresql/data/pgdata
       - POSTGRES_USER_FILE=/run/secrets/go-test-db-user
       - POSTGRES_PASSWORD_FILE=/run/secrets/go-test-db-password
+    expose:
+      - 5432
+    ports:
+      - "127.0.0.1:5432:5432"
     networks:
       - test
     secrets:
       - go-test-db-user
       - go-test-db-password
+    user: ${DOCKER_USER}
     volumes:
-      - "./docker/go-test-db/data:/var/lib/postgresql/data"
+      - "./data/go-test-db/data:/var/lib/postgresql/data"
 
 networks:
   test:

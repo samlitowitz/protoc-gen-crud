@@ -5,9 +5,12 @@ import (
 	"fmt"
 	"testing"
 
+	test_cases "github.com/samlitowitz/protoc-gen-crud/test-cases"
+
+	"github.com/samlitowitz/protoc-gen-crud/options"
+
 	"github.com/samlitowitz/protoc-gen-crud/expressions"
 
-	"modernc.org/sqlite"
 	sqliteLib "modernc.org/sqlite/lib"
 
 	"github.com/google/go-cmp/cmp"
@@ -19,7 +22,8 @@ import (
 func TestSAInt64Repository_Create_WithADuplicatePrimaryKeyFails(t *testing.T) {
 	opts := saInt64DefaultCmpOpts()
 
-	for repoDesc, componentUnderTest := range saInt64ImplementationsToTest() {
+	for repoType, componentUnderTest := range saInt64ImplementationsToTest() {
+		repoDesc := repoType.String()
 		// Call setup function, inject t *testing.T, and use t.Cleanup
 		repoImpl := componentUnderTest(t)
 		if repoImpl == nil {
@@ -106,13 +110,16 @@ func TestSAInt64Repository_Create_WithADuplicatePrimaryKeyFails(t *testing.T) {
 			t.Fatalf("%s: Create(): expected error", repoDesc)
 		}
 
-		sqlErr, ok := err.(*sqlite.Error)
-		if !ok {
-			t.Fatalf("%s: Create(): expected *sqlite.Error, got %T", repoDesc, err)
-		}
-		if sqlErr.Code() != sqliteLib.SQLITE_CONSTRAINT_PRIMARYKEY {
-			t.Fatalf("%s: Create(): expected duplicate error code, got %d", repoDesc, sqlErr.Code())
-		}
+		test_cases.AssertSQLErrorCode(
+			t,
+			repoType,
+			map[options.Implementation]any{
+				options.Implementation_PGSQL:  "23505",
+				options.Implementation_SQLITE: sqliteLib.SQLITE_CONSTRAINT_PRIMARYKEY,
+			},
+			err,
+			fmt.Sprintf("%s: Create(): ", repoDesc),
+		)
 
 		res, err = repoImpl.Read(context.Background(), nil)
 		if err != nil {
@@ -139,7 +146,8 @@ func TestSAInt64Repository_Create_WithADuplicatePrimaryKeyFails(t *testing.T) {
 func TestSAInt64Repository_Create_WithANonDuplicatePrimaryKeySucceeds(t *testing.T) {
 	opts := saInt64DefaultCmpOpts()
 
-	for repoDesc, componentUnderTest := range saInt64ImplementationsToTest() {
+	for repoType, componentUnderTest := range saInt64ImplementationsToTest() {
+		repoDesc := repoType.String()
 		// Call setup function, inject t *testing.T, and use t.Cleanup
 		repoImpl := componentUnderTest(t)
 		if repoImpl == nil {
@@ -226,7 +234,8 @@ func TestSAInt64Repository_Create_WithANonDuplicatePrimaryKeySucceeds(t *testing
 }
 
 func TestSAInt64Repository_Update_WithUnLocatablePrimaryKeyUpdatesNothing(t *testing.T) {
-	for repoDesc, componentUnderTest := range saInt64ImplementationsToTest() {
+	for repoType, componentUnderTest := range saInt64ImplementationsToTest() {
+		repoDesc := repoType.String()
 		// Call setup function, inject t *testing.T, and use t.Cleanup
 		repoImpl := componentUnderTest(t)
 		if repoImpl == nil {
@@ -301,7 +310,8 @@ func TestSAInt64Repository_Update_WithUnLocatablePrimaryKeyUpdatesNothing(t *tes
 func TestSAInt64Repository_Update_WithLocatablePrimaryKeySucceeds(t *testing.T) {
 	opts := saInt64DefaultCmpOpts()
 
-	for repoDesc, componentUnderTest := range saInt64ImplementationsToTest() {
+	for repoType, componentUnderTest := range saInt64ImplementationsToTest() {
+		repoDesc := repoType.String()
 		// Call setup function, inject t *testing.T, and use t.Cleanup
 		repoImpl := componentUnderTest(t)
 		if repoImpl == nil {
@@ -508,7 +518,8 @@ func TestSAInt64Repository_Delete_WithLocatablePrimaryKeySucceeds(t *testing.T) 
 	}
 
 	for testDesc, testCase := range testCases {
-		for repoDesc, componentUnderTest := range saInt64ImplementationsToTest() {
+		for repoType, componentUnderTest := range saInt64ImplementationsToTest() {
+			repoDesc := repoType.String()
 			// Call setup function, inject t *testing.T, and use t.Cleanup
 			repoImpl := componentUnderTest(t)
 			if repoImpl == nil {
@@ -615,9 +626,10 @@ func TestSAInt64Repository_Delete_WithLocatablePrimaryKeySucceeds(t *testing.T) 
 	}
 }
 
-func saInt64ImplementationsToTest() map[string]saInt64ComponentUnderTest {
-	return map[string]saInt64ComponentUnderTest{
-		"SQLite": sqliteSAInt64ComponentUnderTest,
+func saInt64ImplementationsToTest() map[options.Implementation]saInt64ComponentUnderTest {
+	return map[options.Implementation]saInt64ComponentUnderTest{
+		options.Implementation_SQLITE: sqliteSAInt64ComponentUnderTest,
+		options.Implementation_PGSQL:  pgsqlSAInt64ComponentUnderTest,
 	}
 }
 

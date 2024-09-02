@@ -807,6 +807,7 @@ func TestMAAllRepository_Update_WithNoFieldMaskUsedModifiesAllNonPrimeAttributes
 func maAllImplementationsToTest() map[string]maAllComponentUnderTest {
 	return map[string]maAllComponentUnderTest{
 		"SQLite": sqliteMAAllComponentUnderTest,
+		"PgSQL":  pgsqlMAAllComponentUnderTest,
 	}
 }
 
