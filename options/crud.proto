@@ -11,6 +11,7 @@ option go_package = "github.com/samlitowitz/protoc-gen-crud/options";
 enum Implementation {
   UNKNOWN = 0;
   SQLITE = 1;
+  PGSQL = 2;
 }
 
 message FileOptions {}
