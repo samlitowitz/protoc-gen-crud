@@ -1,0 +1,43 @@
+services:
+  go-test:
+    image: golang:1.23-alpine
+    entrypoint: [ "go" ]
+    command: [ "test","-v","./test-cases/..." ]
+    environment:
+      - DB_HOST=go-test-db:5432
+      - DB_USER_FILE=/run/secrets/go-test-db-user
+      - DB_PASSWORD_FILE=/run/secrets/go-test-db-password
+    depends_on:
+      - go-test-db
+    networks:
+      - test
+    secrets:
+      - go-test-db-user
+      - go-test-db-password
+    working_dir: "/app"
+    volumes:
+      - "./:/app:ro"
+
+  go-test-db:
+    image: postgres:16-alpine
+    environment:
+      - PGDATA=/var/lib/postgresql/data/pgdata
+      - POSTGRES_USER_FILE=/run/secrets/go-test-db-user
+      - POSTGRES_PASSWORD_FILE=/run/secrets/go-test-db-password
+    networks:
+      - test
+    secrets:
+      - go-test-db-user
+      - go-test-db-password
+    volumes:
+      - "./docker/go-test-db/data:/var/lib/postgresql/data"
+
+networks:
+  test:
+    name: protoc-gen-crud_test
+
+secrets:
+  go-test-db-user:
+    file: docker/go-test-db/secrets/user
+  go-test-db-password:
+    file: docker/go-test-db/secrets/password
