@@ -25,18 +25,21 @@
 | Implementation | Create             | Read               | Update             | Delete             |
 |:---------------|:-------------------|:-------------------|:-------------------|:-------------------|
 | SQLite         | :white_check_mark: | :white_check_mark: | :white_check_mark: | :white_check_mark: |
+| PgSQL          | :white_check_mark: | :white_check_mark: | :white_check_mark: | :white_check_mark: |
 
 ### Delete Strategy
 
 | Implementation | Hard               | Soft |
 |:---------------|:-------------------|:-----|
 | SQLite         | :white_check_mark: |      |
+| PgSQL          | :white_check_mark: |      |
 
 ### Partial Creates/Updates
 
 | Implementation | Field Mask         |
 |:---------------|:-------------------|
 | SQLite         | :white_check_mark: |
+| PgSQL          | :white_check_mark: |
 
 ### Meta-Data
 
@@ -56,13 +59,15 @@
 
 | Implementation | Single             | Composite |
 |:---------------|:-------------------|:----------|
-| SQLite         | :white_check_mark: |           |
+| SQLite         | :white_check_mark: | :white_check_mark: |
+| PgSQL          | :white_check_mark: | :white_check_mark: |
 
 ### Auto-generate Strategy
 
 | Implementation | None | UUID | Sequential Integer |
 |:---------------|:-----|:-----|:-------------------|
 | SQLite         |   :white_check_mark:   |      |                    |
+| PgSQL          |   :white_check_mark:   |      |                    |
 
 ### Nullable
 
@@ -75,6 +80,7 @@
 | Implementation | Skip | Inline             | Relationship (see below) |
 |:---------------|:-----|:-------------------|:-------------------------|
 | SQLite         | :white_check_mark:     | :white_check_mark: | -                        |
+| PgSQL          | :white_check_mark:     | :white_check_mark: | -                        |
 
 #### Relationship
 
@@ -88,9 +94,10 @@
 
 ##### Unidirectional
 
-| Implementation | One-to-one | One-to-many | Many-to-many |
-|:---------------|:-----------|:------------|:-------------|
-| SQLite         |            |             |              |
+| Implementation | One-to-one          | One-to-many | Many-to-many |
+|:---------------|:--------------------|:------------|:-------------|
+| SQLite         | :white_check_mark:  |             |              |
+| PgSQL          | :white_check_mark:  |             |              |
 
 # References
 
