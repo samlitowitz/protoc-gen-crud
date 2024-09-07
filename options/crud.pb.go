@@ -20,12 +20,13 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
+// Implementations supported by `protoc-gen-crud`
 type Implementation int32
 
 const (
-	Implementation_UNKNOWN Implementation = 0
-	Implementation_SQLITE  Implementation = 1
-	Implementation_PGSQL   Implementation = 2
+	Implementation_UNKNOWN Implementation = 0 // Generate nothing via `protoc-gen-crud`
+	Implementation_SQLITE  Implementation = 1 // Generate SQLite SQL and Go code
+	Implementation_PGSQL   Implementation = 2 // Generate Postgres SQL and Go code
 )
 
 // Enum value maps for Implementation.
@@ -150,9 +151,16 @@ type MessageOptions struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
+	// Sets the implementations to generate for this message.
 	Implementations []Implementation `protobuf:"varint,1,rep,packed,name=implementations,proto3,enum=protoc_gen_crud.options.Implementation" json:"implementations,omitempty"`
-	FieldMask       string           `protobuf:"bytes,2,opt,name=fieldMask,proto3" json:"fieldMask,omitempty"`
-	PrimaryKey      []string         `protobuf:"bytes,3,rep,name=primaryKey,proto3" json:"primaryKey,omitempty"`
+	// Sets the property of this message to be used as the field mask.
+	// The field mask is enables and is required for partial update support.
+	// If set, the property must exist on the message and be of type `google.protobuf.FieldMask`.
+	// If not set updates affect all message properties.
+	FieldMask string `protobuf:"bytes,2,opt,name=fieldMask,proto3" json:"fieldMask,omitempty"`
+	// Sets the properties of this message to be used as primary key(s).
+	// There must be at least one primary key defined.
+	PrimaryKey []string `protobuf:"bytes,3,rep,name=primaryKey,proto3" json:"primaryKey,omitempty"`
 }
 
 func (x *MessageOptions) Reset() {
@@ -246,6 +254,7 @@ func (*ServiceOptions) Descriptor() ([]byte, []int) {
 	return file_protoc_gen_crud_options_crud_proto_rawDescGZIP(), []int{3}
 }
 
+// TODO: Document FieldOptions
 type FieldOptions struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache

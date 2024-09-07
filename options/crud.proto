@@ -6,12 +6,14 @@ import "protoc-gen-crud/options/relationship.proto";
 
 option go_package = "github.com/samlitowitz/protoc-gen-crud/options";
 
-// TODO: Document this file, enum, enum values, message, and fields
+// Please see the [test cases](test-cases/) for examples of how to use
+// these options and the output produced.
 
+// Implementations supported by `protoc-gen-crud`
 enum Implementation {
-  UNKNOWN = 0;
-  SQLITE = 1;
-  PGSQL = 2;
+  UNKNOWN = 0;  // Generate nothing via `protoc-gen-crud`
+  SQLITE = 1;   // Generate SQLite SQL and Go code
+  PGSQL = 2;    // Generate Postgres SQL and Go code
 }
 
 message FileOptions {}
@@ -19,13 +21,23 @@ message FileOptions {}
 message MethodOptions {}
 
 message MessageOptions {
+  // Sets the implementations to generate for this message.
   repeated Implementation implementations = 1;
+
+  // Sets the property of this message to be used as the field mask.
+  // The field mask is enables and is required for partial update support.
+  // If set, the property must exist on the message and be of type `google.protobuf.FieldMask`.
+  // If not set updates affect all message properties.
   string fieldMask = 2;
+
+  // Sets the properties of this message to be used as primary key(s).
+  // There must be at least one primary key defined.
   repeated string primaryKey = 3;
 }
 
 message ServiceOptions {}
 
+// TODO: Document FieldOptions
 message FieldOptions {
   Relationship relationship = 1;
   bool ignore = 2;
