@@ -25,7 +25,7 @@ message MessageOptions {
   repeated Implementation implementations = 1;
 
   // Sets the property of this message to be used as the field mask.
-  // The field mask is enables and is required for partial update support.
+  // The field mask is enables and is required for partial create and update support.
   // If set, the property must exist on the message and be of type `google.protobuf.FieldMask`.
   // If not set updates affect all message properties.
   string fieldMask = 2;
