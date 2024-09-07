@@ -85,7 +85,7 @@ DROP TABLE IF EXISTS {{quotedIdent .GetName}};
 CREATE TABLE IF NOT EXISTS {{quotedIdent .GetName}} (
 {{- range $i, $col := .PrimaryKeyCols -}}
     {{- if $i}},{{end}}
-    {{- template "column-definition" $col}}
+    {{template "column-definition" $col}}
 {{- end -}}
 {{- if gt (len .NonPrimeAttributeCols) 0 -}},{{- end -}}
 
