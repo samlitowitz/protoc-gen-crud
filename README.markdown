@@ -62,6 +62,13 @@
 | SQLite         | :white_check_mark: | :white_check_mark: |
 | PgSQL          | :white_check_mark: | :white_check_mark: |
 
+### As Timestamp
+
+| Implementation | google.protobuf.Timestamp |
+|:---------------|-------------------|
+| SQLite         |                     |
+| PgSQL          |                     |
+
 ### Auto-generate Strategy
 
 | Implementation | None | UUID | Sequential Integer |

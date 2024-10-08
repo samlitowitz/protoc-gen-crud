@@ -7,14 +7,13 @@ option go_package = "github.com/samlitowitz/protoc-gen-crud/test-cases/inline-fi
 import "protoc-gen-crud/options/annotations.proto";
 import "google/protobuf/timestamp.proto";
 
-message Test {
+message InlineTimestamp {
   option (protoc_gen_crud.options.crud_message_options) = {
-    implementations: [SQLITE]
+    implementations: [SQLITE, PGSQL]
     primaryKey: ["id"]
   };
-  string id = 1;
-  string data = 2;
-  google.protobuf.Timestamp timestamp = 3 [
+  int32 id = 1;
+  google.protobuf.Timestamp timestamp = 2 [
     (protoc_gen_crud.options.crud_field_options) = {
       inline: true
     }

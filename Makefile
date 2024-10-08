@@ -28,7 +28,7 @@ generate-test-cases:
 	PROJECT_PROTO_INCLUDE=${PROJECT_PROTO_INCLUDE} PROJECT_PROTO_OUT=${PROJECT_PROTO_OUT} go generate -v ./test-cases/...
 
 generate-tmp:
-	PROJECT_PROTO_INCLUDE=${PROJECT_PROTO_INCLUDE} PROJECT_PROTO_OUT=${PROJECT_PROTO_OUT} go generate -v ./test-cases/inline-field
+	PROJECT_PROTO_INCLUDE=${PROJECT_PROTO_INCLUDE} PROJECT_PROTO_OUT=${PROJECT_PROTO_OUT} go generate -v ./test-cases/as-timestamp-field
 
 docker-test:
 	docker-compose run --rm --build go-test
