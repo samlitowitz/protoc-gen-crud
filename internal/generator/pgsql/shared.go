@@ -38,6 +38,10 @@ func (col *Column) GetName() string {
 }
 
 func (col *Column) GetComment() string {
+	if col.AsTimestamp {
+		return ""
+	}
+
 	switch col.Field.GetType() {
 	case descriptorpb.FieldDescriptorProto_TYPE_DOUBLE:
 		fallthrough
@@ -83,6 +87,10 @@ func (col *Column) GetComment() string {
 }
 
 func (col *Column) GetType() string {
+	if col.Field.AsTimestamp {
+		return "TIMESTAMP WITH TIME ZONE"
+	}
+
 	switch col.Field.GetType() {
 	case descriptorpb.FieldDescriptorProto_TYPE_DOUBLE:
 		fallthrough

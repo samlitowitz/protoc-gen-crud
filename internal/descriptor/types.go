@@ -270,6 +270,8 @@ type Field struct {
 	ForcePrefixedName bool
 
 	// CRUD Field Options
+	// AsTimestamp when set to true indicates that this field is to be treated as an implementation of `google.golang.org/protobuf/types/known/timestamppb.Timestamp`
+	AsTimestamp bool
 	// Ignore when set to true indicates this field is not to be used for or by and generated CRUD code
 	Ignore bool
 	// Inline when set to true indicates all scalar value fields on the message type associated with this field will be treated as if they were on the parent message

@@ -22,6 +22,9 @@ func init() {
 }
 
 func protoFieldAccessorFn(col *genSQLite.Column) string {
+	if col.AsTimestamp {
+		return fmt.Sprintf("Get%s().AsTime().Format(time.RFC3339)", casing.CamelIdentifier(col.GetName()))
+	}
 	if col.IsInlined {
 		return fmt.Sprintf("Get%s().Get%s()", casing.CamelIdentifier(col.Parent.GetName()), casing.CamelIdentifier(col.Field.GetName()))
 	}

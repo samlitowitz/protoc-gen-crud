@@ -38,6 +38,9 @@ func (col *Column) GetName() string {
 }
 
 func (col *Column) GetComment() string {
+	if col.Field.AsTimestamp {
+		return " /* stored as RFC3339 string */"
+	}
 	switch col.Field.GetType() {
 	case descriptorpb.FieldDescriptorProto_TYPE_DOUBLE:
 		fallthrough
@@ -83,6 +86,9 @@ func (col *Column) GetComment() string {
 }
 
 func (col *Column) GetType() string {
+	if col.Field.AsTimestamp {
+		return "TEXT"
+	}
 	switch col.Field.GetType() {
 	case descriptorpb.FieldDescriptorProto_TYPE_DOUBLE:
 		fallthrough

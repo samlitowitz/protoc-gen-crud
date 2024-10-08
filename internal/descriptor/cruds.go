@@ -164,6 +164,7 @@ func assignRelationships(r *Registry, msg *Message, field *Field, fieldOpts *cru
 func assignFieldOptions(field *Field, fieldOpts *crudOptions.FieldOptions) error {
 	field.Ignore = fieldOpts.Ignore
 	field.Inline = fieldOpts.Inline
+	field.AsTimestamp = fieldOpts.AsTimestamp
 	return nil
 }
 
