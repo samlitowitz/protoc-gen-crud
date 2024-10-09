@@ -290,13 +290,27 @@ func (repo *SQLite{{.GetName}}Repository) Read(ctx context.Context, expr express
 			{{if $field.Inline}}{{camelIdentifier $field.GetName}}: &{{$field.FieldMessage.GoType $.File.GoPkg.Path}}{},{{end}}
 			{{- end}}
 		}
+		{{range $i, $field := .NonPrimeAttributes -}}
+		{{if $field.AsTimestamp}}var {{toLowerCamel $field.GetName}}TimeStr string{{end}}
+		{{- end}}
 		if err = rows.Scan(
 		{{- range $i, $col := .QueryableCols -}}
-		{{if $i}},{{end}} &{{toLowerCamel $.GetName}}.{{protoFieldField $col}}
+		{{if $i}},{{end}}
+		{{- if not $col.Field.AsTimestamp}} &{{toLowerCamel $.GetName}}.{{protoFieldField $col}} {{end -}}
+		{{- if $col.Field.AsTimestamp}} &{{toLowerCamel $col.Field.GetName}}TimeStr {{end -}}
 		{{- end -}}
 		); err != nil {
 			return nil, err
 		}
+		{{ range $i, $col := .QueryableCols -}}
+		{{ if $col.Field.AsTimestamp}}
+		{{toLowerCamel $col.Field.GetName}}Time, err := time.Parse(time.RFC3339, {{toLowerCamel $col.Field.GetName}}TimeStr)
+		if err != nil {
+			return nil, err
+		}
+		{{toLowerCamel $.GetName}}.{{protoFieldField $col}} = timestamppb.New({{toLowerCamel $col.Field.GetName}}Time)
+		{{end }}
+		{{- end }}
 		found = append(found, {{toLowerCamel .GetName}})
 	}
 	if err = rows.Err(); err != nil {
