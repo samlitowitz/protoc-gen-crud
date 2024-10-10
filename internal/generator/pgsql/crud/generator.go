@@ -120,6 +120,10 @@ func (g *generator) addMessagePathParamImports(file *descriptor.File, msg *descr
 			pkgSeen["github.com/jackc/pgx/v5/pgtype"] = true
 			imports = append(imports, descriptor.GoPackage{Path: "github.com/jackc/pgx/v5/pgtype", Name: "pgtype"})
 		}
+		if f.AsTimestamp && !pkgSeen["time"] {
+			pkgSeen["time"] = true
+			imports = append(imports, descriptor.GoPackage{Path: "time", Name: "time"})
+		}
 		t, err := g.reg.LookupMsg("", f.GetTypeName())
 		if err != nil {
 			continue

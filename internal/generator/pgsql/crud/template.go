@@ -525,6 +525,8 @@ func whereClauseFromExpressionForPgSQL{{.GetName}}(expr expressions.Expression, 
 			return fmt.Sprintf(` + "`" + `{{sqlQuotedIdent .GetName}}."%s"` + "`" + `,colName), nil, nil
 		case *expressions.Scalar:
 			return fmt.Sprintf("$%d", paramIdx), []any{expr.Value()}, nil
+		case expressions.Timestamp:
+			return fmt.Sprintf("$%d", paramIdx), []any{time.Time(expr)}, nil
 		default:
 			return "", nil, fmt.Errorf("unknown expression")
 	}

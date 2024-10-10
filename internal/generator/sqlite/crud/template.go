@@ -507,6 +507,8 @@ func whereClauseFromExpressionForSQLite{{.GetName}}(expr expressions.Expression)
 			return fmt.Sprintf(` + "`" + `{{sqlQuotedIdent .GetName}}."%s"` + "`" + `,colName), nil, nil
 		case *expressions.Scalar:
 			return "?", []any{expr.Value()}, nil
+		case expressions.Timestamp:
+			return "?", []any{time.Time(expr).Format(time.RFC3339)}, nil
 		default:
 			return "", nil, fmt.Errorf("unknown expression")
 	}

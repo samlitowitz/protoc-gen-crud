@@ -504,11 +504,11 @@ func TestAsTimestamp_DescriptorRepository_Delete_WithLocatablePrimaryKeySucceeds
 			deleteExpression: expressions.NewOr(
 				expressions.NewEqual(
 					expressions.NewIdentifier(as_timestamp_field.AsTimestamp_Timestamp_Field),
-					expressions.NewScalar(one_hour_ago.GetSeconds()),
+					expressions.NewTimestamp(one_hour_ago.AsTime()),
 				),
 				expressions.NewEqual(
 					expressions.NewIdentifier(as_timestamp_field.AsTimestamp_Timestamp_Field),
-					expressions.NewScalar(two_hour_ago.GetSeconds()),
+					expressions.NewTimestamp(two_hour_ago.AsTime()),
 				),
 			),
 			expected: []*as_timestamp_field.AsTimestamp{
@@ -644,6 +644,7 @@ func asTimestampDefaultCmpOpts() cmp.Options {
 	return cmp.Options{
 		cmpopts.IgnoreUnexported(as_timestamp_field.AsTimestamp{}),
 		cmpopts.IgnoreUnexported(timestamppb.Timestamp{}),
+		cmpopts.IgnoreFields(timestamppb.Timestamp{}, "Nanos"),
 		cmpopts.SortSlices(func(x, y *as_timestamp_field.AsTimestamp) bool {
 			return x.GetId() < y.GetId()
 		}),

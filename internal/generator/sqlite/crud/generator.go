@@ -120,9 +120,6 @@ func (g *generator) addMessagePathParamImports(file *descriptor.File, msg *descr
 			pkgSeen["time"] = true
 			imports = append(imports, descriptor.GoPackage{Path: "time", Name: "time"})
 		}
-		if f.AsTimestamp {
-			continue
-		}
 		t, err := g.reg.LookupMsg("", f.GetTypeName())
 		if err != nil {
 			continue
