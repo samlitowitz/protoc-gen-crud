@@ -1,5 +1,7 @@
 package expressions
 
+import "time"
+
 type FieldID string
 
 type Expression interface {
@@ -119,4 +121,15 @@ func (s Scalar) Operands() []Expression {
 
 func (s Scalar) Value() any {
 	return s.value
+}
+
+// Timestamp
+type Timestamp time.Time
+
+func NewTimestamp(value time.Time) Timestamp {
+	return Timestamp(value)
+}
+
+func (t Timestamp) Operands() []Expression {
+	return nil
 }
