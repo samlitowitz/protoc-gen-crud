@@ -6,11 +6,8 @@ import (
 	"os"
 	"strings"
 
-	pgx_zap "github.com/jackc/pgx-zap"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/stdlib"
-	"github.com/jackc/pgx/v5/tracelog"
-	"go.uber.org/zap"
 )
 
 func PgSQLDBURLFromEnv() (string, error) {
@@ -47,14 +44,14 @@ func PgSQLDBURLFromEnv() (string, error) {
 	if err != nil {
 		return "", fmt.Errorf("parse config: %w", err)
 	}
-	devLogger, err := zap.NewDevelopment()
-	if err != nil {
-		return "", fmt.Errorf("new dev logger: %w", err)
-	}
-	connConfig.Tracer = &tracelog.TraceLog{
-		Logger:   pgx_zap.NewLogger(devLogger),
-		LogLevel: tracelog.LogLevelError,
-	}
+	//devLogger, err := zap.NewDevelopment()
+	//if err != nil {
+	//	return "", fmt.Errorf("new dev logger: %w", err)
+	//}
+	//connConfig.Tracer = &tracelog.TraceLog{
+	//	Logger:   pgx_zap.NewLogger(devLogger),
+	//	LogLevel: tracelog.LogLevelError,
+	//}
 	connStr := stdlib.RegisterConnConfig(connConfig)
 	return connStr, nil
 }
