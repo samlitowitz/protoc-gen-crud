@@ -3,6 +3,8 @@ package sql
 import (
 	"fmt"
 
+	crudOptions "github.com/samlitowitz/protoc-gen-crud/options"
+
 	"github.com/samlitowitz/protoc-gen-crud/internal/descriptor"
 	gen "github.com/samlitowitz/protoc-gen-crud/internal/generator"
 	"google.golang.org/protobuf/proto"
@@ -23,6 +25,9 @@ func (g *generator) Generate(targets []*descriptor.File) ([]*descriptor.Response
 	var files []*descriptor.ResponseFile
 	for _, file := range targets {
 		if len(file.Implementations) == 0 {
+			continue
+		}
+		if _, ok := file.Implementations[crudOptions.Implementation_PGSQL]; !ok {
 			continue
 		}
 		code, err := g.generate(file)
