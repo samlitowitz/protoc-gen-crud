@@ -4,7 +4,7 @@ services:
       context: .
       dockerfile: Dockerfile
       target: "go-test"
-    command: [ "go", "test", "-v", "./test-cases/as-timestamp-field/..." ]
+    command: [ "go", "test", "-v", "./test-cases/..." ]
     environment:
       - DB_HOST=go-test-db:5432
       - DB_USER_FILE=/run/secrets/go-test-db-user
