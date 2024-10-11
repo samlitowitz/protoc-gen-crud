@@ -120,10 +120,6 @@ func (g *generator) addMessagePathParamImports(file *descriptor.File, msg *descr
 			pkgSeen["github.com/jackc/pgx/v5/pgtype"] = true
 			imports = append(imports, descriptor.GoPackage{Path: "github.com/jackc/pgx/v5/pgtype", Name: "pgtype"})
 		}
-		if f.AsTimestamp && !pkgSeen["time"] {
-			pkgSeen["time"] = true
-			imports = append(imports, descriptor.GoPackage{Path: "time", Name: "time"})
-		}
 		t, err := g.reg.LookupMsg("", f.GetTypeName())
 		if err != nil {
 			continue
@@ -175,6 +171,10 @@ func (g *generator) addCrudPathParamImports(msg *descriptor.Message, pkgSeen map
 		if !pkgSeen["github.com/samlitowitz/protoc-gen-crud/expressions"] {
 			pkgSeen["github.com/samlitowitz/protoc-gen-crud/expressions"] = true
 			imports = append(imports, descriptor.GoPackage{Path: "github.com/samlitowitz/protoc-gen-crud/expressions", Name: "expressions"})
+		}
+		if !pkgSeen["time"] {
+			pkgSeen["time"] = true
+			imports = append(imports, descriptor.GoPackage{Path: "time", Name: "time"})
 		}
 	}
 
