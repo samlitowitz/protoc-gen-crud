@@ -66,8 +66,8 @@
 
 | Implementation | google.protobuf.Timestamp |
 |:---------------|-------------------|
-| SQLite         |                     |
-| PgSQL          |                     |
+| SQLite         | :white_check_mark: |
+| PgSQL          | :white_check_mark: |
 
 ### Auto-generate Strategy
 

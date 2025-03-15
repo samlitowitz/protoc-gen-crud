@@ -4,6 +4,9 @@ TODO: PgSQL Update Template
 https://github.com/ghostiam/protogetter
 https://golangci-lint.run/usage/linters/#protogetter
 
+1. implement auto increment (or auto generate strategies)
+2. implement relationships
+
 1. Remove operation specification
 2. always generate all options
 3.
