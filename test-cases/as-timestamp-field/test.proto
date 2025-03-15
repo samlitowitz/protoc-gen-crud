@@ -9,7 +9,7 @@ import "google/protobuf/timestamp.proto";
 
 message AsTimestamp {
   option (protoc_gen_crud.options.crud_message_options) = {
-    implementations: [SQLITE, PGSQL]
+    implementations: [IMPLEMENTATION_SQLITE, IMPLEMENTATION_PGSQL]
     primaryKey: ["id"]
   };
   int32 id = 1;

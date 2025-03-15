@@ -9,7 +9,7 @@ import "google/protobuf/timestamp.proto";
 
 message Test {
   option (protoc_gen_crud.options.crud_message_options) = {
-    implementations: [SQLITE]
+    implementations: [IMPLEMENTATION_SQLITE]
     primaryKey: ["id"]
   };
   string id = 1;
