@@ -33,7 +33,7 @@ func protoFieldAccessorFn(col *genSQLite.Column) string {
 
 func protoFieldField(col *genSQLite.Column) string {
 	if col.IsInlined {
-		return fmt.Sprintf("Get%s().%s", casing.CamelIdentifier(col.Parent.GetName()), casing.CamelIdentifier(col.Field.GetName()))
+		return fmt.Sprintf("%s.%s", casing.CamelIdentifier(col.Parent.GetName()), casing.CamelIdentifier(col.Field.GetName()))
 	}
 	return casing.CamelIdentifier(col.GetName())
 }
@@ -284,7 +284,7 @@ func (repo *SQLite{{.GetName}}Repository) Read(ctx context.Context, expr express
 	defer rows.Close()
 	var found []*{{.GoType .File.GoPkg.Path}}
 	for rows.Next() {
-		{{toLowerCamel .GetName}} := &{{.GoType .File.GoPkg.Path}}{
+		{{toLowerCamel .GetName}} := &{{.GoType .File.GoPkg.Path}}_builder{
 			{{range $i, $field := .NonPrimeAttributes -}}
 			{{if $field.HasRelationship}}{{camelIdentifier $field.GetName}}: &{{$field.FieldMessage.GoType $.File.GoPkg.Path}}{},{{end}}
 			{{if $field.Inline}}{{camelIdentifier $field.GetName}}: &{{$field.FieldMessage.GoType $.File.GoPkg.Path}}{},{{end}}
@@ -311,7 +311,7 @@ func (repo *SQLite{{.GetName}}Repository) Read(ctx context.Context, expr express
 		{{toLowerCamel $.GetName}}.{{protoFieldField $col}} = timestamppb.New({{toLowerCamel $col.Field.GetName}}Time)
 		{{end }}
 		{{- end }}
-		found = append(found, {{toLowerCamel .GetName}})
+		found = append(found, {{toLowerCamel .GetName}}.Build())
 	}
 	if err = rows.Err(); err != nil {
 		return nil, err
