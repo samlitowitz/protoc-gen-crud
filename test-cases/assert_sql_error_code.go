@@ -16,7 +16,7 @@ func AssertSQLErrorCode(t *testing.T, typ options.Implementation, lut map[option
 		t.Fatal(prefix, "missing LUT entry: ", typ.String())
 	}
 	switch typ {
-	case options.Implementation_PGSQL:
+	case options.Implementation_IMPLEMENTATION_PGSQL:
 		sqlErr, ok := err.(*pgconn.PgError)
 		if !ok {
 			t.Fatalf("%sexpected *pgconn.PgError, got %T", prefix, err)
@@ -33,7 +33,7 @@ func AssertSQLErrorCode(t *testing.T, typ options.Implementation, lut map[option
 				sqlErr.Detail,
 			)
 		}
-	case options.Implementation_SQLITE:
+	case options.Implementation_IMPLEMENTATION_SQLITE:
 		sqlErr, ok := err.(*sqlite.Error)
 		if !ok {
 			t.Fatalf("%sexpected *sqlite.Error, got %T", prefix, err)

@@ -51,7 +51,7 @@ func TestInlineTimestampRepository_Create_WithADuplicatePrimaryKeyFails(t *testi
 				len(res),
 			)
 		}
-		initial := []*inline_field.InlineTimestamp{
+		initialBuilder := []*inline_field.InlineTimestamp_builder{
 			{
 				Id:        0,
 				Timestamp: timestamppb.New(time.Now()),
@@ -68,6 +68,10 @@ func TestInlineTimestampRepository_Create_WithADuplicatePrimaryKeyFails(t *testi
 				Id:        3,
 				Timestamp: timestamppb.New(time.Now()),
 			},
+		}
+		initial := make([]*inline_field.InlineTimestamp, 0, len(initialBuilder))
+		for _, builder := range initialBuilder {
+			initial = append(initial, builder.Build())
 		}
 		res, err = repoImpl.Create(context.Background(), initial)
 		if err != nil {
@@ -90,7 +94,7 @@ func TestInlineTimestampRepository_Create_WithADuplicatePrimaryKeyFails(t *testi
 			)
 		}
 
-		duplicates := []*inline_field.InlineTimestamp{
+		duplicatesBuilder := []*inline_field.InlineTimestamp_builder{
 			{
 				Id:        0,
 				Timestamp: timestamppb.New(time.Now()),
@@ -108,6 +112,10 @@ func TestInlineTimestampRepository_Create_WithADuplicatePrimaryKeyFails(t *testi
 				Timestamp: timestamppb.New(time.Now()),
 			},
 		}
+		duplicates := make([]*inline_field.InlineTimestamp, 0, len(duplicatesBuilder))
+		for _, builder := range duplicatesBuilder {
+			duplicates = append(duplicates, builder.Build())
+		}
 		res, err = repoImpl.Create(context.Background(), duplicates)
 		if err == nil {
 			t.Fatalf("%s: Create(): expected error", repoDesc)
@@ -117,8 +125,8 @@ func TestInlineTimestampRepository_Create_WithADuplicatePrimaryKeyFails(t *testi
 			t,
 			repoType,
 			map[options.Implementation]any{
-				options.Implementation_PGSQL:  "23505",
-				options.Implementation_SQLITE: sqliteLib.SQLITE_CONSTRAINT_PRIMARYKEY,
+				options.Implementation_IMPLEMENTATION_PGSQL:  "23505",
+				options.Implementation_IMPLEMENTATION_SQLITE: sqliteLib.SQLITE_CONSTRAINT_PRIMARYKEY,
 			},
 			err,
 			fmt.Sprintf("%s: Create(): ", repoDesc),
@@ -175,7 +183,7 @@ func TestInlineTimestamp_DescriptorRepository_Create_WithANonDuplicatePrimaryKey
 				len(res),
 			)
 		}
-		expected := []*inline_field.InlineTimestamp{
+		expectedBuilder := []*inline_field.InlineTimestamp_builder{
 			{
 				Id:        0,
 				Timestamp: timestamppb.New(time.Now()),
@@ -192,6 +200,10 @@ func TestInlineTimestamp_DescriptorRepository_Create_WithANonDuplicatePrimaryKey
 				Id:        3,
 				Timestamp: timestamppb.New(time.Now()),
 			},
+		}
+		expected := make([]*inline_field.InlineTimestamp, 0, len(expectedBuilder))
+		for _, builder := range expectedBuilder {
+			expected = append(expected, builder.Build())
 		}
 		res, err = repoImpl.Create(context.Background(), expected)
 		if err != nil {
@@ -264,7 +276,7 @@ func TestInlineTimestamp_DescriptorRepository_Update_WithUnLocatablePrimaryKeyUp
 			)
 		}
 
-		expected := []*inline_field.InlineTimestamp{
+		expectedBuilder := []*inline_field.InlineTimestamp_builder{
 			{
 				Id:        0,
 				Timestamp: timestamppb.New(time.Now()),
@@ -282,7 +294,10 @@ func TestInlineTimestamp_DescriptorRepository_Update_WithUnLocatablePrimaryKeyUp
 				Timestamp: timestamppb.New(time.Now()),
 			},
 		}
-
+		expected := make([]*inline_field.InlineTimestamp, 0, len(expectedBuilder))
+		for _, builder := range expectedBuilder {
+			expected = append(expected, builder.Build())
+		}
 		_, err = repoImpl.Update(context.Background(), expected)
 		if err != nil {
 			t.Fatalf(
@@ -339,7 +354,7 @@ func TestInlineTimestamp_DescriptorRepository_Update_WithLocatablePrimaryKeySucc
 				len(res),
 			)
 		}
-		initial := []*inline_field.InlineTimestamp{
+		initialBuilder := []*inline_field.InlineTimestamp_builder{
 			{
 				Id:        0,
 				Timestamp: timestamppb.New(time.Now()),
@@ -356,6 +371,10 @@ func TestInlineTimestamp_DescriptorRepository_Update_WithLocatablePrimaryKeySucc
 				Id:        3,
 				Timestamp: timestamppb.New(time.Now()),
 			},
+		}
+		initial := make([]*inline_field.InlineTimestamp, 0, len(initialBuilder))
+		for _, builder := range initialBuilder {
+			initial = append(initial, builder.Build())
 		}
 		res, err = repoImpl.Create(context.Background(), initial)
 		if err != nil {
@@ -401,10 +420,10 @@ func TestInlineTimestamp_DescriptorRepository_Update_WithLocatablePrimaryKeySucc
 		for _, inlineTimestamp := range initial {
 			expected = append(
 				expected,
-				&inline_field.InlineTimestamp{
+				inline_field.InlineTimestamp_builder{
 					Id:        inlineTimestamp.GetId(),
 					Timestamp: timestamppb.New(time.Now().Add(time.Hour * 5)),
-				},
+				}.Build(),
 			)
 		}
 
@@ -438,12 +457,12 @@ func TestInlineTimestamp_DescriptorRepository_Delete_WithLocatablePrimaryKeySucc
 	two_hour_ago := timestamppb.New(time.Now().Add(time.Hour * -2))
 
 	testCases := map[string]struct {
-		initial          []*inline_field.InlineTimestamp
+		initial          []*inline_field.InlineTimestamp_builder
 		deleteExpression expressions.Expression
-		expected         []*inline_field.InlineTimestamp
+		expected         []*inline_field.InlineTimestamp_builder
 	}{
 		"using primary key": {
-			initial: []*inline_field.InlineTimestamp{
+			initial: []*inline_field.InlineTimestamp_builder{
 				{
 					Id:        0,
 					Timestamp: now,
@@ -471,7 +490,7 @@ func TestInlineTimestamp_DescriptorRepository_Delete_WithLocatablePrimaryKeySucc
 					expressions.NewScalar(3),
 				),
 			),
-			expected: []*inline_field.InlineTimestamp{
+			expected: []*inline_field.InlineTimestamp_builder{
 				{
 					Id:        0,
 					Timestamp: now,
@@ -483,7 +502,7 @@ func TestInlineTimestamp_DescriptorRepository_Delete_WithLocatablePrimaryKeySucc
 			},
 		},
 		"using non-prime attributes": {
-			initial: []*inline_field.InlineTimestamp{
+			initial: []*inline_field.InlineTimestamp_builder{
 				{
 					Id:        0,
 					Timestamp: now,
@@ -511,7 +530,7 @@ func TestInlineTimestamp_DescriptorRepository_Delete_WithLocatablePrimaryKeySucc
 					expressions.NewScalar(two_hour_ago.GetSeconds()),
 				),
 			),
-			expected: []*inline_field.InlineTimestamp{
+			expected: []*inline_field.InlineTimestamp_builder{
 				{
 					Id:        0,
 					Timestamp: now,
@@ -554,7 +573,11 @@ func TestInlineTimestamp_DescriptorRepository_Delete_WithLocatablePrimaryKeySucc
 					len(res),
 				)
 			}
-			res, err = repoImpl.Create(context.Background(), testCase.initial)
+			initial := make([]*inline_field.InlineTimestamp, 0, len(testCase.initial))
+			for _, builder := range testCase.initial {
+				initial = append(initial, builder.Build())
+			}
+			res, err = repoImpl.Create(context.Background(), initial)
 			if err != nil {
 				t.Fatalf(
 					"%s: %s: Create(): %s",
@@ -563,7 +586,7 @@ func TestInlineTimestamp_DescriptorRepository_Delete_WithLocatablePrimaryKeySucc
 					err,
 				)
 			}
-			if diff := cmp.Diff(testCase.initial, res, opts); diff != "" {
+			if diff := cmp.Diff(initial, res, opts); diff != "" {
 				t.Fatal(
 					mismatch(
 						fmt.Sprintf(
@@ -585,7 +608,7 @@ func TestInlineTimestamp_DescriptorRepository_Delete_WithLocatablePrimaryKeySucc
 					err,
 				)
 			}
-			if diff := cmp.Diff(testCase.initial, res, opts); diff != "" {
+			if diff := cmp.Diff(initial, res, opts); diff != "" {
 				t.Fatal(
 					mismatch(
 						fmt.Sprintf(
@@ -617,7 +640,11 @@ func TestInlineTimestamp_DescriptorRepository_Delete_WithLocatablePrimaryKeySucc
 					err,
 				)
 			}
-			if diff := cmp.Diff(testCase.expected, res, opts); diff != "" {
+			expected := make([]*inline_field.InlineTimestamp, 0, len(testCase.expected))
+			for _, builder := range testCase.expected {
+				expected = append(expected, builder.Build())
+			}
+			if diff := cmp.Diff(expected, res, opts); diff != "" {
 				t.Fatal(
 					mismatch(
 						fmt.Sprintf(
@@ -635,8 +662,8 @@ func TestInlineTimestamp_DescriptorRepository_Delete_WithLocatablePrimaryKeySucc
 
 func inlineTimestampImplementationsToTest() map[options.Implementation]inlineTimestampComponentUnderTest {
 	return map[options.Implementation]inlineTimestampComponentUnderTest{
-		options.Implementation_SQLITE: sqliteInlineTimestampComponentUnderTest,
-		options.Implementation_PGSQL:  pgsqlInlineTimestampComponentUnderTest,
+		options.Implementation_IMPLEMENTATION_SQLITE: sqliteInlineTimestampComponentUnderTest,
+		options.Implementation_IMPLEMENTATION_PGSQL:  pgsqlInlineTimestampComponentUnderTest,
 	}
 }
 
