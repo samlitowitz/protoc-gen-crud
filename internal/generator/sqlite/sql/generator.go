@@ -27,7 +27,7 @@ func (g *generator) Generate(targets []*descriptor.File) ([]*descriptor.Response
 		if len(file.Implementations) == 0 {
 			continue
 		}
-		if _, ok := file.Implementations[crudOptions.Implementation_SQLITE]; !ok {
+		if _, ok := file.Implementations[crudOptions.Implementation_IMPLEMENTATION_SQLITE]; !ok {
 			continue
 		}
 		code, err := g.generate(file)

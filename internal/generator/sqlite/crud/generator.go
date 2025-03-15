@@ -63,7 +63,7 @@ func (g *generator) Generate(targets []*descriptor.File) ([]*descriptor.Response
 		if len(file.Implementations) == 0 {
 			continue
 		}
-		if _, ok := file.Implementations[crudOptions.Implementation_SQLITE]; !ok {
+		if _, ok := file.Implementations[crudOptions.Implementation_IMPLEMENTATION_SQLITE]; !ok {
 			continue
 		}
 		code, err := g.generate(file)
@@ -138,7 +138,7 @@ func (g *generator) addCrudPathParamImports(msg *descriptor.Message, pkgSeen map
 	}
 	var imports []descriptor.GoPackage
 
-	if _, ok := msg.Implementations[crudOptions.Implementation_SQLITE]; ok {
+	if _, ok := msg.Implementations[crudOptions.Implementation_IMPLEMENTATION_SQLITE]; ok {
 		if !pkgSeen["context"] {
 			pkgSeen["context"] = true
 			imports = append(imports, descriptor.GoPackage{Path: "context", Name: "context"})

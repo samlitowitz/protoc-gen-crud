@@ -78,7 +78,7 @@ func assignMessageOptions(msg *Message, msgOpts *crudOptions.MessageOptions) err
 	msg.NonPrimeAttributesByFQFN = make(map[string]*Field)
 
 	if msgOpts.GetImplementations() != nil {
-		for _, implementation := range msgOpts.Implementations {
+		for _, implementation := range msgOpts.GetImplementations() {
 			msg.Implementations[implementation] = struct{}{}
 		}
 	}
@@ -124,7 +124,7 @@ func assignMessageOptions(msg *Message, msgOpts *crudOptions.MessageOptions) err
 }
 
 func assignRelationships(r *Registry, msg *Message, field *Field, fieldOpts *crudOptions.FieldOptions) error {
-	if fieldOpts.Relationship == nil {
+	if !fieldOpts.HasRelationship() {
 		return nil
 	}
 	if field.Ignore {
@@ -162,9 +162,9 @@ func assignRelationships(r *Registry, msg *Message, field *Field, fieldOpts *cru
 }
 
 func assignFieldOptions(field *Field, fieldOpts *crudOptions.FieldOptions) error {
-	field.Ignore = fieldOpts.Ignore
-	field.Inline = fieldOpts.Inline
-	field.AsTimestamp = fieldOpts.AsTimestamp
+	field.Ignore = fieldOpts.GetIgnore()
+	field.Inline = fieldOpts.GetInline()
+	field.AsTimestamp = fieldOpts.GetAsTimestamp()
 	return nil
 }
 

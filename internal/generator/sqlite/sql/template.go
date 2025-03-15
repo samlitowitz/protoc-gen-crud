@@ -42,7 +42,7 @@ func applyTemplate(p param, reg *descriptor.Registry) (string, error) {
 		if !msg.GenerateCRUD {
 			continue
 		}
-		if _, ok := msg.Implementations[options.Implementation_SQLITE]; !ok {
+		if _, ok := msg.Implementations[options.Implementation_IMPLEMENTATION_SQLITE]; !ok {
 			continue
 		}
 

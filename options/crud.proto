@@ -11,10 +11,16 @@ option go_package = "github.com/samlitowitz/protoc-gen-crud/options";
 
 // Implementations supported by `protoc-gen-crud`
 enum Implementation {
-  UNKNOWN = 0;  // Generate nothing via `protoc-gen-crud`
-  SQLITE = 1;   // Generate SQLite SQL and Go code
-  PGSQL = 2;    // Generate Postgres SQL and Go code
+  IMPLEMENTATION_UNSPECIFIED = 0; // Generate nothing via `protoc-gen-crud`
+  IMPLEMENTATION_SQLITE = 1; // Generate SQLite SQL and Go code
+  IMPLEMENTATION_PGSQL = 2; // Generate Postgres SQL and Go code
 }
+
+// Auto-generated strategies supported by `protoc-gen-crud`
+//enum AutoGenerationStrategy {
+//  AUTO_GENERATION_STRATEGY_UNKNOWN = 0;
+//  AUTO_INCREMENT = 1;
+//};
 
 message FileOptions {}
 

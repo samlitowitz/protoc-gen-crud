@@ -65,7 +65,7 @@ func applyTemplate(p param, reg *descriptor.Registry) (string, error) {
 		if !msg.GenerateCRUD {
 			continue
 		}
-		if _, ok := msg.Implementations[crudOptions.Implementation_PGSQL]; !ok {
+		if _, ok := msg.Implementations[crudOptions.Implementation_IMPLEMENTATION_PGSQL]; !ok {
 			continue
 		}
 
