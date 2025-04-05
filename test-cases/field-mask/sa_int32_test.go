@@ -487,7 +487,6 @@ func saInt32ImplementationsToTest() map[string]saInt32ComponentUnderTest {
 func saInt32DefaultCmpOpts() cmp.Options {
 	return cmp.Options{
 		cmpopts.IgnoreUnexported(fieldMask.SAInt32{}),
-		cmpopts.IgnoreFields(fieldMask.SAInt32{}, "FieldMask"),
 		cmpopts.SortSlices(func(x, y *fieldMask.SAInt32) bool {
 			return x.GetId() > y.GetId()
 		}),

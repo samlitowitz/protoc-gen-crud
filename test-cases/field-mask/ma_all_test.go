@@ -832,7 +832,6 @@ func maAllImplementationsToTest() map[string]maAllComponentUnderTest {
 func maAllDefaultCmpOpts() cmp.Options {
 	return cmp.Options{
 		cmpopts.IgnoreUnexported(fieldMask.MAAll{}),
-		cmpopts.IgnoreFields(fieldMask.MAAll{}, "FieldMask"),
 		cmpopts.SortSlices(func(x, y *fieldMask.MAAll) bool {
 			switch strings.Compare(x.GetIdEnum().String(), y.GetIdEnum().String()) {
 			case -1:
