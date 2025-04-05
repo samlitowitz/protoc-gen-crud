@@ -767,7 +767,7 @@ func TestMAAllRepository_Delete_WithLocatablePrimaryKeySucceeds(t *testing.T) {
 					err,
 				)
 			}
-			if diff := cmp.Diff(testCase.initial, res, opts); diff != "" {
+			if diff := cmp.Diff(initial, res, opts); diff != "" {
 				t.Fatal(
 					mismatch(
 						fmt.Sprintf(
@@ -800,7 +800,8 @@ func TestMAAllRepository_Delete_WithLocatablePrimaryKeySucceeds(t *testing.T) {
 					err,
 				)
 			}
-			if diff := cmp.Diff(testCase.expected, res, opts); diff != "" {
+			expected := maAllBuild(testCase.expected)
+			if diff := cmp.Diff(expected, res, opts); diff != "" {
 				t.Fatal(
 					mismatch(
 						fmt.Sprintf(
@@ -814,6 +815,14 @@ func TestMAAllRepository_Delete_WithLocatablePrimaryKeySucceeds(t *testing.T) {
 			}
 		}
 	}
+}
+
+func maAllBuild(in []*primaryKey.MAAll_builder) []*primaryKey.MAAll {
+	out := make([]*primaryKey.MAAll, 0, len(in))
+	for _, builder := range in {
+		out = append(out, builder.Build())
+	}
+	return out
 }
 
 func maAllImplementationsToTest() map[options.Implementation]maAllComponentUnderTest {

@@ -15,7 +15,7 @@ import (
 func TestSAInt32Repository_Create_WithAnyPrimeAttributeExcludedByFieldMaskFails(t *testing.T) {
 	opts := saInt32DefaultCmpOpts()
 
-	testCases := map[string][]*fieldMask.SAInt32{
+	testCases := map[string][]*fieldMask.SAInt32_builder{
 		"all fields excluded by field mask": {
 			{
 				FieldMask: &field_mask.FieldMask{
@@ -51,8 +51,8 @@ func TestSAInt32Repository_Create_WithAnyPrimeAttributeExcludedByFieldMaskFails(
 			if err != nil {
 				t.Fatalf("%s: %s", repoDesc, err)
 			}
-
-			_, err = repoImpl.Create(context.Background(), testCase)
+			toCreate := saInt32Build(testCase)
+			_, err = repoImpl.Create(context.Background(), toCreate)
 			if err == nil {
 				t.Fatalf(
 					"%s: %s: Create: expected field masking prime attribute error",
@@ -98,7 +98,7 @@ func TestSAInt32Repository_Create_WithNonPrimeAttributesExcludedByFieldMaskUsesE
 				len(res),
 			)
 		}
-		toCreate := []*fieldMask.SAInt32{
+		toCreateBuilder := []*fieldMask.SAInt32_builder{
 			{
 				Id:   0,
 				Data: "SHOULD BE SET - 0",
@@ -125,7 +125,7 @@ func TestSAInt32Repository_Create_WithNonPrimeAttributesExcludedByFieldMaskUsesE
 				Data: "SHOULD BE EMPTY",
 			},
 		}
-		expectedRead := []*fieldMask.SAInt32{
+		expectedReadBuilder := []*fieldMask.SAInt32_builder{
 			{
 				Id:   0,
 				Data: "SHOULD BE SET - 0",
@@ -143,6 +143,8 @@ func TestSAInt32Repository_Create_WithNonPrimeAttributesExcludedByFieldMaskUsesE
 				Data: "",
 			},
 		}
+		toCreate := saInt32Build(toCreateBuilder)
+		expectedRead := saInt32Build(expectedReadBuilder)
 		err = sqliteSAInt32CreateSuccessWithReadAfterCheck(opts, repoImpl, context.Background(), toCreate, expectedRead)
 		if err != nil {
 			t.Fatalf("%s: %s", repoDesc, err)
@@ -178,7 +180,7 @@ func TestSAInt32Repository_Create_WithNoFieldMaskUsedSetsAllAttributes(t *testin
 				len(res),
 			)
 		}
-		toCreate := []*fieldMask.SAInt32{
+		toCreateBuilder := []*fieldMask.SAInt32_builder{
 			{
 				Id:   0,
 				Data: "0",
@@ -196,6 +198,7 @@ func TestSAInt32Repository_Create_WithNoFieldMaskUsedSetsAllAttributes(t *testin
 				Data: "3",
 			},
 		}
+		toCreate := saInt32Build(toCreateBuilder)
 		err = sqliteSAInt32CreateSuccessWithReadAfterCheck(opts, repoImpl, context.Background(), toCreate, toCreate)
 		if err != nil {
 			t.Fatalf("%s: %s", repoDesc, err)
@@ -206,7 +209,7 @@ func TestSAInt32Repository_Create_WithNoFieldMaskUsedSetsAllAttributes(t *testin
 func TestSAInt32Repository_Update_WithAnyPrimeAttributeExcludedByFieldMaskFails(t *testing.T) {
 	opts := saInt32DefaultCmpOpts()
 
-	testCases := map[string][]*fieldMask.SAInt32{
+	testCases := map[string][]*fieldMask.SAInt32_builder{
 		"all fields excluded by field mask": {
 			{
 				FieldMask: &field_mask.FieldMask{
@@ -243,7 +246,7 @@ func TestSAInt32Repository_Update_WithAnyPrimeAttributeExcludedByFieldMaskFails(
 				t.Fatalf("%s: %s: %s", repoDesc, testDesc, err)
 			}
 
-			toCreate := []*fieldMask.SAInt32{
+			toCreateBuilder := []*fieldMask.SAInt32_builder{
 				{
 					Id:   0,
 					Data: "0",
@@ -261,12 +264,14 @@ func TestSAInt32Repository_Update_WithAnyPrimeAttributeExcludedByFieldMaskFails(
 					Data: "3",
 				},
 			}
+			toCreate := saInt32Build(toCreateBuilder)
 			err = sqliteSAInt32CreateSuccessWithReadAfterCheck(opts, repoImpl, context.Background(), toCreate, toCreate)
 			if err != nil {
 				t.Fatalf("%s: %s: %s", repoDesc, testDesc, err)
 			}
 
-			_, err = repoImpl.Update(context.Background(), testCase)
+			toUpdate := saInt32Build(testCase)
+			_, err = repoImpl.Update(context.Background(), toUpdate)
 			if err == nil {
 				t.Fatalf(
 					"%s: %s: Update: expected prime attribute masked error",
@@ -301,7 +306,7 @@ func TestSAInt32Repository_Update_WithNonPrimeAttributesExcludedByFieldMaskAreNo
 		if err != nil {
 			t.Fatalf("%s: %s", repoDesc, err)
 		}
-		toCreate := []*fieldMask.SAInt32{
+		toCreateBuilder := []*fieldMask.SAInt32_builder{
 			{
 				Id:   0,
 				Data: "0",
@@ -319,12 +324,13 @@ func TestSAInt32Repository_Update_WithNonPrimeAttributesExcludedByFieldMaskAreNo
 				Data: "3",
 			},
 		}
+		toCreate := saInt32Build(toCreateBuilder)
 		err = sqliteSAInt32CreateSuccessWithReadAfterCheck(opts, repoImpl, context.Background(), toCreate, toCreate)
 		if err != nil {
 			t.Fatalf("%s: %s", repoDesc, err)
 		}
 
-		toUpdate := []*fieldMask.SAInt32{
+		toUpdateBuilder := []*fieldMask.SAInt32_builder{
 			{
 				FieldMask: &field_mask.FieldMask{
 					Paths: []string{"id"},
@@ -340,6 +346,7 @@ func TestSAInt32Repository_Update_WithNonPrimeAttributesExcludedByFieldMaskAreNo
 				Data: "SHOULD UPDATE",
 			},
 		}
+		toUpdate := saInt32Build(toUpdateBuilder)
 		_, err = repoImpl.Update(context.Background(), toUpdate)
 		if err != nil {
 			t.Fatalf(
@@ -349,7 +356,7 @@ func TestSAInt32Repository_Update_WithNonPrimeAttributesExcludedByFieldMaskAreNo
 			)
 		}
 
-		expected := []*fieldMask.SAInt32{
+		expectedBuilder := []*fieldMask.SAInt32_builder{
 			{
 				Id:   0,
 				Data: "0",
@@ -367,6 +374,7 @@ func TestSAInt32Repository_Update_WithNonPrimeAttributesExcludedByFieldMaskAreNo
 				Data: "3",
 			},
 		}
+		expected := saInt32Build(expectedBuilder)
 		err = sqliteSAInt32ReadCheck(opts, repoImpl, context.Background(), nil, expected)
 		if err != nil {
 			t.Fatalf("%s: %s", repoDesc, err)
@@ -391,7 +399,7 @@ func TestSAInt32Repository_Update_WithNoFieldMaskUsedModifiesAllNonPrimeAttribut
 		if err != nil {
 			t.Fatalf("%s: %s", repoDesc, err)
 		}
-		toCreate := []*fieldMask.SAInt32{
+		toCreateBuilder := []*fieldMask.SAInt32_builder{
 			{
 				Id:   0,
 				Data: "0",
@@ -409,12 +417,13 @@ func TestSAInt32Repository_Update_WithNoFieldMaskUsedModifiesAllNonPrimeAttribut
 				Data: "3",
 			},
 		}
+		toCreate := saInt32Build(toCreateBuilder)
 		err = sqliteSAInt32CreateSuccessWithReadAfterCheck(opts, repoImpl, context.Background(), toCreate, toCreate)
 		if err != nil {
 			t.Fatalf("%s: %s", repoDesc, err)
 		}
 
-		toUpdate := []*fieldMask.SAInt32{
+		toUpdateBuilder := []*fieldMask.SAInt32_builder{
 			{
 				Id:   0,
 				Data: "SHOULD UPDATE",
@@ -424,6 +433,7 @@ func TestSAInt32Repository_Update_WithNoFieldMaskUsedModifiesAllNonPrimeAttribut
 				Data: "SHOULD UPDATE",
 			},
 		}
+		toUpdate := saInt32Build(toUpdateBuilder)
 		_, err = repoImpl.Update(context.Background(), toUpdate)
 		if err != nil {
 			t.Fatalf(
@@ -433,7 +443,7 @@ func TestSAInt32Repository_Update_WithNoFieldMaskUsedModifiesAllNonPrimeAttribut
 			)
 		}
 
-		expected := []*fieldMask.SAInt32{
+		expectedBuilder := []*fieldMask.SAInt32_builder{
 			{
 				Id:   0,
 				Data: "SHOULD UPDATE",
@@ -451,11 +461,20 @@ func TestSAInt32Repository_Update_WithNoFieldMaskUsedModifiesAllNonPrimeAttribut
 				Data: "3",
 			},
 		}
+		expected := saInt32Build(expectedBuilder)
 		err = sqliteSAInt32ReadCheck(opts, repoImpl, context.Background(), nil, expected)
 		if err != nil {
 			t.Fatalf("%s: %s", repoDesc, err)
 		}
 	}
+}
+
+func saInt32Build(in []*fieldMask.SAInt32_builder) []*fieldMask.SAInt32 {
+	out := make([]*fieldMask.SAInt32, 0, len(in))
+	for _, builder := range in {
+		out = append(out, builder.Build())
+	}
+	return out
 }
 
 func saInt32ImplementationsToTest() map[string]saInt32ComponentUnderTest {

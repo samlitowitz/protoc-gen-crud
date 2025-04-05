@@ -566,10 +566,7 @@ func TestSAInt32Repository_Delete_WithLocatablePrimaryKeySucceeds(t *testing.T) 
 					len(res),
 				)
 			}
-			initial := make([]*primaryKey.SAInt32, 0, len(testCase.initial))
-			for _, builder := range testCase.initial {
-				initial = append(initial, builder.Build())
-			}
+			initial := saInt32Build(testCase.initial)
 			res, err = repoImpl.Create(context.Background(), initial)
 			if err != nil {
 				t.Fatalf(
@@ -601,7 +598,7 @@ func TestSAInt32Repository_Delete_WithLocatablePrimaryKeySucceeds(t *testing.T) 
 					err,
 				)
 			}
-			if diff := cmp.Diff(testCase.initial, res, opts); diff != "" {
+			if diff := cmp.Diff(initial, res, opts); diff != "" {
 				t.Fatal(
 					mismatch(
 						fmt.Sprintf(
@@ -633,10 +630,7 @@ func TestSAInt32Repository_Delete_WithLocatablePrimaryKeySucceeds(t *testing.T) 
 					err,
 				)
 			}
-			expected := make([]*primaryKey.SAInt32, 0, len(testCase.expected))
-			for _, builder := range testCase.expected {
-				expected = append(expected, builder.Build())
-			}
+			expected := saInt32Build(testCase.expected)
 			if diff := cmp.Diff(expected, res, opts); diff != "" {
 				t.Fatal(
 					mismatch(
@@ -651,6 +645,14 @@ func TestSAInt32Repository_Delete_WithLocatablePrimaryKeySucceeds(t *testing.T) 
 			}
 		}
 	}
+}
+
+func saInt32Build(in []*primaryKey.SAInt32_builder) []*primaryKey.SAInt32 {
+	out := make([]*primaryKey.SAInt32, 0, len(in))
+	for _, builder := range in {
+		out = append(out, builder.Build())
+	}
+	return out
 }
 
 func saInt32ImplementationsToTest() map[options.Implementation]saInt32ComponentUnderTest {

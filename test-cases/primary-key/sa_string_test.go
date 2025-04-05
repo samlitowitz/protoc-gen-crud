@@ -602,7 +602,7 @@ func TestSAStringRepository_Delete_WithLocatablePrimaryKeySucceeds(t *testing.T)
 					err,
 				)
 			}
-			if diff := cmp.Diff(testCase.initial, res, opts); diff != "" {
+			if diff := cmp.Diff(initial, res, opts); diff != "" {
 				t.Fatal(
 					mismatch(
 						fmt.Sprintf(
@@ -634,7 +634,8 @@ func TestSAStringRepository_Delete_WithLocatablePrimaryKeySucceeds(t *testing.T)
 					err,
 				)
 			}
-			if diff := cmp.Diff(testCase.expected, res, opts); diff != "" {
+			expected := saStringBuild(testCase.expected)
+			if diff := cmp.Diff(expected, res, opts); diff != "" {
 				t.Fatal(
 					mismatch(
 						fmt.Sprintf(
@@ -648,6 +649,14 @@ func TestSAStringRepository_Delete_WithLocatablePrimaryKeySucceeds(t *testing.T)
 			}
 		}
 	}
+}
+
+func saStringBuild(in []*primaryKey.SAString_builder) []*primaryKey.SAString {
+	out := make([]*primaryKey.SAString, 0, len(in))
+	for _, builder := range in {
+		out = append(out, builder.Build())
+	}
+	return out
 }
 
 func saStringImplementationsToTest() map[options.Implementation]saStringComponentUnderTest {

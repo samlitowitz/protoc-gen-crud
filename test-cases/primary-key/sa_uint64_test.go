@@ -614,7 +614,8 @@ func TestSAUint64Repository_Delete_WithLocatablePrimaryKeySucceeds(t *testing.T)
 					err,
 				)
 			}
-			if diff := cmp.Diff(testCase.expected, res, opts); diff != "" {
+			expected := saUint64Build(testCase.expected)
+			if diff := cmp.Diff(expected, res, opts); diff != "" {
 				t.Fatal(
 					mismatch(
 						fmt.Sprintf(
