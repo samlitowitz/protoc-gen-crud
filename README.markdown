@@ -46,12 +46,14 @@
 | Implementation | Created At | Updated At | Deleted At |
 |:---------------|:-----------|:-----------|:-----------|
 | SQLite         |            |            |            |
+| PgSQL          |            |            |            |
 
 ### Audit Logging
 
 | Implementation |
 |:---------------|
 | SQLite         |
+| PgSQL          |
 
 ## Field
 
@@ -78,9 +80,10 @@
 
 ### Nullable
 
-| Implementation | Nullable | Not-Nullable |
-|:---------------|:---------|:-------------|
-| SQLite         |    :white_check_mark:      |              |
+| Implementation | Nullable                  | Not-Nullable |
+|:---------------|:--------------------------|:-------------|
+| SQLite         | :white_check_mark:        |              |
+| PgSQL          |                          |              |
 
 ### Non-scalar Fields
 
