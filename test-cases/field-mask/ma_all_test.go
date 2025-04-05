@@ -16,7 +16,7 @@ import (
 func TestMAAllRepository_Create_WithAnyPrimeAttributeExcludedByFieldMaskFails(t *testing.T) {
 	opts := maAllDefaultCmpOpts()
 
-	testCases := map[string][]*fieldMask.MAAll{
+	testCases := map[string][]*fieldMask.MAAll_builder{
 		"all fields excluded by field mask": {
 			{
 				FieldMask: &field_mask.FieldMask{
@@ -132,8 +132,8 @@ func TestMAAllRepository_Create_WithAnyPrimeAttributeExcludedByFieldMaskFails(t 
 			if err != nil {
 				t.Fatalf("%s: %s", repoDesc, err)
 			}
-
-			_, err = repoImpl.Create(context.Background(), testCase)
+			input := maAllBuild(testCase)
+			_, err = repoImpl.Create(context.Background(), input)
 			if err == nil {
 				t.Fatalf(
 					"%s: %s: Create: expected field masking prime attribute error",
@@ -179,7 +179,7 @@ func TestMAAllRepository_Create_WithNonPrimeAttributesExcludedByFieldMaskUsesEmp
 				len(res),
 			)
 		}
-		toCreate := []*fieldMask.MAAll{
+		toCreateBuilder := []*fieldMask.MAAll_builder{
 			{
 				IdEnum:   fieldMask.PrimaryKeyEnum_ZERO,
 				IdInt32:  0,
@@ -226,7 +226,7 @@ func TestMAAllRepository_Create_WithNonPrimeAttributesExcludedByFieldMaskUsesEmp
 				Data:     "SHOULD BE EMPTY",
 			},
 		}
-		expectedRead := []*fieldMask.MAAll{
+		expectedReadBuilder := []*fieldMask.MAAll_builder{
 			{
 				IdEnum:   fieldMask.PrimaryKeyEnum_ZERO,
 				IdInt32:  0,
@@ -264,6 +264,8 @@ func TestMAAllRepository_Create_WithNonPrimeAttributesExcludedByFieldMaskUsesEmp
 				Data:     "",
 			},
 		}
+		toCreate := maAllBuild(toCreateBuilder)
+		expectedRead := maAllBuild(expectedReadBuilder)
 		err = sqliteMAAllCreateSuccessWithReadAfterCheck(opts, repoImpl, context.Background(), toCreate, expectedRead)
 		if err != nil {
 			t.Fatalf("%s: %s", repoDesc, err)
@@ -299,7 +301,7 @@ func TestMAAllRepository_Create_WithNoFieldMaskUsedSetsAllAttributes(t *testing.
 				len(res),
 			)
 		}
-		toCreate := []*fieldMask.MAAll{
+		toCreateBuilder := []*fieldMask.MAAll_builder{
 			{
 				IdEnum:   fieldMask.PrimaryKeyEnum_ZERO,
 				IdInt32:  0,
@@ -337,6 +339,7 @@ func TestMAAllRepository_Create_WithNoFieldMaskUsedSetsAllAttributes(t *testing.
 				Data:     "SHOULD SET - 3",
 			},
 		}
+		toCreate := maAllBuild(toCreateBuilder)
 		err = sqliteMAAllCreateSuccessWithReadAfterCheck(opts, repoImpl, context.Background(), toCreate, toCreate)
 		if err != nil {
 			t.Fatalf("%s: %s", repoDesc, err)
@@ -347,7 +350,7 @@ func TestMAAllRepository_Create_WithNoFieldMaskUsedSetsAllAttributes(t *testing.
 func TestMAAllRepository_Update_WithAnyPrimeAttributeExcludedByFieldMaskFails(t *testing.T) {
 	opts := maAllDefaultCmpOpts()
 
-	testCases := map[string][]*fieldMask.MAAll{
+	testCases := map[string][]*fieldMask.MAAll_builder{
 		"all fields excluded by field mask": {
 			{
 				FieldMask: &field_mask.FieldMask{
@@ -464,7 +467,7 @@ func TestMAAllRepository_Update_WithAnyPrimeAttributeExcludedByFieldMaskFails(t 
 				t.Fatalf("%s: %s: %s", repoDesc, testDesc, err)
 			}
 
-			toCreate := []*fieldMask.MAAll{
+			toCreateBuilder := []*fieldMask.MAAll_builder{
 				{
 					IdEnum:   fieldMask.PrimaryKeyEnum_ZERO,
 					IdInt32:  0,
@@ -502,12 +505,13 @@ func TestMAAllRepository_Update_WithAnyPrimeAttributeExcludedByFieldMaskFails(t 
 					Data:     "SHOULD SET - 3",
 				},
 			}
+			toCreate := maAllBuild(toCreateBuilder)
 			err = sqliteMAAllCreateSuccessWithReadAfterCheck(opts, repoImpl, context.Background(), toCreate, toCreate)
 			if err != nil {
 				t.Fatalf("%s: %s: %s", repoDesc, testDesc, err)
 			}
-
-			_, err = repoImpl.Update(context.Background(), testCase)
+			update := maAllBuild(testCase)
+			_, err = repoImpl.Update(context.Background(), update)
 			if err == nil {
 				t.Fatalf(
 					"%s: %s: Update: expected prime attribute masked error",
@@ -542,7 +546,7 @@ func TestMAAllRepository_Update_WithNonPrimeAttributesExcludedByFieldMaskAreNotM
 		if err != nil {
 			t.Fatalf("%s: %s", repoDesc, err)
 		}
-		toCreate := []*fieldMask.MAAll{
+		toCreateBuilder := []*fieldMask.MAAll_builder{
 			{
 				IdEnum:   fieldMask.PrimaryKeyEnum_ZERO,
 				IdInt32:  0,
@@ -580,12 +584,13 @@ func TestMAAllRepository_Update_WithNonPrimeAttributesExcludedByFieldMaskAreNotM
 				Data:     "SHOULD SET - 3",
 			},
 		}
+		toCreate := maAllBuild(toCreateBuilder)
 		err = sqliteMAAllCreateSuccessWithReadAfterCheck(opts, repoImpl, context.Background(), toCreate, toCreate)
 		if err != nil {
 			t.Fatalf("%s: %s", repoDesc, err)
 		}
 
-		toUpdate := []*fieldMask.MAAll{
+		toUpdateBuilder := []*fieldMask.MAAll_builder{
 			{
 				FieldMask: &field_mask.FieldMask{
 					Paths: []string{"id_enum", "id_int32", "id_int64", "id_uint32", "id_uint64", "id_string"},
@@ -611,6 +616,7 @@ func TestMAAllRepository_Update_WithNonPrimeAttributesExcludedByFieldMaskAreNotM
 				Data:     "SHOULD UPDATE",
 			},
 		}
+		toUpdate := maAllBuild(toUpdateBuilder)
 		_, err = repoImpl.Update(context.Background(), toUpdate)
 		if err != nil {
 			t.Fatalf(
@@ -620,7 +626,7 @@ func TestMAAllRepository_Update_WithNonPrimeAttributesExcludedByFieldMaskAreNotM
 			)
 		}
 
-		expected := []*fieldMask.MAAll{
+		expectedBuilder := []*fieldMask.MAAll_builder{
 			{
 				IdEnum:   fieldMask.PrimaryKeyEnum_ZERO,
 				IdInt32:  0,
@@ -661,6 +667,7 @@ func TestMAAllRepository_Update_WithNonPrimeAttributesExcludedByFieldMaskAreNotM
 				Data:     "SHOULD SET - 3",
 			},
 		}
+		expected := maAllBuild(expectedBuilder)
 		err = sqliteMAAllReadCheck(opts, repoImpl, context.Background(), nil, expected)
 		if err != nil {
 			t.Fatalf("%s: %s", repoDesc, err)
@@ -685,7 +692,7 @@ func TestMAAllRepository_Update_WithNoFieldMaskUsedModifiesAllNonPrimeAttributes
 		if err != nil {
 			t.Fatalf("%s: %s", repoDesc, err)
 		}
-		toCreate := []*fieldMask.MAAll{
+		toCreateBuilder := []*fieldMask.MAAll_builder{
 			{
 				IdEnum:   fieldMask.PrimaryKeyEnum_ZERO,
 				IdInt32:  0,
@@ -724,12 +731,13 @@ func TestMAAllRepository_Update_WithNoFieldMaskUsedModifiesAllNonPrimeAttributes
 				Data:     "SHOULD SET - 3",
 			},
 		}
+		toCreate := maAllBuild(toCreateBuilder)
 		err = sqliteMAAllCreateSuccessWithReadAfterCheck(opts, repoImpl, context.Background(), toCreate, toCreate)
 		if err != nil {
 			t.Fatalf("%s: %s", repoDesc, err)
 		}
 
-		toUpdate := []*fieldMask.MAAll{
+		toUpdateBuilder := []*fieldMask.MAAll_builder{
 			{
 				IdEnum:   fieldMask.PrimaryKeyEnum_ZERO,
 				IdInt32:  0,
@@ -749,6 +757,7 @@ func TestMAAllRepository_Update_WithNoFieldMaskUsedModifiesAllNonPrimeAttributes
 				Data:     "SHOULD UPDATE - 1",
 			},
 		}
+		toUpdate := maAllBuild(toUpdateBuilder)
 		_, err = repoImpl.Update(context.Background(), toUpdate)
 		if err != nil {
 			t.Fatalf(
@@ -758,7 +767,7 @@ func TestMAAllRepository_Update_WithNoFieldMaskUsedModifiesAllNonPrimeAttributes
 			)
 		}
 
-		expected := []*fieldMask.MAAll{
+		expectedBuilder := []*fieldMask.MAAll_builder{
 			{
 				IdEnum:   fieldMask.PrimaryKeyEnum_ZERO,
 				IdInt32:  0,
@@ -797,11 +806,20 @@ func TestMAAllRepository_Update_WithNoFieldMaskUsedModifiesAllNonPrimeAttributes
 				Data:     "SHOULD SET - 3",
 			},
 		}
+		expected := maAllBuild(expectedBuilder)
 		err = sqliteMAAllReadCheck(opts, repoImpl, context.Background(), nil, expected)
 		if err != nil {
 			t.Fatalf("%s: %s", repoDesc, err)
 		}
 	}
+}
+
+func maAllBuild(in []*fieldMask.MAAll_builder) []*fieldMask.MAAll {
+	out := make([]*fieldMask.MAAll, 0, len(in))
+	for _, builder := range in {
+		out = append(out, builder.Build())
+	}
+	return out
 }
 
 func maAllImplementationsToTest() map[string]maAllComponentUnderTest {

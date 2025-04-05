@@ -602,7 +602,7 @@ func TestSAEnumRepository_Delete_WithLocatablePrimaryKeySucceeds(t *testing.T) {
 					err,
 				)
 			}
-			if diff := cmp.Diff(testCase.initial, res, opts); diff != "" {
+			if diff := cmp.Diff(initial, res, opts); diff != "" {
 				t.Fatal(
 					mismatch(
 						fmt.Sprintf(

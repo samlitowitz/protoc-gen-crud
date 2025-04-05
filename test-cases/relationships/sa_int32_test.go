@@ -48,7 +48,7 @@ func TestSAInt32Repository_Create_WithADuplicatePrimaryKeyFails(t *testing.T) {
 				len(res),
 			)
 		}
-		initial := []*relationships.SAInt32{
+		initialBuilder := []*relationships.SAInt32_builder{
 			{
 				Id:   0,
 				Data: "0",
@@ -66,6 +66,7 @@ func TestSAInt32Repository_Create_WithADuplicatePrimaryKeyFails(t *testing.T) {
 				Data: "3",
 			},
 		}
+		initial := saInt32Build(initialBuilder)
 		res, err = repoImpl.Create(context.Background(), initial)
 		if err != nil {
 			t.Fatalf(
@@ -87,7 +88,7 @@ func TestSAInt32Repository_Create_WithADuplicatePrimaryKeyFails(t *testing.T) {
 			)
 		}
 
-		duplicates := []*relationships.SAInt32{
+		duplicatesBuilder := []*relationships.SAInt32_builder{
 			{
 				Id:   0,
 				Data: "0",
@@ -105,6 +106,7 @@ func TestSAInt32Repository_Create_WithADuplicatePrimaryKeyFails(t *testing.T) {
 				Data: "3",
 			},
 		}
+		duplicates := saInt32Build(duplicatesBuilder)
 		res, err = repoImpl.Create(context.Background(), duplicates)
 		if err == nil {
 			t.Fatalf("%s: Create(): expected error", repoDesc)
@@ -114,8 +116,8 @@ func TestSAInt32Repository_Create_WithADuplicatePrimaryKeyFails(t *testing.T) {
 			t,
 			repoType,
 			map[options.Implementation]any{
-				options.Implementation_PGSQL:  "23505",
-				options.Implementation_SQLITE: sqliteLib.SQLITE_CONSTRAINT_PRIMARYKEY,
+				options.Implementation_IMPLEMENTATION_PGSQL:  "23505",
+				options.Implementation_IMPLEMENTATION_SQLITE: sqliteLib.SQLITE_CONSTRAINT_PRIMARYKEY,
 			},
 			err,
 			fmt.Sprintf("%s: Create(): ", repoDesc),
@@ -172,7 +174,7 @@ func TestSAInt32Repository_Create_WithANonDuplicatePrimaryKeySucceeds(t *testing
 				len(res),
 			)
 		}
-		expected := []*relationships.SAInt32{
+		expectedBuilder := []*relationships.SAInt32_builder{
 			{
 				Id:   0,
 				Data: "0",
@@ -190,6 +192,7 @@ func TestSAInt32Repository_Create_WithANonDuplicatePrimaryKeySucceeds(t *testing
 				Data: "3",
 			},
 		}
+		expected := saInt32Build(expectedBuilder)
 		res, err = repoImpl.Create(context.Background(), expected)
 		if err != nil {
 			t.Fatalf(
@@ -261,7 +264,7 @@ func TestSAInt32Repository_Update_WithUnLocatablePrimaryKeyUpdatesNothing(t *tes
 			)
 		}
 
-		expected := []*relationships.SAInt32{
+		expectedBuilder := []*relationships.SAInt32_builder{
 			{
 				Id:   0,
 				Data: "0",
@@ -279,7 +282,7 @@ func TestSAInt32Repository_Update_WithUnLocatablePrimaryKeyUpdatesNothing(t *tes
 				Data: "3",
 			},
 		}
-
+		expected := saInt32Build(expectedBuilder)
 		_, err = repoImpl.Update(context.Background(), expected)
 		if err != nil {
 			t.Fatalf(
@@ -336,7 +339,7 @@ func TestSAInt32Repository_Update_WithLocatablePrimaryKeySucceeds(t *testing.T) 
 				len(res),
 			)
 		}
-		initial := []*relationships.SAInt32{
+		initialBuilder := []*relationships.SAInt32_builder{
 			{
 				Id:   0,
 				Data: "0",
@@ -354,6 +357,7 @@ func TestSAInt32Repository_Update_WithLocatablePrimaryKeySucceeds(t *testing.T) 
 				Data: "3",
 			},
 		}
+		initial := saInt32Build(initialBuilder)
 		res, err = repoImpl.Create(context.Background(), initial)
 		if err != nil {
 			t.Fatalf(
@@ -398,10 +402,10 @@ func TestSAInt32Repository_Update_WithLocatablePrimaryKeySucceeds(t *testing.T) 
 		for _, saint32 := range initial {
 			expected = append(
 				expected,
-				&relationships.SAInt32{
+				relationships.SAInt32_builder{
 					Id:   saint32.GetId(),
 					Data: "UPDATED",
-				},
+				}.Build(),
 			)
 		}
 
@@ -431,12 +435,12 @@ func TestSAInt32Repository_Delete_WithLocatablePrimaryKeySucceeds(t *testing.T) 
 	opts := saInt32DefaultCmpOpts()
 
 	testCases := map[string]struct {
-		initial          []*relationships.SAInt32
+		initial          []*relationships.SAInt32_builder
 		deleteExpression expressions.Expression
-		expected         []*relationships.SAInt32
+		expected         []*relationships.SAInt32_builder
 	}{
 		"using primary key": {
-			initial: []*relationships.SAInt32{
+			initial: []*relationships.SAInt32_builder{
 				{
 					Id:   0,
 					Data: "0",
@@ -464,7 +468,7 @@ func TestSAInt32Repository_Delete_WithLocatablePrimaryKeySucceeds(t *testing.T) 
 					expressions.NewScalar(3),
 				),
 			),
-			expected: []*relationships.SAInt32{
+			expected: []*relationships.SAInt32_builder{
 				{
 					Id:   0,
 					Data: "0",
@@ -476,7 +480,7 @@ func TestSAInt32Repository_Delete_WithLocatablePrimaryKeySucceeds(t *testing.T) 
 			},
 		},
 		"using non-prime attributes": {
-			initial: []*relationships.SAInt32{
+			initial: []*relationships.SAInt32_builder{
 				{
 					Id:   0,
 					Data: "0",
@@ -504,7 +508,7 @@ func TestSAInt32Repository_Delete_WithLocatablePrimaryKeySucceeds(t *testing.T) 
 					expressions.NewScalar("3"),
 				),
 			),
-			expected: []*relationships.SAInt32{
+			expected: []*relationships.SAInt32_builder{
 				{
 					Id:   0,
 					Data: "0",
@@ -547,7 +551,8 @@ func TestSAInt32Repository_Delete_WithLocatablePrimaryKeySucceeds(t *testing.T) 
 					len(res),
 				)
 			}
-			res, err = repoImpl.Create(context.Background(), testCase.initial)
+			initial := saInt32Build(testCase.initial)
+			res, err = repoImpl.Create(context.Background(), initial)
 			if err != nil {
 				t.Fatalf(
 					"%s: %s: Create(): %s",
@@ -556,7 +561,7 @@ func TestSAInt32Repository_Delete_WithLocatablePrimaryKeySucceeds(t *testing.T) 
 					err,
 				)
 			}
-			if diff := cmp.Diff(testCase.initial, res, opts); diff != "" {
+			if diff := cmp.Diff(initial, res, opts); diff != "" {
 				t.Fatal(
 					mismatch(
 						fmt.Sprintf(
@@ -578,7 +583,7 @@ func TestSAInt32Repository_Delete_WithLocatablePrimaryKeySucceeds(t *testing.T) 
 					err,
 				)
 			}
-			if diff := cmp.Diff(testCase.initial, res, opts); diff != "" {
+			if diff := cmp.Diff(initial, res, opts); diff != "" {
 				t.Fatal(
 					mismatch(
 						fmt.Sprintf(
@@ -610,7 +615,8 @@ func TestSAInt32Repository_Delete_WithLocatablePrimaryKeySucceeds(t *testing.T) 
 					err,
 				)
 			}
-			if diff := cmp.Diff(testCase.expected, res, opts); diff != "" {
+			expected := saInt32Build(testCase.expected)
+			if diff := cmp.Diff(expected, res, opts); diff != "" {
 				t.Fatal(
 					mismatch(
 						fmt.Sprintf(
@@ -626,10 +632,18 @@ func TestSAInt32Repository_Delete_WithLocatablePrimaryKeySucceeds(t *testing.T) 
 	}
 }
 
+func saInt32Build(in []*relationships.SAInt32_builder) []*relationships.SAInt32 {
+	out := make([]*relationships.SAInt32, 0, len(in))
+	for _, builder := range in {
+		out = append(out, builder.Build())
+	}
+	return out
+}
+
 func saInt32ImplementationsToTest() map[options.Implementation]saInt32ComponentUnderTest {
 	return map[options.Implementation]saInt32ComponentUnderTest{
-		options.Implementation_SQLITE: sqliteSAInt32ComponentUnderTest,
-		options.Implementation_PGSQL:  pgsqlSAInt32ComponentUnderTest,
+		options.Implementation_IMPLEMENTATION_SQLITE: sqliteSAInt32ComponentUnderTest,
+		options.Implementation_IMPLEMENTATION_PGSQL:  pgsqlSAInt32ComponentUnderTest,
 	}
 }
 
