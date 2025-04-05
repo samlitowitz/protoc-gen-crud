@@ -50,6 +50,8 @@ type param struct {
 type message struct {
 	*descriptor.Message
 
+	FieldMaskCol *genPgSQL.Column
+
 	QueryableCols         []*genPgSQL.Column
 	PrimaryKeyCols        []*genPgSQL.Column
 	NonPrimeAttributeCols []*genPgSQL.Column
@@ -74,6 +76,9 @@ func applyTemplate(p param, reg *descriptor.Registry) (string, error) {
 			QueryableCols:         genPgSQL.ColumnsFromFields(crud.QueryableFieldsFromMessage(msg)),
 			PrimaryKeyCols:        genPgSQL.ColumnsFromFields(crud.QueryableFieldsFromFields(msg.PrimaryKey())),
 			NonPrimeAttributeCols: genPgSQL.ColumnsFromFields(crud.QueryableFieldsFromFields(msg.NonPrimeAttributes())),
+		}
+		if msg.FieldMask != nil {
+			injected.FieldMaskCol = &genPgSQL.Column{QueryableField: crud.QueryableFieldsFromFields([]*descriptor.Field{msg.FieldMask})[0]}
 		}
 		if err := repositoryTemplate.Execute(w, injected); err != nil {
 			return "", fmt.Errorf(" message %s: repository: %v", msg.GetName(), err)
@@ -219,7 +224,7 @@ func (repo *PgSQL{{.GetName}}Repository) Create(ctx context.Context, toCreate []
 	noMaskBindsStrs := []string{}
 	noMaskBindsIdx := 1
 	for _, {{toLowerCamel $.GetName}} := range toCreate {
-		if {{toLowerCamel $.GetName}}.{{camelIdentifier $.FieldMask.GetName}} == nil {
+		if {{toLowerCamel $.GetName}}.{{protoFieldAccessor $.FieldMaskCol}} == nil {
 			{{- range $col := .QueryableCols}}
 			noMaskBinds = append(noMaskBinds, {{toLowerCamel $.GetName}}.{{protoFieldAccessor $col}})
 			{{- end}}
@@ -235,7 +240,7 @@ func (repo *PgSQL{{.GetName}}Repository) Create(ctx context.Context, toCreate []
 			noMaskBindsIdx += {{len .QueryableCols}}
 			continue
 		}
-		valuesByColName, err := pgsql{{.GetName}}GetCreateValuesByColumnName({{toLowerCamel $.GetName}}, {{toLowerCamel $.GetName}}.{{camelIdentifier $.FieldMask.GetName}})
+		valuesByColName, err := pgsql{{.GetName}}GetCreateValuesByColumnName({{toLowerCamel $.GetName}}, {{toLowerCamel $.GetName}}.{{protoFieldAccessor $.FieldMaskCol}})
 		if err != nil {
 			return nil, err
 		}
@@ -390,7 +395,7 @@ func (repo *PgSQL{{.GetName}}Repository) Update(ctx context.Context, toUpdate []
 
 	_ = template.Must(repositoryTemplate.New("repository-update-field-mask").Funcs(funcMap).Parse(`
 	for _, {{toLowerCamel .GetName}} := range toUpdate {
-		if {{toLowerCamel .GetName}}.{{camelIdentifier .FieldMask.GetName}} == nil {
+		if {{toLowerCamel .GetName}}.{{protoFieldAccessor $.FieldMaskCol}} == nil {
 			_, err = stmt.ExecContext(ctx, {{ range $i, $col := .NonPrimeAttributeCols -}}
 			{{if $i}},{{end}}{{toLowerCamel $.GetName}}.{{protoFieldAccessor $col}}
 			{{- end }},{{ range $i, $col := .PrimaryKeyCols -}}
@@ -401,7 +406,7 @@ func (repo *PgSQL{{.GetName}}Repository) Update(ctx context.Context, toUpdate []
 			}
 			continue
 		}
-		valuesByColName, err := pgsql{{.GetName}}GetUpdateValuesByColumnName({{toLowerCamel .GetName}}, {{toLowerCamel .GetName}}.{{camelIdentifier .FieldMask.GetName}})
+		valuesByColName, err := pgsql{{.GetName}}GetUpdateValuesByColumnName({{toLowerCamel .GetName}}, {{toLowerCamel .GetName}}.{{protoFieldAccessor $.FieldMaskCol}})
 		if err != nil {
 			return nil, err
 		}

@@ -46,6 +46,8 @@ type param struct {
 type message struct {
 	*descriptor.Message
 
+	FieldMaskCol *genSQLite.Column
+
 	QueryableCols         []*genSQLite.Column
 	PrimaryKeyCols        []*genSQLite.Column
 	NonPrimeAttributeCols []*genSQLite.Column
@@ -70,6 +72,9 @@ func applyTemplate(p param, reg *descriptor.Registry) (string, error) {
 			QueryableCols:         genSQLite.ColumnsFromFields(crud.QueryableFieldsFromMessage(msg)),
 			PrimaryKeyCols:        genSQLite.ColumnsFromFields(crud.QueryableFieldsFromFields(msg.PrimaryKey())),
 			NonPrimeAttributeCols: genSQLite.ColumnsFromFields(crud.QueryableFieldsFromFields(msg.NonPrimeAttributes())),
+		}
+		if msg.FieldMask != nil {
+			injected.FieldMaskCol = &genSQLite.Column{QueryableField: crud.QueryableFieldsFromFields([]*descriptor.Field{msg.FieldMask})[0]}
 		}
 		if err := repositoryTemplate.Execute(w, injected); err != nil {
 			return "", fmt.Errorf(" message %s: repository: %v", msg.GetName(), err)
@@ -207,7 +212,7 @@ func (repo *SQLite{{.GetName}}Repository) Create(ctx context.Context, toCreate [
 	noMaskBinds := []any{}
 	noMaskBindsStrs := []string{}
 	for _, {{toLowerCamel $.GetName}} := range toCreate {
-		if {{toLowerCamel $.GetName}}.{{camelIdentifier $.FieldMask.GetName}} == nil {
+		if {{toLowerCamel $.GetName}}.{{protoFieldAccessor $.FieldMaskCol}} == nil {
 			{{- range $col := .QueryableCols}}
 			noMaskBinds = append(noMaskBinds, {{toLowerCamel $.GetName}}.{{protoFieldAccessor $col}})
 			{{- end}}
@@ -218,7 +223,7 @@ func (repo *SQLite{{.GetName}}Repository) Create(ctx context.Context, toCreate [
 			)")
 			continue
 		}
-		valuesByColName, err := sqlite{{.GetName}}GetCreateValuesByColumnName({{toLowerCamel $.GetName}}, {{toLowerCamel $.GetName}}.{{camelIdentifier $.FieldMask.GetName}})
+		valuesByColName, err := sqlite{{.GetName}}GetCreateValuesByColumnName({{toLowerCamel $.GetName}}, {{toLowerCamel $.GetName}}.{{protoFieldAccessor $.FieldMaskCol}})
 		if err != nil {
 			return nil, err
 		}
@@ -377,7 +382,7 @@ func (repo *SQLite{{.GetName}}Repository) Update(ctx context.Context, toUpdate [
 
 	_ = template.Must(repositoryTemplate.New("repository-update-field-mask").Funcs(funcMap).Parse(`
 	for _, {{toLowerCamel .GetName}} := range toUpdate {
-		if {{toLowerCamel .GetName}}.{{camelIdentifier .FieldMask.GetName}} == nil {
+		if {{toLowerCamel .GetName}}.{{protoFieldAccessor $.FieldMaskCol}} == nil {
 			_, err = stmt.ExecContext(ctx, {{ range $i, $col := .NonPrimeAttributeCols -}}
 			{{if $i}},{{end}}{{toLowerCamel $.GetName}}.{{protoFieldAccessor $col}}
 			{{- end }},{{ range $i, $col := .PrimaryKeyCols -}}
@@ -388,7 +393,7 @@ func (repo *SQLite{{.GetName}}Repository) Update(ctx context.Context, toUpdate [
 			}
 			continue
 		}
-		valuesByColName, err := sqlite{{.GetName}}GetUpdateValuesByColumnName({{toLowerCamel .GetName}}, {{toLowerCamel .GetName}}.{{camelIdentifier .FieldMask.GetName}})
+		valuesByColName, err := sqlite{{.GetName}}GetUpdateValuesByColumnName({{toLowerCamel .GetName}}, {{toLowerCamel .GetName}}.{{protoFieldAccessor $.FieldMaskCol}})
 		if err != nil {
 			return nil, err
 		}
