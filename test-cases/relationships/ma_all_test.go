@@ -48,7 +48,7 @@ func TestMAAllRepository_Create_WithADuplicatePrimaryKeyFails(t *testing.T) {
 				len(res),
 			)
 		}
-		initial := []*relationships.MAAll{
+		initialBuilder := []*relationships.MAAll_builder{
 			{
 				IdEnum:   relationships.PrimaryKeyEnum_ZERO,
 				IdInt32:  0,
@@ -85,6 +85,10 @@ func TestMAAllRepository_Create_WithADuplicatePrimaryKeyFails(t *testing.T) {
 				IdString: "three",
 				Data:     "three",
 			},
+		}
+		initial := make([]*relationships.MAAll, 0, len(initialBuilder))
+		for _, builder := range initialBuilder {
+			initial = append(initial, builder.Build())
 		}
 		res, err = repoImpl.Create(context.Background(), initial)
 		if err != nil {
@@ -107,7 +111,7 @@ func TestMAAllRepository_Create_WithADuplicatePrimaryKeyFails(t *testing.T) {
 			)
 		}
 
-		duplicates := []*relationships.MAAll{
+		duplicatesBuilder := []*relationships.MAAll_builder{
 			{
 				IdEnum:   relationships.PrimaryKeyEnum_ZERO,
 				IdInt32:  0,
@@ -145,6 +149,10 @@ func TestMAAllRepository_Create_WithADuplicatePrimaryKeyFails(t *testing.T) {
 				Data:     "three",
 			},
 		}
+		duplicates := make([]*relationships.MAAll, 0, len(duplicatesBuilder))
+		for _, builder := range duplicatesBuilder {
+			duplicates = append(duplicates, builder.Build())
+		}
 		res, err = repoImpl.Create(context.Background(), duplicates)
 		if err == nil {
 			t.Fatalf("%s: Create(): expected error", repoDesc)
@@ -154,8 +162,8 @@ func TestMAAllRepository_Create_WithADuplicatePrimaryKeyFails(t *testing.T) {
 			t,
 			repoType,
 			map[options.Implementation]any{
-				options.Implementation_PGSQL:  "23505",
-				options.Implementation_SQLITE: sqliteLib.SQLITE_CONSTRAINT_PRIMARYKEY,
+				options.Implementation_IMPLEMENTATION_PGSQL:  "23505",
+				options.Implementation_IMPLEMENTATION_SQLITE: sqliteLib.SQLITE_CONSTRAINT_PRIMARYKEY,
 			},
 			err,
 			fmt.Sprintf("%s: Create(): ", repoDesc),
@@ -212,7 +220,7 @@ func TestMAAllRepository_Create_WithANonDuplicatePrimaryKeySucceeds(t *testing.T
 				len(res),
 			)
 		}
-		expected := []*relationships.MAAll{
+		expectedBuilder := []*relationships.MAAll_builder{
 			{
 				IdEnum:   relationships.PrimaryKeyEnum_ZERO,
 				IdInt32:  0,
@@ -249,6 +257,10 @@ func TestMAAllRepository_Create_WithANonDuplicatePrimaryKeySucceeds(t *testing.T
 				IdString: "three",
 				Data:     "three",
 			},
+		}
+		expected := make([]*relationships.MAAll, 0, len(expectedBuilder))
+		for _, builder := range expectedBuilder {
+			expected = append(expected, builder.Build())
 		}
 		res, err = repoImpl.Create(context.Background(), expected)
 		if err != nil {
@@ -321,7 +333,7 @@ func TestMAAllRepository_Update_WithUnLocatablePrimaryKeyUpdatesNothing(t *testi
 			)
 		}
 
-		expected := []*relationships.MAAll{
+		expectedBuilder := []*relationships.MAAll_builder{
 			{
 				IdEnum:   relationships.PrimaryKeyEnum_ZERO,
 				IdInt32:  0,
@@ -359,7 +371,10 @@ func TestMAAllRepository_Update_WithUnLocatablePrimaryKeyUpdatesNothing(t *testi
 				Data:     "three",
 			},
 		}
-
+		expected := make([]*relationships.MAAll, 0, len(expectedBuilder))
+		for _, builder := range expectedBuilder {
+			expected = append(expected, builder.Build())
+		}
 		_, err = repoImpl.Update(context.Background(), expected)
 		if err != nil {
 			t.Fatalf(
@@ -416,7 +431,7 @@ func TestMAAllRepository_Update_WithLocatablePrimaryKeySucceeds(t *testing.T) {
 				len(res),
 			)
 		}
-		initial := []*relationships.MAAll{
+		initialBuilder := []*relationships.MAAll_builder{
 			{
 				IdEnum:   relationships.PrimaryKeyEnum_ZERO,
 				IdInt32:  0,
@@ -453,6 +468,10 @@ func TestMAAllRepository_Update_WithLocatablePrimaryKeySucceeds(t *testing.T) {
 				IdString: "three",
 				Data:     "three",
 			},
+		}
+		initial := make([]*relationships.MAAll, 0, len(initialBuilder))
+		for _, builder := range initialBuilder {
+			initial = append(initial, builder.Build())
 		}
 		res, err = repoImpl.Create(context.Background(), initial)
 		if err != nil {
@@ -498,7 +517,7 @@ func TestMAAllRepository_Update_WithLocatablePrimaryKeySucceeds(t *testing.T) {
 		for _, maall := range initial {
 			expected = append(
 				expected,
-				&relationships.MAAll{
+				relationships.MAAll_builder{
 					IdEnum:   maall.GetIdEnum(),
 					IdInt32:  maall.GetIdInt32(),
 					IdInt64:  maall.GetIdInt64(),
@@ -506,7 +525,7 @@ func TestMAAllRepository_Update_WithLocatablePrimaryKeySucceeds(t *testing.T) {
 					IdUint64: maall.GetIdUint64(),
 					IdString: maall.GetIdString(),
 					Data:     "UPDATED",
-				},
+				}.Build(),
 			)
 		}
 
@@ -536,12 +555,12 @@ func TestMAAllRepository_Delete_WithLocatablePrimaryKeySucceeds(t *testing.T) {
 	opts := maAllDefaultCmpOpts()
 
 	testCases := map[string]struct {
-		initial          []*relationships.MAAll
+		initial          []*relationships.MAAll_builder
 		deleteExpression expressions.Expression
-		expected         []*relationships.MAAll
+		expected         []*relationships.MAAll_builder
 	}{
 		"using primary key": {
-			initial: []*relationships.MAAll{
+			initial: []*relationships.MAAll_builder{
 				{
 					IdEnum:   relationships.PrimaryKeyEnum_ZERO,
 					IdInt32:  0,
@@ -589,7 +608,7 @@ func TestMAAllRepository_Delete_WithLocatablePrimaryKeySucceeds(t *testing.T) {
 					expressions.NewScalar(relationships.PrimaryKeyEnum_THREE),
 				),
 			),
-			expected: []*relationships.MAAll{
+			expected: []*relationships.MAAll_builder{
 				{
 					IdEnum:   relationships.PrimaryKeyEnum_ZERO,
 					IdInt32:  0,
@@ -611,7 +630,7 @@ func TestMAAllRepository_Delete_WithLocatablePrimaryKeySucceeds(t *testing.T) {
 			},
 		},
 		"using non-prime attributes": {
-			initial: []*relationships.MAAll{
+			initial: []*relationships.MAAll_builder{
 				{
 					IdEnum:   relationships.PrimaryKeyEnum_ZERO,
 					IdInt32:  0,
@@ -659,7 +678,7 @@ func TestMAAllRepository_Delete_WithLocatablePrimaryKeySucceeds(t *testing.T) {
 					expressions.NewScalar("three"),
 				),
 			),
-			expected: []*relationships.MAAll{
+			expected: []*relationships.MAAll_builder{
 				{
 					IdEnum:   relationships.PrimaryKeyEnum_ZERO,
 					IdInt32:  0,
@@ -712,7 +731,11 @@ func TestMAAllRepository_Delete_WithLocatablePrimaryKeySucceeds(t *testing.T) {
 					len(res),
 				)
 			}
-			res, err = repoImpl.Create(context.Background(), testCase.initial)
+			initial := make([]*relationships.MAAll, 0, len(testCase.initial))
+			for _, builder := range testCase.initial {
+				initial = append(initial, builder.Build())
+			}
+			res, err = repoImpl.Create(context.Background(), initial)
 			if err != nil {
 				t.Fatalf(
 					"%s: %s: Create(): %s",
@@ -721,7 +744,7 @@ func TestMAAllRepository_Delete_WithLocatablePrimaryKeySucceeds(t *testing.T) {
 					err,
 				)
 			}
-			if diff := cmp.Diff(testCase.initial, res, opts); diff != "" {
+			if diff := cmp.Diff(initial, res, opts); diff != "" {
 				t.Fatal(
 					mismatch(
 						fmt.Sprintf(
@@ -743,7 +766,7 @@ func TestMAAllRepository_Delete_WithLocatablePrimaryKeySucceeds(t *testing.T) {
 					err,
 				)
 			}
-			if diff := cmp.Diff(testCase.initial, res, opts); diff != "" {
+			if diff := cmp.Diff(initial, res, opts); diff != "" {
 				t.Fatal(
 					mismatch(
 						fmt.Sprintf(
@@ -794,8 +817,8 @@ func TestMAAllRepository_Delete_WithLocatablePrimaryKeySucceeds(t *testing.T) {
 
 func maAllImplementationsToTest() map[options.Implementation]maAllComponentUnderTest {
 	return map[options.Implementation]maAllComponentUnderTest{
-		options.Implementation_SQLITE: sqliteMAAllComponentUnderTest,
-		options.Implementation_PGSQL:  pgsqlMAAllComponentUnderTest,
+		options.Implementation_IMPLEMENTATION_SQLITE: sqliteMAAllComponentUnderTest,
+		options.Implementation_IMPLEMENTATION_PGSQL:  pgsqlMAAllComponentUnderTest,
 	}
 }
 
