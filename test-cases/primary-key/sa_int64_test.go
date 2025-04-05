@@ -48,7 +48,7 @@ func TestSAInt64Repository_Create_WithADuplicatePrimaryKeyFails(t *testing.T) {
 				len(res),
 			)
 		}
-		initial := []*primaryKey.SAInt64{
+		initialBuilder := []*primaryKey.SAInt64_builder{
 			{
 				Id:   0,
 				Data: "0",
@@ -65,6 +65,10 @@ func TestSAInt64Repository_Create_WithADuplicatePrimaryKeyFails(t *testing.T) {
 				Id:   3,
 				Data: "3",
 			},
+		}
+		initial := make([]*primaryKey.SAInt64, 0, len(initialBuilder))
+		for _, builder := range initialBuilder {
+			initial = append(initial, builder.Build())
 		}
 		res, err = repoImpl.Create(context.Background(), initial)
 		if err != nil {
@@ -87,7 +91,7 @@ func TestSAInt64Repository_Create_WithADuplicatePrimaryKeyFails(t *testing.T) {
 			)
 		}
 
-		duplicates := []*primaryKey.SAInt64{
+		duplicatesBuilder := []*primaryKey.SAInt64_builder{
 			{
 				Id:   0,
 				Data: "0",
@@ -105,6 +109,10 @@ func TestSAInt64Repository_Create_WithADuplicatePrimaryKeyFails(t *testing.T) {
 				Data: "3",
 			},
 		}
+		duplicates := make([]*primaryKey.SAInt64, 0, len(duplicatesBuilder))
+		for _, builder := range duplicatesBuilder {
+			duplicates = append(duplicates, builder.Build())
+		}
 		res, err = repoImpl.Create(context.Background(), duplicates)
 		if err == nil {
 			t.Fatalf("%s: Create(): expected error", repoDesc)
@@ -114,8 +122,8 @@ func TestSAInt64Repository_Create_WithADuplicatePrimaryKeyFails(t *testing.T) {
 			t,
 			repoType,
 			map[options.Implementation]any{
-				options.Implementation_PGSQL:  "23505",
-				options.Implementation_SQLITE: sqliteLib.SQLITE_CONSTRAINT_PRIMARYKEY,
+				options.Implementation_IMPLEMENTATION_PGSQL:  "23505",
+				options.Implementation_IMPLEMENTATION_SQLITE: sqliteLib.SQLITE_CONSTRAINT_PRIMARYKEY,
 			},
 			err,
 			fmt.Sprintf("%s: Create(): ", repoDesc),
@@ -172,7 +180,7 @@ func TestSAInt64Repository_Create_WithANonDuplicatePrimaryKeySucceeds(t *testing
 				len(res),
 			)
 		}
-		expected := []*primaryKey.SAInt64{
+		expectedBuilder := []*primaryKey.SAInt64_builder{
 			{
 				Id:   0,
 				Data: "0",
@@ -189,6 +197,10 @@ func TestSAInt64Repository_Create_WithANonDuplicatePrimaryKeySucceeds(t *testing
 				Id:   3,
 				Data: "3",
 			},
+		}
+		expected := make([]*primaryKey.SAInt64, 0, len(expectedBuilder))
+		for _, builder := range expectedBuilder {
+			expected = append(expected, builder.Build())
 		}
 		res, err = repoImpl.Create(context.Background(), expected)
 		if err != nil {
@@ -261,7 +273,7 @@ func TestSAInt64Repository_Update_WithUnLocatablePrimaryKeyUpdatesNothing(t *tes
 			)
 		}
 
-		expected := []*primaryKey.SAInt64{
+		expectedBuilder := []*primaryKey.SAInt64_builder{
 			{
 				Id:   0,
 				Data: "0",
@@ -279,7 +291,10 @@ func TestSAInt64Repository_Update_WithUnLocatablePrimaryKeyUpdatesNothing(t *tes
 				Data: "3",
 			},
 		}
-
+		expected := make([]*primaryKey.SAInt64, 0, len(expectedBuilder))
+		for _, builder := range expectedBuilder {
+			expected = append(expected, builder.Build())
+		}
 		_, err = repoImpl.Update(context.Background(), expected)
 		if err != nil {
 			t.Fatalf(
@@ -336,7 +351,7 @@ func TestSAInt64Repository_Update_WithLocatablePrimaryKeySucceeds(t *testing.T) 
 				len(res),
 			)
 		}
-		initial := []*primaryKey.SAInt64{
+		initialBuilder := []*primaryKey.SAInt64_builder{
 			{
 				Id:   0,
 				Data: "0",
@@ -353,6 +368,10 @@ func TestSAInt64Repository_Update_WithLocatablePrimaryKeySucceeds(t *testing.T) 
 				Id:   3,
 				Data: "3",
 			},
+		}
+		initial := make([]*primaryKey.SAInt64, 0, len(initialBuilder))
+		for _, builder := range initialBuilder {
+			initial = append(initial, builder.Build())
 		}
 		res, err = repoImpl.Create(context.Background(), initial)
 		if err != nil {
@@ -398,10 +417,10 @@ func TestSAInt64Repository_Update_WithLocatablePrimaryKeySucceeds(t *testing.T) 
 		for _, saint64 := range initial {
 			expected = append(
 				expected,
-				&primaryKey.SAInt64{
+				primaryKey.SAInt64_builder{
 					Id:   saint64.GetId(),
 					Data: "UPDATED",
-				},
+				}.Build(),
 			)
 		}
 
@@ -431,12 +450,12 @@ func TestSAInt64Repository_Delete_WithLocatablePrimaryKeySucceeds(t *testing.T) 
 	opts := saInt64DefaultCmpOpts()
 
 	testCases := map[string]struct {
-		initial          []*primaryKey.SAInt64
+		initial          []*primaryKey.SAInt64_builder
 		deleteExpression expressions.Expression
-		expected         []*primaryKey.SAInt64
+		expected         []*primaryKey.SAInt64_builder
 	}{
 		"using primary key": {
-			initial: []*primaryKey.SAInt64{
+			initial: []*primaryKey.SAInt64_builder{
 				{
 					Id:   0,
 					Data: "0",
@@ -464,7 +483,7 @@ func TestSAInt64Repository_Delete_WithLocatablePrimaryKeySucceeds(t *testing.T) 
 					expressions.NewScalar(3),
 				),
 			),
-			expected: []*primaryKey.SAInt64{
+			expected: []*primaryKey.SAInt64_builder{
 				{
 					Id:   0,
 					Data: "0",
@@ -476,7 +495,7 @@ func TestSAInt64Repository_Delete_WithLocatablePrimaryKeySucceeds(t *testing.T) 
 			},
 		},
 		"using non-prime attributes": {
-			initial: []*primaryKey.SAInt64{
+			initial: []*primaryKey.SAInt64_builder{
 				{
 					Id:   0,
 					Data: "0",
@@ -504,7 +523,7 @@ func TestSAInt64Repository_Delete_WithLocatablePrimaryKeySucceeds(t *testing.T) 
 					expressions.NewScalar("3"),
 				),
 			),
-			expected: []*primaryKey.SAInt64{
+			expected: []*primaryKey.SAInt64_builder{
 				{
 					Id:   0,
 					Data: "0",
@@ -547,7 +566,11 @@ func TestSAInt64Repository_Delete_WithLocatablePrimaryKeySucceeds(t *testing.T) 
 					len(res),
 				)
 			}
-			res, err = repoImpl.Create(context.Background(), testCase.initial)
+			initial := make([]*primaryKey.SAInt64, 0, len(testCase.initial))
+			for _, builder := range testCase.initial {
+				initial = append(initial, builder.Build())
+			}
+			res, err = repoImpl.Create(context.Background(), initial)
 			if err != nil {
 				t.Fatalf(
 					"%s: %s: Create(): %s",
@@ -556,7 +579,7 @@ func TestSAInt64Repository_Delete_WithLocatablePrimaryKeySucceeds(t *testing.T) 
 					err,
 				)
 			}
-			if diff := cmp.Diff(testCase.initial, res, opts); diff != "" {
+			if diff := cmp.Diff(initial, res, opts); diff != "" {
 				t.Fatal(
 					mismatch(
 						fmt.Sprintf(
@@ -578,7 +601,7 @@ func TestSAInt64Repository_Delete_WithLocatablePrimaryKeySucceeds(t *testing.T) 
 					err,
 				)
 			}
-			if diff := cmp.Diff(testCase.initial, res, opts); diff != "" {
+			if diff := cmp.Diff(initial, res, opts); diff != "" {
 				t.Fatal(
 					mismatch(
 						fmt.Sprintf(
@@ -610,7 +633,11 @@ func TestSAInt64Repository_Delete_WithLocatablePrimaryKeySucceeds(t *testing.T) 
 					err,
 				)
 			}
-			if diff := cmp.Diff(testCase.expected, res, opts); diff != "" {
+			expected := make([]*primaryKey.SAInt64, 0, len(testCase.expected))
+			for _, builder := range testCase.expected {
+				expected = append(expected, builder.Build())
+			}
+			if diff := cmp.Diff(expected, res, opts); diff != "" {
 				t.Fatal(
 					mismatch(
 						fmt.Sprintf(
@@ -628,8 +655,8 @@ func TestSAInt64Repository_Delete_WithLocatablePrimaryKeySucceeds(t *testing.T) 
 
 func saInt64ImplementationsToTest() map[options.Implementation]saInt64ComponentUnderTest {
 	return map[options.Implementation]saInt64ComponentUnderTest{
-		options.Implementation_SQLITE: sqliteSAInt64ComponentUnderTest,
-		options.Implementation_PGSQL:  pgsqlSAInt64ComponentUnderTest,
+		options.Implementation_IMPLEMENTATION_SQLITE: sqliteSAInt64ComponentUnderTest,
+		options.Implementation_IMPLEMENTATION_PGSQL:  pgsqlSAInt64ComponentUnderTest,
 	}
 }
 

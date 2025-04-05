@@ -49,7 +49,7 @@ func TestSAEnumRepository_Create_WithADuplicatePrimaryKeyFails(t *testing.T) {
 				len(res),
 			)
 		}
-		initial := []*primaryKey.SAEnum{
+		initialBuilder := []*primaryKey.SAEnum_builder{
 			{
 				Id:   primaryKey.PrimaryKeyEnum_ZERO,
 				Data: primaryKey.PrimaryKeyEnum_ZERO.String(),
@@ -66,6 +66,10 @@ func TestSAEnumRepository_Create_WithADuplicatePrimaryKeyFails(t *testing.T) {
 				Id:   primaryKey.PrimaryKeyEnum_THREE,
 				Data: primaryKey.PrimaryKeyEnum_THREE.String(),
 			},
+		}
+		initial := make([]*primaryKey.SAEnum, 0, len(initialBuilder))
+		for _, builder := range initialBuilder {
+			initial = append(initial, builder.Build())
 		}
 		res, err = repoImpl.Create(context.Background(), initial)
 		if err != nil {
@@ -88,7 +92,7 @@ func TestSAEnumRepository_Create_WithADuplicatePrimaryKeyFails(t *testing.T) {
 			)
 		}
 
-		duplicates := []*primaryKey.SAEnum{
+		duplicatesBuilder := []*primaryKey.SAEnum_builder{
 			{
 				Id:   primaryKey.PrimaryKeyEnum_ZERO,
 				Data: primaryKey.PrimaryKeyEnum_ZERO.String(),
@@ -106,6 +110,10 @@ func TestSAEnumRepository_Create_WithADuplicatePrimaryKeyFails(t *testing.T) {
 				Data: primaryKey.PrimaryKeyEnum_THREE.String(),
 			},
 		}
+		duplicates := make([]*primaryKey.SAEnum, 0, len(duplicatesBuilder))
+		for _, builder := range duplicatesBuilder {
+			duplicates = append(duplicates, builder.Build())
+		}
 		res, err = repoImpl.Create(context.Background(), duplicates)
 		if err == nil {
 			t.Fatalf("%s: Create(): expected error", repoDesc)
@@ -115,8 +123,8 @@ func TestSAEnumRepository_Create_WithADuplicatePrimaryKeyFails(t *testing.T) {
 			t,
 			repoType,
 			map[options.Implementation]any{
-				options.Implementation_PGSQL:  "23505",
-				options.Implementation_SQLITE: sqliteLib.SQLITE_CONSTRAINT_PRIMARYKEY,
+				options.Implementation_IMPLEMENTATION_PGSQL:  "23505",
+				options.Implementation_IMPLEMENTATION_SQLITE: sqliteLib.SQLITE_CONSTRAINT_PRIMARYKEY,
 			},
 			err,
 			fmt.Sprintf("%s: Create(): ", repoDesc),
@@ -173,7 +181,7 @@ func TestSAEnumRepository_Create_WithANonDuplicatePrimaryKeySucceeds(t *testing.
 				len(res),
 			)
 		}
-		expected := []*primaryKey.SAEnum{
+		expectedBuilder := []*primaryKey.SAEnum_builder{
 			{
 				Id:   primaryKey.PrimaryKeyEnum_ZERO,
 				Data: primaryKey.PrimaryKeyEnum_ZERO.String(),
@@ -190,6 +198,10 @@ func TestSAEnumRepository_Create_WithANonDuplicatePrimaryKeySucceeds(t *testing.
 				Id:   primaryKey.PrimaryKeyEnum_THREE,
 				Data: primaryKey.PrimaryKeyEnum_THREE.String(),
 			},
+		}
+		expected := make([]*primaryKey.SAEnum, 0, len(expectedBuilder))
+		for _, builder := range expectedBuilder {
+			expected = append(expected, builder.Build())
 		}
 		res, err = repoImpl.Create(context.Background(), expected)
 		if err != nil {
@@ -262,7 +274,7 @@ func TestSAEnumRepository_Update_WithUnLocatablePrimaryKeyUpdatesNothing(t *test
 			)
 		}
 
-		expected := []*primaryKey.SAEnum{
+		expectedBuilder := []*primaryKey.SAEnum_builder{
 			{
 				Id:   primaryKey.PrimaryKeyEnum_ZERO,
 				Data: primaryKey.PrimaryKeyEnum_ZERO.String(),
@@ -280,7 +292,10 @@ func TestSAEnumRepository_Update_WithUnLocatablePrimaryKeyUpdatesNothing(t *test
 				Data: primaryKey.PrimaryKeyEnum_THREE.String(),
 			},
 		}
-
+		expected := make([]*primaryKey.SAEnum, 0, len(expectedBuilder))
+		for _, builder := range expectedBuilder {
+			expected = append(expected, builder.Build())
+		}
 		_, err = repoImpl.Update(context.Background(), expected)
 		if err != nil {
 			t.Fatalf(
@@ -337,7 +352,7 @@ func TestSAEnumRepository_Update_WithLocatablePrimaryKeySucceeds(t *testing.T) {
 				len(res),
 			)
 		}
-		initial := []*primaryKey.SAEnum{
+		initialBuilder := []*primaryKey.SAEnum_builder{
 			{
 				Id:   primaryKey.PrimaryKeyEnum_ZERO,
 				Data: primaryKey.PrimaryKeyEnum_ZERO.String(),
@@ -354,6 +369,10 @@ func TestSAEnumRepository_Update_WithLocatablePrimaryKeySucceeds(t *testing.T) {
 				Id:   primaryKey.PrimaryKeyEnum_THREE,
 				Data: primaryKey.PrimaryKeyEnum_THREE.String(),
 			},
+		}
+		initial := make([]*primaryKey.SAEnum, 0, len(initialBuilder))
+		for _, builder := range initialBuilder {
+			initial = append(initial, builder.Build())
 		}
 		res, err = repoImpl.Create(context.Background(), initial)
 		if err != nil {
@@ -399,10 +418,10 @@ func TestSAEnumRepository_Update_WithLocatablePrimaryKeySucceeds(t *testing.T) {
 		for _, saenum := range initial {
 			expected = append(
 				expected,
-				&primaryKey.SAEnum{
+				primaryKey.SAEnum_builder{
 					Id:   saenum.GetId(),
 					Data: "UPDATED",
-				},
+				}.Build(),
 			)
 		}
 
@@ -432,12 +451,12 @@ func TestSAEnumRepository_Delete_WithLocatablePrimaryKeySucceeds(t *testing.T) {
 	opts := saEnumDefaultCmpOpts()
 
 	testCases := map[string]struct {
-		initial          []*primaryKey.SAEnum
+		initial          []*primaryKey.SAEnum_builder
 		deleteExpression expressions.Expression
-		expected         []*primaryKey.SAEnum
+		expected         []*primaryKey.SAEnum_builder
 	}{
 		"using primary key": {
-			initial: []*primaryKey.SAEnum{
+			initial: []*primaryKey.SAEnum_builder{
 				{
 					Id:   primaryKey.PrimaryKeyEnum_ZERO,
 					Data: primaryKey.PrimaryKeyEnum_ZERO.String(),
@@ -465,7 +484,7 @@ func TestSAEnumRepository_Delete_WithLocatablePrimaryKeySucceeds(t *testing.T) {
 					expressions.NewScalar(primaryKey.PrimaryKeyEnum_THREE),
 				),
 			),
-			expected: []*primaryKey.SAEnum{
+			expected: []*primaryKey.SAEnum_builder{
 				{
 					Id:   primaryKey.PrimaryKeyEnum_ZERO,
 					Data: primaryKey.PrimaryKeyEnum_ZERO.String(),
@@ -477,7 +496,7 @@ func TestSAEnumRepository_Delete_WithLocatablePrimaryKeySucceeds(t *testing.T) {
 			},
 		},
 		"using non-prime attributes": {
-			initial: []*primaryKey.SAEnum{
+			initial: []*primaryKey.SAEnum_builder{
 				{
 					Id:   primaryKey.PrimaryKeyEnum_ZERO,
 					Data: primaryKey.PrimaryKeyEnum_ZERO.String(),
@@ -505,7 +524,7 @@ func TestSAEnumRepository_Delete_WithLocatablePrimaryKeySucceeds(t *testing.T) {
 					expressions.NewScalar(primaryKey.PrimaryKeyEnum_THREE.String()),
 				),
 			),
-			expected: []*primaryKey.SAEnum{
+			expected: []*primaryKey.SAEnum_builder{
 				{
 					Id:   primaryKey.PrimaryKeyEnum_ZERO,
 					Data: primaryKey.PrimaryKeyEnum_ZERO.String(),
@@ -548,7 +567,11 @@ func TestSAEnumRepository_Delete_WithLocatablePrimaryKeySucceeds(t *testing.T) {
 					len(res),
 				)
 			}
-			res, err = repoImpl.Create(context.Background(), testCase.initial)
+			initial := make([]*primaryKey.SAEnum, 0, len(testCase.initial))
+			for _, builder := range testCase.initial {
+				initial = append(initial, builder.Build())
+			}
+			res, err = repoImpl.Create(context.Background(), initial)
 			if err != nil {
 				t.Fatalf(
 					"%s: %s: Create(): %s",
@@ -557,7 +580,7 @@ func TestSAEnumRepository_Delete_WithLocatablePrimaryKeySucceeds(t *testing.T) {
 					err,
 				)
 			}
-			if diff := cmp.Diff(testCase.initial, res, opts); diff != "" {
+			if diff := cmp.Diff(initial, res, opts); diff != "" {
 				t.Fatal(
 					mismatch(
 						fmt.Sprintf(
@@ -611,7 +634,11 @@ func TestSAEnumRepository_Delete_WithLocatablePrimaryKeySucceeds(t *testing.T) {
 					err,
 				)
 			}
-			if diff := cmp.Diff(testCase.expected, res, opts); diff != "" {
+			expected := make([]*primaryKey.SAEnum, 0, len(testCase.expected))
+			for _, builder := range testCase.expected {
+				expected = append(expected, builder.Build())
+			}
+			if diff := cmp.Diff(expected, res, opts); diff != "" {
 				t.Fatal(
 					mismatch(
 						fmt.Sprintf(
@@ -629,8 +656,8 @@ func TestSAEnumRepository_Delete_WithLocatablePrimaryKeySucceeds(t *testing.T) {
 
 func saEnumImplementationsToTest() map[options.Implementation]saEnumComponentUnderTest {
 	return map[options.Implementation]saEnumComponentUnderTest{
-		options.Implementation_SQLITE: sqliteSAEnumComponentUnderTest,
-		options.Implementation_PGSQL:  pgsqlSAEnumComponentUnderTest,
+		options.Implementation_IMPLEMENTATION_SQLITE: sqliteSAEnumComponentUnderTest,
+		options.Implementation_IMPLEMENTATION_PGSQL:  pgsqlSAEnumComponentUnderTest,
 	}
 }
 

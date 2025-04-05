@@ -47,7 +47,7 @@ func TestSAUint32Repository_Create_WithADuplicatePrimaryKeyFails(t *testing.T) {
 				len(res),
 			)
 		}
-		initial := []*primaryKey.SAUint32{
+		initialBuilder := []*primaryKey.SAUint32_builder{
 			{
 				Id:   0,
 				Data: "0",
@@ -64,6 +64,10 @@ func TestSAUint32Repository_Create_WithADuplicatePrimaryKeyFails(t *testing.T) {
 				Id:   3,
 				Data: "3",
 			},
+		}
+		initial := make([]*primaryKey.SAUint32, 0, len(initialBuilder))
+		for _, builder := range initialBuilder {
+			initial = append(initial, builder.Build())
 		}
 		res, err = repoImpl.Create(context.Background(), initial)
 		if err != nil {
@@ -86,7 +90,7 @@ func TestSAUint32Repository_Create_WithADuplicatePrimaryKeyFails(t *testing.T) {
 			)
 		}
 
-		duplicates := []*primaryKey.SAUint32{
+		duplicatesBuilder := []*primaryKey.SAUint32_builder{
 			{
 				Id:   0,
 				Data: "0",
@@ -104,6 +108,10 @@ func TestSAUint32Repository_Create_WithADuplicatePrimaryKeyFails(t *testing.T) {
 				Data: "3",
 			},
 		}
+		duplicates := make([]*primaryKey.SAUint32, 0, len(duplicatesBuilder))
+		for _, builder := range duplicatesBuilder {
+			duplicates = append(duplicates, builder.Build())
+		}
 		res, err = repoImpl.Create(context.Background(), duplicates)
 		if err == nil {
 			t.Fatalf("%s: Create(): expected error", repoDesc)
@@ -113,8 +121,8 @@ func TestSAUint32Repository_Create_WithADuplicatePrimaryKeyFails(t *testing.T) {
 			t,
 			repoType,
 			map[options.Implementation]any{
-				options.Implementation_PGSQL:  "23505",
-				options.Implementation_SQLITE: sqliteLib.SQLITE_CONSTRAINT_PRIMARYKEY,
+				options.Implementation_IMPLEMENTATION_PGSQL:  "23505",
+				options.Implementation_IMPLEMENTATION_SQLITE: sqliteLib.SQLITE_CONSTRAINT_PRIMARYKEY,
 			},
 			err,
 			fmt.Sprintf("%s: Create(): ", repoDesc),
@@ -171,7 +179,7 @@ func TestSAUint32Repository_Create_WithANonDuplicatePrimaryKeySucceeds(t *testin
 				len(res),
 			)
 		}
-		expected := []*primaryKey.SAUint32{
+		expectedBuilder := []*primaryKey.SAUint32_builder{
 			{
 				Id:   0,
 				Data: "0",
@@ -188,6 +196,10 @@ func TestSAUint32Repository_Create_WithANonDuplicatePrimaryKeySucceeds(t *testin
 				Id:   3,
 				Data: "3",
 			},
+		}
+		expected := make([]*primaryKey.SAUint32, 0, len(expectedBuilder))
+		for _, builder := range expectedBuilder {
+			expected = append(expected, builder.Build())
 		}
 		res, err = repoImpl.Create(context.Background(), expected)
 		if err != nil {
@@ -260,7 +272,7 @@ func TestSAUint32Repository_Update_WithUnLocatablePrimaryKeyUpdatesNothing(t *te
 			)
 		}
 
-		expected := []*primaryKey.SAUint32{
+		expectedBuilder := []*primaryKey.SAUint32_builder{
 			{
 				Id:   0,
 				Data: "0",
@@ -278,7 +290,10 @@ func TestSAUint32Repository_Update_WithUnLocatablePrimaryKeyUpdatesNothing(t *te
 				Data: "3",
 			},
 		}
-
+		expected := make([]*primaryKey.SAUint32, 0, len(expectedBuilder))
+		for _, builder := range expectedBuilder {
+			expected = append(expected, builder.Build())
+		}
 		_, err = repoImpl.Update(context.Background(), expected)
 		if err != nil {
 			t.Fatalf(
@@ -335,7 +350,7 @@ func TestSAUint32Repository_Update_WithLocatablePrimaryKeySucceeds(t *testing.T)
 				len(res),
 			)
 		}
-		initial := []*primaryKey.SAUint32{
+		initialBuilder := []*primaryKey.SAUint32_builder{
 			{
 				Id:   0,
 				Data: "0",
@@ -352,6 +367,10 @@ func TestSAUint32Repository_Update_WithLocatablePrimaryKeySucceeds(t *testing.T)
 				Id:   3,
 				Data: "3",
 			},
+		}
+		initial := make([]*primaryKey.SAUint32, 0, len(initialBuilder))
+		for _, builder := range initialBuilder {
+			initial = append(initial, builder.Build())
 		}
 		res, err = repoImpl.Create(context.Background(), initial)
 		if err != nil {
@@ -397,10 +416,10 @@ func TestSAUint32Repository_Update_WithLocatablePrimaryKeySucceeds(t *testing.T)
 		for _, sauint32 := range initial {
 			expected = append(
 				expected,
-				&primaryKey.SAUint32{
+				primaryKey.SAUint32_builder{
 					Id:   sauint32.GetId(),
 					Data: "UPDATED",
-				},
+				}.Build(),
 			)
 		}
 
@@ -430,12 +449,12 @@ func TestSAUint32Repository_Delete_WithLocatablePrimaryKeySucceeds(t *testing.T)
 	opts := saUint32DefaultCmpOpts()
 
 	testCases := map[string]struct {
-		initial          []*primaryKey.SAUint32
+		initial          []*primaryKey.SAUint32_builder
 		deleteExpression expressions.Expression
-		expected         []*primaryKey.SAUint32
+		expected         []*primaryKey.SAUint32_builder
 	}{
 		"using primary key": {
-			initial: []*primaryKey.SAUint32{
+			initial: []*primaryKey.SAUint32_builder{
 				{
 					Id:   0,
 					Data: "0",
@@ -463,7 +482,7 @@ func TestSAUint32Repository_Delete_WithLocatablePrimaryKeySucceeds(t *testing.T)
 					expressions.NewScalar(3),
 				),
 			),
-			expected: []*primaryKey.SAUint32{
+			expected: []*primaryKey.SAUint32_builder{
 				{
 					Id:   0,
 					Data: "0",
@@ -475,7 +494,7 @@ func TestSAUint32Repository_Delete_WithLocatablePrimaryKeySucceeds(t *testing.T)
 			},
 		},
 		"using non-prime attributes": {
-			initial: []*primaryKey.SAUint32{
+			initial: []*primaryKey.SAUint32_builder{
 				{
 					Id:   0,
 					Data: "0",
@@ -503,7 +522,7 @@ func TestSAUint32Repository_Delete_WithLocatablePrimaryKeySucceeds(t *testing.T)
 					expressions.NewScalar("3"),
 				),
 			),
-			expected: []*primaryKey.SAUint32{
+			expected: []*primaryKey.SAUint32_builder{
 				{
 					Id:   0,
 					Data: "0",
@@ -546,7 +565,11 @@ func TestSAUint32Repository_Delete_WithLocatablePrimaryKeySucceeds(t *testing.T)
 					len(res),
 				)
 			}
-			res, err = repoImpl.Create(context.Background(), testCase.initial)
+			initial := make([]*primaryKey.SAUint32, 0, len(testCase.initial))
+			for _, builder := range testCase.initial {
+				initial = append(initial, builder.Build())
+			}
+			res, err = repoImpl.Create(context.Background(), initial)
 			if err != nil {
 				t.Fatalf(
 					"%s: %s: Create(): %s",
@@ -555,7 +578,7 @@ func TestSAUint32Repository_Delete_WithLocatablePrimaryKeySucceeds(t *testing.T)
 					err,
 				)
 			}
-			if diff := cmp.Diff(testCase.initial, res, opts); diff != "" {
+			if diff := cmp.Diff(initial, res, opts); diff != "" {
 				t.Fatal(
 					mismatch(
 						fmt.Sprintf(
@@ -577,7 +600,7 @@ func TestSAUint32Repository_Delete_WithLocatablePrimaryKeySucceeds(t *testing.T)
 					err,
 				)
 			}
-			if diff := cmp.Diff(testCase.initial, res, opts); diff != "" {
+			if diff := cmp.Diff(initial, res, opts); diff != "" {
 				t.Fatal(
 					mismatch(
 						fmt.Sprintf(
@@ -609,7 +632,11 @@ func TestSAUint32Repository_Delete_WithLocatablePrimaryKeySucceeds(t *testing.T)
 					err,
 				)
 			}
-			if diff := cmp.Diff(testCase.expected, res, opts); diff != "" {
+			expected := make([]*primaryKey.SAUint32, 0, len(testCase.expected))
+			for _, builder := range testCase.expected {
+				expected = append(expected, builder.Build())
+			}
+			if diff := cmp.Diff(expected, res, opts); diff != "" {
 				t.Fatal(
 					mismatch(
 						fmt.Sprintf(
@@ -627,8 +654,8 @@ func TestSAUint32Repository_Delete_WithLocatablePrimaryKeySucceeds(t *testing.T)
 
 func saUint32ImplementationsToTest() map[options.Implementation]saUint32ComponentUnderTest {
 	return map[options.Implementation]saUint32ComponentUnderTest{
-		options.Implementation_SQLITE: sqliteSAUint32ComponentUnderTest,
-		options.Implementation_PGSQL:  pgsqlSAUint32ComponentUnderTest,
+		options.Implementation_IMPLEMENTATION_SQLITE: sqliteSAUint32ComponentUnderTest,
+		options.Implementation_IMPLEMENTATION_PGSQL:  pgsqlSAUint32ComponentUnderTest,
 	}
 }
 
