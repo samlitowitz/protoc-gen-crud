@@ -51,7 +51,7 @@ func TestAsTimestampRepository_Create_WithADuplicatePrimaryKeyFails(t *testing.T
 				len(res),
 			)
 		}
-		initial := []*as_timestamp_field.AsTimestamp{
+		initialBuilder := []*as_timestamp_field.AsTimestamp_builder{
 			{
 				Id:        0,
 				Timestamp: timestamppb.New(time.Now()),
@@ -68,6 +68,10 @@ func TestAsTimestampRepository_Create_WithADuplicatePrimaryKeyFails(t *testing.T
 				Id:        3,
 				Timestamp: timestamppb.New(time.Now()),
 			},
+		}
+		initial := make([]*as_timestamp_field.AsTimestamp, 0, len(initialBuilder))
+		for _, builder := range initialBuilder {
+			initial = append(initial, builder.Build())
 		}
 		res, err = repoImpl.Create(context.Background(), initial)
 		if err != nil {
@@ -90,7 +94,7 @@ func TestAsTimestampRepository_Create_WithADuplicatePrimaryKeyFails(t *testing.T
 			)
 		}
 
-		duplicates := []*as_timestamp_field.AsTimestamp{
+		duplicatesBuilder := []*as_timestamp_field.AsTimestamp_builder{
 			{
 				Id:        0,
 				Timestamp: timestamppb.New(time.Now()),
@@ -108,6 +112,10 @@ func TestAsTimestampRepository_Create_WithADuplicatePrimaryKeyFails(t *testing.T
 				Timestamp: timestamppb.New(time.Now()),
 			},
 		}
+		duplicates := make([]*as_timestamp_field.AsTimestamp, 0, len(duplicatesBuilder))
+		for _, builder := range duplicatesBuilder {
+			duplicates = append(duplicates, builder.Build())
+		}
 		res, err = repoImpl.Create(context.Background(), duplicates)
 		if err == nil {
 			t.Fatalf("%s: Create(): expected error", repoDesc)
@@ -117,8 +125,8 @@ func TestAsTimestampRepository_Create_WithADuplicatePrimaryKeyFails(t *testing.T
 			t,
 			repoType,
 			map[options.Implementation]any{
-				options.Implementation_PGSQL:  "23505",
-				options.Implementation_SQLITE: sqliteLib.SQLITE_CONSTRAINT_PRIMARYKEY,
+				options.Implementation_IMPLEMENTATION_PGSQL:  "23505",
+				options.Implementation_IMPLEMENTATION_SQLITE: sqliteLib.SQLITE_CONSTRAINT_PRIMARYKEY,
 			},
 			err,
 			fmt.Sprintf("%s: Create(): ", repoDesc),
@@ -175,7 +183,7 @@ func TestAsTimestamp_DescriptorRepository_Create_WithANonDuplicatePrimaryKeySucc
 				len(res),
 			)
 		}
-		expected := []*as_timestamp_field.AsTimestamp{
+		expectedBuilder := []*as_timestamp_field.AsTimestamp_builder{
 			{
 				Id:        0,
 				Timestamp: timestamppb.New(time.Now()),
@@ -192,6 +200,10 @@ func TestAsTimestamp_DescriptorRepository_Create_WithANonDuplicatePrimaryKeySucc
 				Id:        3,
 				Timestamp: timestamppb.New(time.Now()),
 			},
+		}
+		expected := make([]*as_timestamp_field.AsTimestamp, 0, len(expectedBuilder))
+		for _, builder := range expectedBuilder {
+			expected = append(expected, builder.Build())
 		}
 		res, err = repoImpl.Create(context.Background(), expected)
 		if err != nil {
@@ -264,7 +276,7 @@ func TestAsTimestamp_DescriptorRepository_Update_WithUnLocatablePrimaryKeyUpdate
 			)
 		}
 
-		expected := []*as_timestamp_field.AsTimestamp{
+		expectedBuilder := []*as_timestamp_field.AsTimestamp_builder{
 			{
 				Id:        0,
 				Timestamp: timestamppb.New(time.Now()),
@@ -282,7 +294,10 @@ func TestAsTimestamp_DescriptorRepository_Update_WithUnLocatablePrimaryKeyUpdate
 				Timestamp: timestamppb.New(time.Now()),
 			},
 		}
-
+		expected := make([]*as_timestamp_field.AsTimestamp, 0, len(expectedBuilder))
+		for _, builder := range expectedBuilder {
+			expected = append(expected, builder.Build())
+		}
 		_, err = repoImpl.Update(context.Background(), expected)
 		if err != nil {
 			t.Fatalf(
@@ -339,7 +354,7 @@ func TestAsTimestamp_DescriptorRepository_Update_WithLocatablePrimaryKeySucceeds
 				len(res),
 			)
 		}
-		initial := []*as_timestamp_field.AsTimestamp{
+		initialBuilder := []*as_timestamp_field.AsTimestamp_builder{
 			{
 				Id:        0,
 				Timestamp: timestamppb.New(time.Now()),
@@ -356,6 +371,10 @@ func TestAsTimestamp_DescriptorRepository_Update_WithLocatablePrimaryKeySucceeds
 				Id:        3,
 				Timestamp: timestamppb.New(time.Now()),
 			},
+		}
+		initial := make([]*as_timestamp_field.AsTimestamp, 0, len(initialBuilder))
+		for _, builder := range initialBuilder {
+			initial = append(initial, builder.Build())
 		}
 		res, err = repoImpl.Create(context.Background(), initial)
 		if err != nil {
@@ -397,17 +416,20 @@ func TestAsTimestamp_DescriptorRepository_Update_WithLocatablePrimaryKeySucceeds
 			)
 		}
 
-		expected := make([]*as_timestamp_field.AsTimestamp, 0, len(initial))
+		expectedBuilder := make([]*as_timestamp_field.AsTimestamp_builder, 0, len(initial))
 		for _, inlineTimestamp := range initial {
-			expected = append(
-				expected,
-				&as_timestamp_field.AsTimestamp{
+			expectedBuilder = append(
+				expectedBuilder,
+				&as_timestamp_field.AsTimestamp_builder{
 					Id:        inlineTimestamp.GetId(),
 					Timestamp: timestamppb.New(time.Now().Add(time.Hour * 5)),
 				},
 			)
 		}
-
+		expected := make([]*as_timestamp_field.AsTimestamp, 0, len(expectedBuilder))
+		for _, builder := range expectedBuilder {
+			expected = append(expected, builder.Build())
+		}
 		res, err = repoImpl.Update(context.Background(), expected)
 		if err != nil {
 			t.Fatalf(
@@ -438,12 +460,12 @@ func TestAsTimestamp_DescriptorRepository_Delete_WithLocatablePrimaryKeySucceeds
 	two_hour_ago := timestamppb.New(time.Now().Add(time.Hour * -2))
 
 	testCases := map[string]struct {
-		initial          []*as_timestamp_field.AsTimestamp
+		initial          []*as_timestamp_field.AsTimestamp_builder
 		deleteExpression expressions.Expression
-		expected         []*as_timestamp_field.AsTimestamp
+		expected         []*as_timestamp_field.AsTimestamp_builder
 	}{
 		"using primary key": {
-			initial: []*as_timestamp_field.AsTimestamp{
+			initial: []*as_timestamp_field.AsTimestamp_builder{
 				{
 					Id:        0,
 					Timestamp: now,
@@ -471,7 +493,7 @@ func TestAsTimestamp_DescriptorRepository_Delete_WithLocatablePrimaryKeySucceeds
 					expressions.NewScalar(3),
 				),
 			),
-			expected: []*as_timestamp_field.AsTimestamp{
+			expected: []*as_timestamp_field.AsTimestamp_builder{
 				{
 					Id:        0,
 					Timestamp: now,
@@ -483,7 +505,7 @@ func TestAsTimestamp_DescriptorRepository_Delete_WithLocatablePrimaryKeySucceeds
 			},
 		},
 		"using non-prime attributes": {
-			initial: []*as_timestamp_field.AsTimestamp{
+			initial: []*as_timestamp_field.AsTimestamp_builder{
 				{
 					Id:        0,
 					Timestamp: now,
@@ -511,7 +533,7 @@ func TestAsTimestamp_DescriptorRepository_Delete_WithLocatablePrimaryKeySucceeds
 					expressions.NewTimestamp(two_hour_ago.AsTime()),
 				),
 			),
-			expected: []*as_timestamp_field.AsTimestamp{
+			expected: []*as_timestamp_field.AsTimestamp_builder{
 				{
 					Id:        0,
 					Timestamp: now,
@@ -554,7 +576,11 @@ func TestAsTimestamp_DescriptorRepository_Delete_WithLocatablePrimaryKeySucceeds
 					len(res),
 				)
 			}
-			res, err = repoImpl.Create(context.Background(), testCase.initial)
+			initial := make([]*as_timestamp_field.AsTimestamp, 0, len(testCase.initial))
+			for _, builder := range testCase.initial {
+				initial = append(initial, builder.Build())
+			}
+			res, err = repoImpl.Create(context.Background(), initial)
 			if err != nil {
 				t.Fatalf(
 					"%s: %s: Create(): %s",
@@ -563,7 +589,7 @@ func TestAsTimestamp_DescriptorRepository_Delete_WithLocatablePrimaryKeySucceeds
 					err,
 				)
 			}
-			if diff := cmp.Diff(testCase.initial, res, opts); diff != "" {
+			if diff := cmp.Diff(initial, res, opts); diff != "" {
 				t.Fatal(
 					mismatch(
 						fmt.Sprintf(
@@ -585,7 +611,7 @@ func TestAsTimestamp_DescriptorRepository_Delete_WithLocatablePrimaryKeySucceeds
 					err,
 				)
 			}
-			if diff := cmp.Diff(testCase.initial, res, opts); diff != "" {
+			if diff := cmp.Diff(initial, res, opts); diff != "" {
 				t.Fatal(
 					mismatch(
 						fmt.Sprintf(
@@ -617,7 +643,11 @@ func TestAsTimestamp_DescriptorRepository_Delete_WithLocatablePrimaryKeySucceeds
 					err,
 				)
 			}
-			if diff := cmp.Diff(testCase.expected, res, opts); diff != "" {
+			expected := make([]*as_timestamp_field.AsTimestamp, 0, len(testCase.expected))
+			for _, builder := range testCase.expected {
+				expected = append(expected, builder.Build())
+			}
+			if diff := cmp.Diff(expected, res, opts); diff != "" {
 				t.Fatal(
 					mismatch(
 						fmt.Sprintf(
@@ -635,8 +665,8 @@ func TestAsTimestamp_DescriptorRepository_Delete_WithLocatablePrimaryKeySucceeds
 
 func asTimestampImplementationsToTest() map[options.Implementation]asTimestampComponentUnderTest {
 	return map[options.Implementation]asTimestampComponentUnderTest{
-		options.Implementation_SQLITE: sqliteAsTimestampComponentUnderTest,
-		options.Implementation_PGSQL:  pgsqlAsTimestampComponentUnderTest,
+		options.Implementation_IMPLEMENTATION_SQLITE: sqliteAsTimestampComponentUnderTest,
+		options.Implementation_IMPLEMENTATION_PGSQL:  pgsqlAsTimestampComponentUnderTest,
 	}
 }
 
