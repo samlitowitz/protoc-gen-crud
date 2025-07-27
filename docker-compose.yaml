@@ -57,7 +57,23 @@ services:
       - go-test-db-password
     user: ${DOCKER_USER}
     volumes:
-      - "./data/go-test-db/data:/var/lib/postgresql/data"
+      - ./data/go-test-db/data:/var/lib/postgresql/data
+
+  lint:
+    image: golangci/golangci-lint:v2.3.0
+    entrypoint: [ "golangci-lint" ]
+    command: [ "run" ]
+    environment:
+      - GOCACHE=/.cache/go-build
+      - GOMODCACHE=/.cache/mod
+      - GOLANGCI_LINT_CACHE=/.cache/golangci-lint
+    user: ${DOCKER_USER}
+    working_dir: "/app"
+    volumes:
+      - ./:/app
+      - ${GOCACHE}:/.cache/go-build
+      - ${GOMODCACHE}:/.cache/mod
+      - ${GOLANGCI_LINT_CACHE}:/.cache/golangci-lint
 
 networks:
   test:
