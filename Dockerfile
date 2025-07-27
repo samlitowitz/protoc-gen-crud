@@ -1,7 +1,7 @@
 ############################
 # -- go-test
 ############################
-FROM golang:1.23-alpine AS go-test
+FROM golang:1.24-alpine AS go-test
 
 #RUN adduser -D -g '' appuser
 WORKDIR $GOPATH/src/github.com/samlitowitz/protoc-gen-crud
