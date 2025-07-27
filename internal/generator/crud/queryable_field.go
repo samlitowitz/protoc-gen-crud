@@ -29,7 +29,7 @@ func QueryableFieldsFromFields(fields []*descriptor.Field) []*QueryableField {
 			continue
 		}
 		// skip field, only handle in-line field types of message
-		if field.FieldDescriptorProto.GetType() != descriptorpb.FieldDescriptorProto_TYPE_MESSAGE {
+		if field.GetType() != descriptorpb.FieldDescriptorProto_TYPE_MESSAGE {
 			continue
 		}
 		// generator error

@@ -290,11 +290,11 @@ func (f *Field) FQFN() string {
 }
 
 func (f *Field) IsScalarGoType() bool {
-	return isScalarGoType(*f.FieldDescriptorProto.Type)
+	return isScalarGoType(f.GetType())
 }
 
 func (f *Field) HasRelationship() bool {
-	return f.Relationships != nil && len(f.Relationships) > 0
+	return len(f.Relationships) > 0
 }
 
 func (f *Field) GoType() string {

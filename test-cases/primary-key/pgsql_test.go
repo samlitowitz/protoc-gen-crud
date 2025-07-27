@@ -1,17 +1,11 @@
 package primary_key_test
 
 import (
-	"context"
 	"database/sql"
-	"fmt"
 	"os"
 	"testing"
 
 	test_cases "github.com/samlitowitz/protoc-gen-crud/test-cases"
-
-	"github.com/samlitowitz/protoc-gen-crud/expressions"
-
-	"github.com/google/go-cmp/cmp"
 
 	primaryKey "github.com/samlitowitz/protoc-gen-crud/test-cases/primary-key"
 )
@@ -245,66 +239,4 @@ func pgsqlMAAllComponentUnderTest(t *testing.T) primaryKey.MAAllRepository {
 		t.Fatal("pgsql: creating repository: ", err)
 	}
 	return repo
-}
-
-func pgsqlSAInt32CreateSuccessWithReadAfterCheck(
-	opts cmp.Options,
-	repo primaryKey.SAInt32Repository,
-	ctx context.Context,
-	toCreate []*primaryKey.SAInt32,
-	expectedRead []*primaryKey.SAInt32,
-) error {
-	_, err := repo.Create(ctx, toCreate)
-	if err != nil {
-		return fmt.Errorf("Create: %s", err)
-	}
-	return pgsqlSAInt32ReadCheck(opts, repo, ctx, nil, expectedRead)
-}
-
-func pgsqlSAInt32ReadCheck(
-	opts cmp.Options,
-	repo primaryKey.SAInt32Repository,
-	ctx context.Context,
-	expr expressions.Expression,
-	expectedRead []*primaryKey.SAInt32,
-) error {
-	read, err := repo.Read(ctx, expr)
-	if err != nil {
-		return fmt.Errorf("Read: %s", err)
-	}
-	if diff := cmp.Diff(expectedRead, read, opts); diff != "" {
-		return fmt.Errorf(mismatch("Read:", diff))
-	}
-	return nil
-}
-
-func pgsqlMAAllCreateSuccessWithReadAfterCheck(
-	opts cmp.Options,
-	repo primaryKey.MAAllRepository,
-	ctx context.Context,
-	toCreate []*primaryKey.MAAll,
-	expectedRead []*primaryKey.MAAll,
-) error {
-	_, err := repo.Create(ctx, toCreate)
-	if err != nil {
-		return fmt.Errorf("Create: %s", err)
-	}
-	return pgsqlMAAllReadCheck(opts, repo, ctx, nil, expectedRead)
-}
-
-func pgsqlMAAllReadCheck(
-	opts cmp.Options,
-	repo primaryKey.MAAllRepository,
-	ctx context.Context,
-	expr expressions.Expression,
-	expectedRead []*primaryKey.MAAll,
-) error {
-	read, err := repo.Read(ctx, expr)
-	if err != nil {
-		return fmt.Errorf("Read: %s", err)
-	}
-	if diff := cmp.Diff(expectedRead, read, opts); diff != "" {
-		return fmt.Errorf(mismatch("Read:", diff))
-	}
-	return nil
 }

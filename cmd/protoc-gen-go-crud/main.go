@@ -56,17 +56,17 @@ func main() {
 			return err
 		}
 
-		targets := make([]*descriptor.File, 0, len(gen.Request.FileToGenerate))
-		for _, target := range gen.Request.FileToGenerate {
+		targets := make([]*descriptor.File, 0, len(gen.Request.GetFileToGenerate()))
+		for _, target := range gen.Request.GetFileToGenerate() {
 			f, err := reg.LookupFile(target)
 			if err != nil {
 				return err
 			}
-			if f.FileDescriptorProto.GetSyntax() != protoreflect.Proto3.String() {
+			if f.GetSyntax() != protoreflect.Proto3.String() {
 				return fmt.Errorf(
 					"%s: unsupported syntax %s, must be %s",
 					target,
-					f.FileDescriptorProto.GetSyntax(),
+					f.GetSyntax(),
 					protoreflect.Proto3,
 				)
 			}

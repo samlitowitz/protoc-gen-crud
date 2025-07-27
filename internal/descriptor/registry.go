@@ -96,8 +96,8 @@ func (r *Registry) loadFile(filePath string, file *protogen.File) {
 	}
 
 	r.files[filePath] = f
-	r.registerMsg(f, nil, file.Proto.MessageType)
-	r.registerEnum(f, nil, file.Proto.EnumType)
+	r.registerMsg(f, nil, file.Proto.GetMessageType())
+	r.registerEnum(f, nil, file.Proto.GetEnumType())
 }
 
 func (r *Registry) registerMsg(file *File, outerPath []string, msgs []*descriptorpb.DescriptorProto) {

@@ -73,7 +73,7 @@ func (col *Column) GetComment() string {
 	case descriptorpb.FieldDescriptorProto_TYPE_ENUM:
 		return fmt.Sprintf(
 			" /* references %s.%s */",
-			QuotedIdent(col.Field.FieldEnum.GetName()),
+			QuotedIdent(col.FieldEnum.GetName()),
 			QuotedIdent("id"),
 		)
 
@@ -87,7 +87,7 @@ func (col *Column) GetComment() string {
 }
 
 func (col *Column) GetType() string {
-	if col.Field.AsTimestamp {
+	if col.AsTimestamp {
 		return "TIMESTAMP WITH TIME ZONE"
 	}
 

@@ -34,7 +34,7 @@ func loadFileWithCodeGeneratorRequest(t *testing.T, reg *Registry, req *pluginpb
 	if err != nil {
 		t.Fatalf("failed to Registry.LoadFromPlugin(): %v", err)
 	}
-	return plugin.Request.ProtoFile
+	return plugin.Request.GetProtoFile()
 }
 
 func loadFile(t *testing.T, reg *Registry, src string) *descriptorpb.FileDescriptorProto {
@@ -75,7 +75,7 @@ func TestLoadFile(t *testing.T) {
 		t.Errorf("reg.LookupMsg(%q, %q)) failed with %v; want success", "", ".example.ExampleMessage", err)
 		return
 	}
-	if got, want := msg.DescriptorProto, fd.MessageType[0]; got != want {
+	if got, want := msg.DescriptorProto, fd.GetMessageType()[0]; got != want {
 		t.Errorf("reg.lookupMsg(%q, %q).DescriptorProto = %#v; want %#v", "", ".example.ExampleMessage", got, want)
 	}
 	if got, want := msg.File, file; got != want {
@@ -86,7 +86,7 @@ func TestLoadFile(t *testing.T) {
 	}
 	if got, want := len(msg.Fields), 1; got != want {
 		t.Errorf("len(msg.Fields) = %d; want %d", got, want)
-	} else if got, want := msg.Fields[0].FieldDescriptorProto, fd.MessageType[0].Field[0]; got != want {
+	} else if got, want := msg.Fields[0].FieldDescriptorProto, fd.GetMessageType()[0].GetField()[0]; got != want {
 		t.Errorf("msg.Fields[0].FieldDescriptorProto = %v; want %v", got, want)
 	} else if got, want := msg.Fields[0].Message, msg; got != want {
 		t.Errorf("msg.Fields[0].Message = %v; want %v", got, want)
@@ -288,7 +288,7 @@ func TestLookupMsgWithoutPackage(t *testing.T) {
 		t.Errorf("reg.LookupMsg(%q, %q)) failed with %v; want success", "", ".ExampleMessage", err)
 		return
 	}
-	if got, want := msg.DescriptorProto, fd.MessageType[0]; got != want {
+	if got, want := msg.DescriptorProto, fd.GetMessageType()[0]; got != want {
 		t.Errorf("reg.lookupMsg(%q, %q).DescriptorProto = %#v; want %#v", "", ".ExampleMessage", got, want)
 	}
 }
@@ -321,7 +321,7 @@ func TestLookupMsgWithNestedPackage(t *testing.T) {
 			t.Errorf("reg.LookupMsg(%q, %q)) failed with %v; want success", ".nested.nested2.mypackage", name, err)
 			return
 		}
-		if got, want := msg.DescriptorProto, fd.MessageType[0]; got != want {
+		if got, want := msg.DescriptorProto, fd.GetMessageType()[0]; got != want {
 			t.Errorf("reg.lookupMsg(%q, %q).DescriptorProto = %#v; want %#v", ".nested.nested2.mypackage", name, got, want)
 		}
 	}
@@ -343,7 +343,7 @@ func TestLookupMsgWithNestedPackage(t *testing.T) {
 			t.Errorf("reg.LookupMsg(%q, %q)) failed with %v; want success", loc, name, err)
 			return
 		}
-		if got, want := msg.DescriptorProto, fd.MessageType[0]; got != want {
+		if got, want := msg.DescriptorProto, fd.GetMessageType()[0]; got != want {
 			t.Errorf("reg.lookupMsg(%q, %q).DescriptorProto = %#v; want %#v", loc, name, got, want)
 		}
 	}
@@ -362,7 +362,7 @@ func TestLookupMsgWithNestedPackage(t *testing.T) {
 			t.Errorf("reg.LookupMsg(%q, %q)) failed with %v; want success", loc, name, err)
 			return
 		}
-		if got, want := msg.DescriptorProto, fd.MessageType[0]; got != want {
+		if got, want := msg.DescriptorProto, fd.GetMessageType()[0]; got != want {
 			t.Errorf("reg.lookupMsg(%q, %q).DescriptorProto = %#v; want %#v", loc, name, got, want)
 		}
 	}
@@ -486,16 +486,5 @@ func TestLoadOverriddenPackageName(t *testing.T) {
 	wantPkg := GoPackage{Path: "example.com/xyz", Name: "pb"}
 	if got, want := file.GoPkg, wantPkg; got != want {
 		t.Errorf("file.GoPkg = %#v; want %#v", got, want)
-	}
-}
-
-func assertStringSlice(t *testing.T, message string, got, want []string) {
-	if len(got) != len(want) {
-		t.Errorf("%s = %#v len(%d); want %#v len(%d)", message, got, len(got), want, len(want))
-	}
-	for i := range want {
-		if got[i] != want[i] {
-			t.Errorf("%s[%d] = %#v; want %#v", message, i, got[i], want[i])
-		}
 	}
 }

@@ -169,13 +169,13 @@ func assignFieldOptions(field *Field, fieldOpts *crudOptions.FieldOptions) error
 }
 
 func extractMessageOptions(msg *descriptorpb.DescriptorProto) (*crudOptions.MessageOptions, error) {
-	if msg.Options == nil {
+	if msg.GetOptions() == nil {
 		return nil, nil
 	}
-	if !proto.HasExtension(msg.Options, crudOptions.E_CrudMessageOptions) {
+	if !proto.HasExtension(msg.GetOptions(), crudOptions.E_CrudMessageOptions) {
 		return nil, nil
 	}
-	ext := proto.GetExtension(msg.Options, crudOptions.E_CrudMessageOptions)
+	ext := proto.GetExtension(msg.GetOptions(), crudOptions.E_CrudMessageOptions)
 	opts, ok := ext.(*crudOptions.MessageOptions)
 	if !ok {
 		return nil, fmt.Errorf("extension is %T; want MessageOptions", ext)
@@ -184,13 +184,13 @@ func extractMessageOptions(msg *descriptorpb.DescriptorProto) (*crudOptions.Mess
 }
 
 func extractFieldOptions(fd *descriptorpb.FieldDescriptorProto) (*crudOptions.FieldOptions, error) {
-	if fd.Options == nil {
+	if fd.GetOptions() == nil {
 		return nil, nil
 	}
-	if !proto.HasExtension(fd.Options, crudOptions.E_CrudFieldOptions) {
+	if !proto.HasExtension(fd.GetOptions(), crudOptions.E_CrudFieldOptions) {
 		return nil, nil
 	}
-	ext := proto.GetExtension(fd.Options, crudOptions.E_CrudFieldOptions)
+	ext := proto.GetExtension(fd.GetOptions(), crudOptions.E_CrudFieldOptions)
 	opts, ok := ext.(*crudOptions.FieldOptions)
 	if !ok {
 		return nil, fmt.Errorf("extension is %T; want CRUD", ext)

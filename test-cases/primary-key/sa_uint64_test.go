@@ -106,7 +106,7 @@ func TestSAUint64Repository_Create_WithADuplicatePrimaryKeyFails(t *testing.T) {
 			},
 		}
 		duplicates := saUint64Build(duplicatesBuilder)
-		res, err = repoImpl.Create(context.Background(), duplicates)
+		_, err = repoImpl.Create(context.Background(), duplicates)
 		if err == nil {
 			t.Fatalf("%s: Create(): expected error", repoDesc)
 		}
