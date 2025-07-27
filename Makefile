@@ -30,8 +30,11 @@ generate-test-cases:
 generate-tmp:
 	PROJECT_PROTO_INCLUDE=${PROJECT_PROTO_INCLUDE} PROJECT_PROTO_OUT=${PROJECT_PROTO_OUT} go generate -v ./test-cases/as-timestamp-field
 
-docker-test:
+lint: docker-compose.yaml
+	docker-compose run --rm lint
+
+docker-test: docker-compose.yaml
 	docker-compose run --rm --build go-test
 
-docker-test-dlv:
+docker-test-dlv: docker-compose.yaml
 	docker-compose up -d --build go-test-dlv
