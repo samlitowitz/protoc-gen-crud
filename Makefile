@@ -33,7 +33,7 @@ generate-tmp:
 lint: docker-compose.yaml
 	docker-compose run --rm lint
 
-docker-test: docker-compose.yaml
+test: docker-compose.yaml
 	docker-compose run --rm --build go-test
 
 docker-test-dlv: docker-compose.yaml
