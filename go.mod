@@ -10,14 +10,13 @@ require (
 	google.golang.org/protobuf v1.32.0
 )
 
-require github.com/google/uuid v1.6.0
+require github.com/google/uuid v1.6.0 // indirect
 
 require (
 	github.com/google/go-cmp v0.6.0
 	github.com/jackc/pgx-zap v0.0.0-20221202020421-94b1cb2f889f
 	github.com/jackc/pgx/v5 v5.6.0
 	github.com/mennanov/fmutils v0.2.1
-	go.uber.org/zap v1.27.0
 	google.golang.org/genproto/googleapis/api v0.0.0-20231106174013-bbf56f31fb17
 	modernc.org/sqlite v1.28.0
 )
@@ -31,6 +30,7 @@ require (
 	github.com/mattn/go-isatty v0.0.20 // indirect
 	github.com/remyoudompheng/bigfft v0.0.0-20230129092748-24d4a6f8daec // indirect
 	go.uber.org/multierr v1.11.0 // indirect
+	go.uber.org/zap v1.27.0 // indirect
 	golang.org/x/crypto v0.26.0 // indirect
 	golang.org/x/mod v0.17.0 // indirect
 	golang.org/x/sync v0.8.0 // indirect
