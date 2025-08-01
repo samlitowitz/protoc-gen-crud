@@ -31,6 +31,13 @@ func protoFieldAccessorFn(col *genSQLite.Column) string {
 	return fmt.Sprintf("Get%s()", casing.CamelIdentifier(col.GetName()))
 }
 
+func protoFieldMutatorFn(col *genSQLite.Column, args string) string {
+	if col.IsInlined {
+		return fmt.Sprintf("Get%s().Set%s(%s)", casing.CamelIdentifier(col.Parent.GetName()), casing.CamelIdentifier(col.Field.GetName()), args)
+	}
+	return fmt.Sprintf("Set%s(%s)", casing.CamelIdentifier(col.GetName()), args)
+}
+
 func protoFieldField(col *genSQLite.Column) string {
 	if col.IsInlined {
 		return fmt.Sprintf("%s.%s", casing.CamelIdentifier(col.Parent.GetName()), casing.CamelIdentifier(col.Field.GetName()))
@@ -47,6 +54,8 @@ type message struct {
 	*descriptor.Message
 
 	FieldMaskCol *genSQLite.Column
+	CreatedAtCol *genSQLite.Column
+	UpdatedAtCol *genSQLite.Column
 
 	QueryableCols         []*genSQLite.Column
 	PrimaryKeyCols        []*genSQLite.Column
@@ -75,6 +84,12 @@ func applyTemplate(p param, reg *descriptor.Registry) (string, error) {
 		}
 		if msg.FieldMask != nil {
 			injected.FieldMaskCol = &genSQLite.Column{QueryableField: crud.QueryableFieldsFromFields([]*descriptor.Field{msg.FieldMask})[0]}
+		}
+		if msg.CreatedAt != nil {
+			injected.CreatedAtCol = &genSQLite.Column{QueryableField: crud.QueryableFieldsFromFields([]*descriptor.Field{msg.CreatedAt})[0]}
+		}
+		if msg.UpdatedAt != nil {
+			injected.UpdatedAtCol = &genSQLite.Column{QueryableField: crud.QueryableFieldsFromFields([]*descriptor.Field{msg.UpdatedAt})[0]}
 		}
 		if err := repositoryTemplate.Execute(w, injected); err != nil {
 			return "", fmt.Errorf(" message %s: repository: %v", msg.GetName(), err)
@@ -144,6 +159,7 @@ func NewSQLite{{.GetName}}Repository(db *sql.DB) (*SQLite{{.GetName}}Repository,
 		"fieldIDConstantName":  crud.FieldIDConstantName,
 		"fieldIDConstantValue": crud.FieldIDConstantValue,
 		"protoFieldAccessor":   protoFieldAccessorFn,
+		"protoFieldMutatorFn":  protoFieldMutatorFn,
 		"protoFieldField":      protoFieldField,
 		"sqlQuotedIdent":       genSQLite.QuotedIdent,
 		"sqlIdent":             genSQLite.Ident,
@@ -161,6 +177,15 @@ func (repo *SQLite{{.GetName}}Repository) Create(ctx context.Context, toCreate [
 		return nil, err
 	}
 	defer tx.Rollback()
+
+	{{ if .HasCreatedAt -}}
+	for _, {{toLowerCamel .GetName}} := range toCreate {
+		if {{toLowerCamel .GetName}}.Get{{protoFieldField $.CreatedAtCol}}() != nil {
+			continue
+		}
+		{{toLowerCamel .GetName}}.{{protoFieldMutatorFn $.CreatedAtCol "timestamppb.New(time.Now())"}}
+	}
+	{{- end -}}
 
 	{{- if .HasFieldMask -}}
 	{{template "repository-create-field-mask" .}}
@@ -351,6 +376,15 @@ func (repo *SQLite{{.GetName}}Repository) Update(ctx context.Context, toUpdate [
 		return nil, err
 	}
 	defer stmt.Close()
+
+	{{ if .HasUpdatedAt -}}
+	for _, {{toLowerCamel .GetName}} := range toUpdate {
+		if {{toLowerCamel .GetName}}.Get{{protoFieldField $.UpdatedAtCol}}() != nil {
+			continue
+		}
+		{{toLowerCamel .GetName}}.{{protoFieldMutatorFn $.UpdatedAtCol "timestamppb.New(time.Now())"}}
+	}
+	{{- end -}}
 
 	{{- if .HasFieldMask -}}
 	{{ template "repository-update-field-mask" .}}

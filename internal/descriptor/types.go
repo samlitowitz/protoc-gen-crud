@@ -95,7 +95,7 @@ type Message struct {
 	// CRUD Message Options
 	// GenerateCRUD is true if CRUD code should be generated for this Message
 	GenerateCRUD bool
-	// Implementations is a set of implementations generate for CRUD operations
+	// Implementations is a set of implementations to generate for CRUD operations
 	Implementations map[options.Implementation]struct{}
 	// FieldMask is the field definition of the field mask
 	FieldMask *Field
@@ -105,6 +105,10 @@ type Message struct {
 	NonPrimeAttributesByFQFN map[string]*Field
 	// IsRelationship is true if this message represents a relationship and was generated
 	IsRelationship bool
+	// CreatedAt is the field definition of created at
+	CreatedAt *Field
+	// UpdatedAt is the field definition of created at
+	UpdatedAt *Field
 
 	// primaryKey is a local cache
 	primaryKey []*Field
@@ -171,6 +175,14 @@ func (m *Message) NonPrimeAttributes() []*Field {
 
 func (m *Message) HasFieldMask() bool {
 	return m.FieldMask != nil
+}
+
+func (m *Message) HasCreatedAt() bool {
+	return m.CreatedAt != nil
+}
+
+func (m *Message) HasUpdatedAt() bool {
+	return m.UpdatedAt != nil
 }
 
 func (m *Message) FQMN() string {

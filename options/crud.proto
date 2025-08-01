@@ -39,6 +39,14 @@ message MessageOptions {
   // Sets the properties of this message to be used as primary key(s).
   // There must be at least one primary key defined.
   repeated string primaryKey = 3;
+
+  // Sets the property of this message to be used to track when this message was created.
+  // If set, the property must exist on the message and must have `asTimestamp` set to true.
+  string createdAt = 4;
+
+  // Sets the property of this message to be used to track when this message was created.
+  // If set, the property must exist on the message and must have `asTimestamp` set to true.
+  string updatedAt = 5;
 }
 
 message ServiceOptions {}

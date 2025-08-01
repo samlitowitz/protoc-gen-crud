@@ -23,12 +23,20 @@ func init() {
 
 func protoFieldAccessorFn(col *genPgSQL.Column) string {
 	if col.AsTimestamp {
+
 		return fmt.Sprintf("Get%s().AsTime()", casing.CamelIdentifier(col.GetName()))
 	}
 	if col.IsInlined {
 		return fmt.Sprintf("Get%s().Get%s()", casing.CamelIdentifier(col.Parent.GetName()), casing.CamelIdentifier(col.Field.GetName()))
 	}
 	return fmt.Sprintf("Get%s()", casing.CamelIdentifier(col.GetName()))
+}
+
+func protoFieldMutatorFn(col *genPgSQL.Column, args string) string {
+	if col.IsInlined {
+		return fmt.Sprintf("Get%s().Set%s(%s)", casing.CamelIdentifier(col.Parent.GetName()), casing.CamelIdentifier(col.Field.GetName()), args)
+	}
+	return fmt.Sprintf("Set%s(%s)", casing.CamelIdentifier(col.GetName()), args)
 }
 
 func protoFieldField(col *genPgSQL.Column) string {
@@ -51,6 +59,8 @@ type message struct {
 	*descriptor.Message
 
 	FieldMaskCol *genPgSQL.Column
+	CreatedAtCol *genPgSQL.Column
+	UpdatedAtCol *genPgSQL.Column
 
 	QueryableCols         []*genPgSQL.Column
 	PrimaryKeyCols        []*genPgSQL.Column
@@ -79,6 +89,12 @@ func applyTemplate(p param, reg *descriptor.Registry) (string, error) {
 		}
 		if msg.FieldMask != nil {
 			injected.FieldMaskCol = &genPgSQL.Column{QueryableField: crud.QueryableFieldsFromFields([]*descriptor.Field{msg.FieldMask})[0]}
+		}
+		if msg.CreatedAt != nil {
+			injected.CreatedAtCol = &genPgSQL.Column{QueryableField: crud.QueryableFieldsFromFields([]*descriptor.Field{msg.CreatedAt})[0]}
+		}
+		if msg.UpdatedAt != nil {
+			injected.UpdatedAtCol = &genPgSQL.Column{QueryableField: crud.QueryableFieldsFromFields([]*descriptor.Field{msg.UpdatedAt})[0]}
 		}
 		if err := repositoryTemplate.Execute(w, injected); err != nil {
 			return "", fmt.Errorf(" message %s: repository: %v", msg.GetName(), err)
@@ -149,6 +165,7 @@ func NewPgSQL{{.GetName}}Repository(db *sql.DB) (*PgSQL{{.GetName}}Repository, e
 		"fieldIDConstantName":  crud.FieldIDConstantName,
 		"fieldIDConstantValue": crud.FieldIDConstantValue,
 		"protoFieldAccessor":   protoFieldAccessorFn,
+		"protoFieldMutatorFn":  protoFieldMutatorFn,
 		"protoFieldField":      protoFieldField,
 		"sqlQuotedIdent":       genPgSQL.QuotedIdent,
 		"sqlIdent":             genPgSQL.Ident,
@@ -166,6 +183,15 @@ func (repo *PgSQL{{.GetName}}Repository) Create(ctx context.Context, toCreate []
 		return nil, err
 	}
 	defer tx.Rollback()
+
+	{{ if .HasCreatedAt -}}
+	for _, {{toLowerCamel .GetName}} := range toCreate {
+		if {{toLowerCamel .GetName}}.Get{{protoFieldField $.CreatedAtCol}}() != nil {
+			continue
+		}
+		{{toLowerCamel .GetName}}.{{protoFieldMutatorFn $.CreatedAtCol "timestamppb.New(time.Now())"}}
+	}
+	{{- end -}}
 
 	{{- if .HasFieldMask -}}
 	{{template "repository-create-field-mask" .}}
@@ -364,6 +390,15 @@ func (repo *PgSQL{{.GetName}}Repository) Update(ctx context.Context, toUpdate []
 		return nil, err
 	}
 	defer stmt.Close()
+
+	{{ if .HasUpdatedAt -}}
+	for _, {{toLowerCamel .GetName}} := range toUpdate {
+		if {{toLowerCamel .GetName}}.Get{{protoFieldField $.UpdatedAtCol}}() != nil {
+			continue
+		}
+		{{toLowerCamel .GetName}}.{{protoFieldMutatorFn $.UpdatedAtCol "timestamppb.New(time.Now())"}}
+	}
+	{{- end -}}
 
 	{{- if .HasFieldMask -}}
 	{{ template "repository-update-field-mask" .}}

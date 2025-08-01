@@ -23,7 +23,7 @@ services:
       dockerfile: Dockerfile
       target: "go-test-dlv"
     image: go-test-dlv
-    command: [ "dlv", "test", "--listen=:40000", "--headless=true", "--api-version=2", "--accept-multiclient", "./test-cases/as-timestamp-field", "--", "-test.v", "-test.run", "^TestAsTimestamp_DescriptorRepository_Delete_WithLocatablePrimaryKeySucceeds" ]
+    command: [ "dlv", "test", "--listen=:40000", "--headless=true", "--api-version=2", "--accept-multiclient", "./test-cases/created-at", "--", "-test.v", "-test.run", "^TestCreatedAtRepository_Create_WithADuplicatePrimaryKeyFails" ]
     environment:
       - DB_HOST=go-test-db:5432
       - DB_USER_FILE=/run/secrets/go-test-db-user

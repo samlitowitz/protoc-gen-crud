@@ -1,0 +1,23 @@
+syntax = "proto3";
+
+package protoc_gen_crud.test_cases.created_at;
+
+option go_package = "github.com/samlitowitz/protoc-gen-crud/test-cases/created-at";
+
+import "protoc-gen-crud/options/annotations.proto";
+import "google/protobuf/timestamp.proto";
+
+message CreatedAt {
+  option (protoc_gen_crud.options.crud_message_options) = {
+    implementations: [IMPLEMENTATION_SQLITE, IMPLEMENTATION_PGSQL]
+    primaryKey: ["id"]
+    createdAt: "createdAt"
+  };
+  int32 id = 1;
+  string data = 2;
+  google.protobuf.Timestamp createdAt = 3 [
+    (protoc_gen_crud.options.crud_field_options) = {
+      asTimestamp: true
+    }
+  ];
+}

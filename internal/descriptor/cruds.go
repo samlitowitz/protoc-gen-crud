@@ -62,6 +62,15 @@ func (r *Registry) loadCRUDs(file *File) error {
 				return fmt.Errorf("%s: inlined field must be of type message", field.FQFN())
 			}
 
+			isCreatedAt := msg.HasCreatedAt() && msg.CreatedAt.FQFN() == field.FQFN()
+			if isCreatedAt && !field.AsTimestamp {
+				return fmt.Errorf("%s: field designed as `createdAt` must be a timestamp", field.FQFN())
+			}
+			isUpdatedAt := msg.HasUpdatedAt() && msg.UpdatedAt.FQFN() == field.FQFN()
+			if isUpdatedAt && !field.AsTimestamp {
+				return fmt.Errorf("%s: field designed as `createdAt` must be a timestamp", field.FQFN())
+			}
+
 			err = assignRelationships(r, msg, field, fieldOpts)
 			if err != nil {
 				return fmt.Errorf("%s: assign relationship: %v", field.FQFN(), err)
@@ -118,6 +127,21 @@ func assignMessageOptions(msg *Message, msgOpts *crudOptions.MessageOptions) err
 			}
 			msg.PrimaryKeyByFQFN[field.FQFN()] = field
 		}
+	}
+
+	if msgOpts.GetCreatedAt() != "" {
+		field, err := msg.LookupField(msgOpts.GetCreatedAt())
+		if err != nil {
+			return err
+		}
+		msg.CreatedAt = field
+	}
+	if msgOpts.GetUpdatedAt() != "" {
+		field, err := msg.LookupField(msgOpts.GetUpdatedAt())
+		if err != nil {
+			return err
+		}
+		msg.UpdatedAt = field
 	}
 
 	return nil

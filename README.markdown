@@ -43,10 +43,10 @@
 
 ### Row Meta-Data
 
-| Implementation | Created At | Updated At | Deleted At |
-|:---------------|:-----------|:-----------|:-----------|
-| SQLite         |            |            |            |
-| PgSQL          |            |            |            |
+| Implementation | Created At         | Updated At         | Deleted At |
+|:---------------|:-------------------|:-------------------|:-----------|
+| SQLite         | :white_check_mark: | :white_check_mark: |            |
+| PgSQL          | :white_check_mark: | :white_check_mark: |            |
 
 ### Audit Logging
 
@@ -59,38 +59,38 @@
 
 ### Unique Identifiers
 
-| Implementation | Single             | Composite |
-|:---------------|:-------------------|:----------|
+| Implementation | Single             | Composite          |
+|:---------------|:-------------------|:-------------------|
 | SQLite         | :white_check_mark: | :white_check_mark: |
 | PgSQL          | :white_check_mark: | :white_check_mark: |
 
 ### As Timestamp
 
 | Implementation | google.protobuf.Timestamp |
-|:---------------|-------------------|
-| SQLite         | :white_check_mark: |
-| PgSQL          | :white_check_mark: |
+|:---------------|---------------------------|
+| SQLite         | :white_check_mark:        |
+| PgSQL          | :white_check_mark:        |
 
 ### Auto-generate Strategy
 
-| Implementation | None | UUID | Sequential Integer |
-|:---------------|:-----|:-----|:-------------------|
-| SQLite         |   :white_check_mark:   |      |                    |
-| PgSQL          |   :white_check_mark:   |      |                    |
+| Implementation | None               | UUID | Sequential Integer |
+|:---------------|:-------------------|:-----|:-------------------|
+| SQLite         | :white_check_mark: |      |                    |
+| PgSQL          | :white_check_mark: |      |                    |
 
 ### Nullable
 
-| Implementation | Nullable                  | Not-Nullable |
-|:---------------|:--------------------------|:-------------|
-| SQLite         | :white_check_mark:        |              |
-| PgSQL          |                          |              |
+| Implementation | Nullable           | Not-Nullable |
+|:---------------|:-------------------|:-------------|
+| SQLite         | :white_check_mark: |              |
+| PgSQL          |                    |              |
 
 ### Non-scalar Fields
 
-| Implementation | Skip | Inline             | Relationship (see below) |
-|:---------------|:-----|:-------------------|:-------------------------|
-| SQLite         | :white_check_mark:     | :white_check_mark: | -                        |
-| PgSQL          | :white_check_mark:     | :white_check_mark: | -                        |
+| Implementation | Skip               | Inline             | Relationship (see below) |
+|:---------------|:-------------------|:-------------------|:-------------------------|
+| SQLite         | :white_check_mark: | :white_check_mark: | -                        |
+| PgSQL          | :white_check_mark: | :white_check_mark: | -                        |
 
 #### Relationship
 
@@ -104,10 +104,10 @@
 
 ##### Unidirectional
 
-| Implementation | One-to-one          | One-to-many | Many-to-many |
-|:---------------|:--------------------|:------------|:-------------|
-| SQLite         | :white_check_mark:  |             |              |
-| PgSQL          | :white_check_mark:  |             |              |
+| Implementation | One-to-one         | One-to-many | Many-to-many |
+|:---------------|:-------------------|:------------|:-------------|
+| SQLite         | :white_check_mark: |             |              |
+| PgSQL          | :white_check_mark: |             |              |
 
 # References
 
