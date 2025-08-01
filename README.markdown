@@ -41,7 +41,7 @@
 | SQLite         | :white_check_mark: |
 | PgSQL          | :white_check_mark: |
 
-### Meta-Data
+### Row Meta-Data
 
 | Implementation | Created At | Updated At | Deleted At |
 |:---------------|:-----------|:-----------|:-----------|
