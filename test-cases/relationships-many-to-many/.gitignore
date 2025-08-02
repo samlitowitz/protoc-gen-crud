@@ -1,0 +1,8 @@
+*
+*.crud.proto
+
+!.gitignore
+
+!generate.go
+!*_test.go
+!test.proto

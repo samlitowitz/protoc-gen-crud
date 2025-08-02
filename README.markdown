@@ -104,10 +104,10 @@
 
 ##### Unidirectional
 
-| Implementation | One-to-one         | One-to-many | Many-to-many |
-|:---------------|:-------------------|:------------|:-------------|
-| SQLite         | :white_check_mark: |             |              |
-| PgSQL          | :white_check_mark: |             |              |
+| Implementation | One-to-one         | One-to-many       | Many-to-many      |
+|:---------------|:-------------------|:------------------|:------------------|
+| SQLite         | :white_check_mark: | white_check_mark: | white_check_mark: |
+| PgSQL          | :white_check_mark: | white_check_mark: | white_check_mark: |
 
 # References
 
