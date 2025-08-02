@@ -170,6 +170,12 @@ func assignRelationships(r *Registry, msg *Message, field *Field, fieldOpts *cru
 	case relationshipOptions.Type_MANY_TO_MANY:
 	case relationshipOptions.Type_ONE_TO_MANY:
 	case relationshipOptions.Type_ONE_TO_ONE:
+		if field.IsRepeated() {
+			return fmt.Errorf(
+				"relationship type %s: repeated fields are not supported",
+				fieldOpts.GetRelationship().GetType().String(),
+			)
+		}
 
 	case relationshipOptions.Type_UNKNOWN_TYPE:
 		fallthrough

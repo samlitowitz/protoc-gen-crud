@@ -305,6 +305,10 @@ func (f *Field) IsScalarGoType() bool {
 	return isScalarGoType(f.GetType())
 }
 
+func (f *Field) IsRepeated() bool {
+	return f.GetLabel() == descriptorpb.FieldDescriptorProto_LABEL_REPEATED
+}
+
 func (f *Field) HasRelationship() bool {
 	return len(f.Relationships) > 0
 }
