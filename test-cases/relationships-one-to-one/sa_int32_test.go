@@ -1,4 +1,4 @@
-package relationships_test
+package relationships_one_to_one_test
 
 import (
 	"context"
@@ -15,7 +15,7 @@ import (
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
 
-	"github.com/samlitowitz/protoc-gen-crud/test-cases/relationships"
+	relationships_one_to_one "github.com/samlitowitz/protoc-gen-crud/test-cases/relationships-one-to-one"
 )
 
 func TestSAInt32Repository_Create_WithADuplicatePrimaryKeyFails(t *testing.T) {
@@ -48,7 +48,7 @@ func TestSAInt32Repository_Create_WithADuplicatePrimaryKeyFails(t *testing.T) {
 				len(res),
 			)
 		}
-		initialBuilder := []*relationships.SAInt32_builder{
+		initialBuilder := []*relationships_one_to_one.SAInt32_builder{
 			{
 				Id:   0,
 				Data: "0",
@@ -88,7 +88,7 @@ func TestSAInt32Repository_Create_WithADuplicatePrimaryKeyFails(t *testing.T) {
 			)
 		}
 
-		duplicatesBuilder := []*relationships.SAInt32_builder{
+		duplicatesBuilder := []*relationships_one_to_one.SAInt32_builder{
 			{
 				Id:   0,
 				Data: "0",
@@ -174,7 +174,7 @@ func TestSAInt32Repository_Create_WithANonDuplicatePrimaryKeySucceeds(t *testing
 				len(res),
 			)
 		}
-		expectedBuilder := []*relationships.SAInt32_builder{
+		expectedBuilder := []*relationships_one_to_one.SAInt32_builder{
 			{
 				Id:   0,
 				Data: "0",
@@ -264,7 +264,7 @@ func TestSAInt32Repository_Update_WithUnLocatablePrimaryKeyUpdatesNothing(t *tes
 			)
 		}
 
-		expectedBuilder := []*relationships.SAInt32_builder{
+		expectedBuilder := []*relationships_one_to_one.SAInt32_builder{
 			{
 				Id:   0,
 				Data: "0",
@@ -339,7 +339,7 @@ func TestSAInt32Repository_Update_WithLocatablePrimaryKeySucceeds(t *testing.T) 
 				len(res),
 			)
 		}
-		initialBuilder := []*relationships.SAInt32_builder{
+		initialBuilder := []*relationships_one_to_one.SAInt32_builder{
 			{
 				Id:   0,
 				Data: "0",
@@ -398,11 +398,11 @@ func TestSAInt32Repository_Update_WithLocatablePrimaryKeySucceeds(t *testing.T) 
 			)
 		}
 
-		expected := make([]*relationships.SAInt32, 0, len(initial))
+		expected := make([]*relationships_one_to_one.SAInt32, 0, len(initial))
 		for _, saint32 := range initial {
 			expected = append(
 				expected,
-				relationships.SAInt32_builder{
+				relationships_one_to_one.SAInt32_builder{
 					Id:   saint32.GetId(),
 					Data: "UPDATED",
 				}.Build(),
@@ -435,12 +435,12 @@ func TestSAInt32Repository_Delete_WithLocatablePrimaryKeySucceeds(t *testing.T) 
 	opts := saInt32DefaultCmpOpts()
 
 	testCases := map[string]struct {
-		initial          []*relationships.SAInt32_builder
+		initial          []*relationships_one_to_one.SAInt32_builder
 		deleteExpression expressions.Expression
-		expected         []*relationships.SAInt32_builder
+		expected         []*relationships_one_to_one.SAInt32_builder
 	}{
 		"using primary key": {
-			initial: []*relationships.SAInt32_builder{
+			initial: []*relationships_one_to_one.SAInt32_builder{
 				{
 					Id:   0,
 					Data: "0",
@@ -460,15 +460,15 @@ func TestSAInt32Repository_Delete_WithLocatablePrimaryKeySucceeds(t *testing.T) 
 			},
 			deleteExpression: expressions.NewOr(
 				expressions.NewEqual(
-					expressions.NewIdentifier(relationships.Saint32_Id_Field),
+					expressions.NewIdentifier(relationships_one_to_one.Saint32_Id_Field),
 					expressions.NewScalar(2),
 				),
 				expressions.NewEqual(
-					expressions.NewIdentifier(relationships.Saint32_Id_Field),
+					expressions.NewIdentifier(relationships_one_to_one.Saint32_Id_Field),
 					expressions.NewScalar(3),
 				),
 			),
-			expected: []*relationships.SAInt32_builder{
+			expected: []*relationships_one_to_one.SAInt32_builder{
 				{
 					Id:   0,
 					Data: "0",
@@ -480,7 +480,7 @@ func TestSAInt32Repository_Delete_WithLocatablePrimaryKeySucceeds(t *testing.T) 
 			},
 		},
 		"using non-prime attributes": {
-			initial: []*relationships.SAInt32_builder{
+			initial: []*relationships_one_to_one.SAInt32_builder{
 				{
 					Id:   0,
 					Data: "0",
@@ -500,15 +500,15 @@ func TestSAInt32Repository_Delete_WithLocatablePrimaryKeySucceeds(t *testing.T) 
 			},
 			deleteExpression: expressions.NewOr(
 				expressions.NewEqual(
-					expressions.NewIdentifier(relationships.Saint32_Data_Field),
+					expressions.NewIdentifier(relationships_one_to_one.Saint32_Data_Field),
 					expressions.NewScalar("2"),
 				),
 				expressions.NewEqual(
-					expressions.NewIdentifier(relationships.Saint32_Data_Field),
+					expressions.NewIdentifier(relationships_one_to_one.Saint32_Data_Field),
 					expressions.NewScalar("3"),
 				),
 			),
-			expected: []*relationships.SAInt32_builder{
+			expected: []*relationships_one_to_one.SAInt32_builder{
 				{
 					Id:   0,
 					Data: "0",
@@ -632,8 +632,8 @@ func TestSAInt32Repository_Delete_WithLocatablePrimaryKeySucceeds(t *testing.T) 
 	}
 }
 
-func saInt32Build(in []*relationships.SAInt32_builder) []*relationships.SAInt32 {
-	out := make([]*relationships.SAInt32, 0, len(in))
+func saInt32Build(in []*relationships_one_to_one.SAInt32_builder) []*relationships_one_to_one.SAInt32 {
+	out := make([]*relationships_one_to_one.SAInt32, 0, len(in))
 	for _, builder := range in {
 		out = append(out, builder.Build())
 	}
@@ -649,8 +649,8 @@ func saInt32ImplementationsToTest() map[options.Implementation]saInt32ComponentU
 
 func saInt32DefaultCmpOpts() cmp.Options {
 	return cmp.Options{
-		cmpopts.IgnoreUnexported(relationships.SAInt32{}),
-		cmpopts.SortSlices(func(x, y *relationships.SAInt32) bool {
+		cmpopts.IgnoreUnexported(relationships_one_to_one.SAInt32{}),
+		cmpopts.SortSlices(func(x, y *relationships_one_to_one.SAInt32) bool {
 			return x.GetId() > y.GetId()
 		}),
 	}

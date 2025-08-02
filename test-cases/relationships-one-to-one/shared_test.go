@@ -1,4 +1,4 @@
-package relationships_test
+package relationships_one_to_one_test
 
 import "fmt"
 

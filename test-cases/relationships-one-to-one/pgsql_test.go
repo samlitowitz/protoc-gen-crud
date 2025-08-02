@@ -1,16 +1,16 @@
-package relationships_test
+package relationships_one_to_one_test
 
 import (
 	"database/sql"
 	"os"
 	"testing"
 
-	"github.com/samlitowitz/protoc-gen-crud/test-cases/relationships"
+	relationships_one_to_one "github.com/samlitowitz/protoc-gen-crud/test-cases/relationships-one-to-one"
 
 	test_cases "github.com/samlitowitz/protoc-gen-crud/test-cases"
 )
 
-func pgsqlSAInt32ComponentUnderTest(t *testing.T) relationships.SAInt32Repository {
+func pgsqlSAInt32ComponentUnderTest(t *testing.T) relationships_one_to_one.SAInt32Repository {
 	dburl, err := test_cases.PgSQLDBURLFromEnv()
 	if err != nil {
 		t.Fatal("pgsql: dburl: ", err)
@@ -36,14 +36,14 @@ func pgsqlSAInt32ComponentUnderTest(t *testing.T) relationships.SAInt32Repositor
 		t.Fatal("pgsql: executing setup SQL: ", err)
 	}
 
-	repo, err := relationships.NewPgSQLSAInt32Repository(db)
+	repo, err := relationships_one_to_one.NewPgSQLSAInt32Repository(db)
 	if err != nil {
 		t.Fatal("pgsql: creating repository: ", err)
 	}
 	return repo
 }
 
-func pgsqlMAAllComponentUnderTest(t *testing.T) relationships.MAAllRepository {
+func pgsqlMAAllComponentUnderTest(t *testing.T) relationships_one_to_one.MAAllRepository {
 	dburl, err := test_cases.PgSQLDBURLFromEnv()
 	if err != nil {
 		t.Fatal("pgsql: dburl: ", err)
@@ -69,7 +69,7 @@ func pgsqlMAAllComponentUnderTest(t *testing.T) relationships.MAAllRepository {
 		t.Fatal("pgsql: executing setup SQL: ", err)
 	}
 
-	repo, err := relationships.NewPgSQLMAAllRepository(db)
+	repo, err := relationships_one_to_one.NewPgSQLMAAllRepository(db)
 	if err != nil {
 		t.Fatal("pgsql: creating repository: ", err)
 	}

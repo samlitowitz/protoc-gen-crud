@@ -1,11 +1,11 @@
-package relationships_test
+package relationships_one_to_one_test
 
 import (
 	"database/sql"
 	"os"
 	"testing"
 
-	"github.com/samlitowitz/protoc-gen-crud/test-cases/relationships"
+	relationships_one_to_one "github.com/samlitowitz/protoc-gen-crud/test-cases/relationships-one-to-one"
 )
 
 func sqliteExecSQLFile(db *sql.DB, file string) error {
@@ -24,7 +24,7 @@ func sqliteExecSQLFile(db *sql.DB, file string) error {
 	return nil
 }
 
-func sqliteSAInt32ComponentUnderTest(t *testing.T) relationships.SAInt32Repository {
+func sqliteSAInt32ComponentUnderTest(t *testing.T) relationships_one_to_one.SAInt32Repository {
 	db, err := sql.Open("sqlite", ":memory:")
 	if err != nil {
 		t.Fatal("sqlite: ", err)
@@ -46,14 +46,14 @@ func sqliteSAInt32ComponentUnderTest(t *testing.T) relationships.SAInt32Reposito
 		t.Fatal("sqlite: executing setup SQL: ", err)
 	}
 
-	repo, err := relationships.NewSQLiteSAInt32Repository(db)
+	repo, err := relationships_one_to_one.NewSQLiteSAInt32Repository(db)
 	if err != nil {
 		t.Fatal("sqlite: creating repository: ", err)
 	}
 	return repo
 }
 
-func sqliteMAAllComponentUnderTest(t *testing.T) relationships.MAAllRepository {
+func sqliteMAAllComponentUnderTest(t *testing.T) relationships_one_to_one.MAAllRepository {
 	db, err := sql.Open("sqlite", ":memory:")
 	if err != nil {
 		t.Fatal("sqlite: ", err)
@@ -75,7 +75,7 @@ func sqliteMAAllComponentUnderTest(t *testing.T) relationships.MAAllRepository {
 		t.Fatal("sqlite: executing setup SQL: ", err)
 	}
 
-	repo, err := relationships.NewSQLiteMAAllRepository(db)
+	repo, err := relationships_one_to_one.NewSQLiteMAAllRepository(db)
 	if err != nil {
 		t.Fatal("sqlite: creating repository: ", err)
 	}

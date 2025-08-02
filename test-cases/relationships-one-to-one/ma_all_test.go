@@ -1,4 +1,4 @@
-package relationships_test
+package relationships_one_to_one_test
 
 import (
 	"context"
@@ -16,7 +16,7 @@ import (
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
 
-	"github.com/samlitowitz/protoc-gen-crud/test-cases/relationships"
+	relationships_one_to_one "github.com/samlitowitz/protoc-gen-crud/test-cases/relationships-one-to-one"
 )
 
 func TestMAAllRepository_Create_WithADuplicatePrimaryKeyFails(t *testing.T) {
@@ -48,9 +48,9 @@ func TestMAAllRepository_Create_WithADuplicatePrimaryKeyFails(t *testing.T) {
 				len(res),
 			)
 		}
-		initialBuilder := []*relationships.MAAll_builder{
+		initialBuilder := []*relationships_one_to_one.MAAll_builder{
 			{
-				IdEnum:   relationships.PrimaryKeyEnum_ZERO,
+				IdEnum:   relationships_one_to_one.PrimaryKeyEnum_ZERO,
 				IdInt32:  0,
 				IdInt64:  0,
 				IdUint32: 0,
@@ -59,7 +59,7 @@ func TestMAAllRepository_Create_WithADuplicatePrimaryKeyFails(t *testing.T) {
 				Data:     "zero",
 			},
 			{
-				IdEnum:   relationships.PrimaryKeyEnum_ONE,
+				IdEnum:   relationships_one_to_one.PrimaryKeyEnum_ONE,
 				IdInt32:  1,
 				IdInt64:  1,
 				IdUint32: 1,
@@ -68,7 +68,7 @@ func TestMAAllRepository_Create_WithADuplicatePrimaryKeyFails(t *testing.T) {
 				Data:     "one",
 			},
 			{
-				IdEnum:   relationships.PrimaryKeyEnum_TWO,
+				IdEnum:   relationships_one_to_one.PrimaryKeyEnum_TWO,
 				IdInt32:  2,
 				IdInt64:  2,
 				IdUint32: 2,
@@ -77,7 +77,7 @@ func TestMAAllRepository_Create_WithADuplicatePrimaryKeyFails(t *testing.T) {
 				Data:     "two",
 			},
 			{
-				IdEnum:   relationships.PrimaryKeyEnum_THREE,
+				IdEnum:   relationships_one_to_one.PrimaryKeyEnum_THREE,
 				IdInt32:  3,
 				IdInt64:  3,
 				IdUint32: 3,
@@ -86,7 +86,7 @@ func TestMAAllRepository_Create_WithADuplicatePrimaryKeyFails(t *testing.T) {
 				Data:     "three",
 			},
 		}
-		initial := make([]*relationships.MAAll, 0, len(initialBuilder))
+		initial := make([]*relationships_one_to_one.MAAll, 0, len(initialBuilder))
 		for _, builder := range initialBuilder {
 			initial = append(initial, builder.Build())
 		}
@@ -111,9 +111,9 @@ func TestMAAllRepository_Create_WithADuplicatePrimaryKeyFails(t *testing.T) {
 			)
 		}
 
-		duplicatesBuilder := []*relationships.MAAll_builder{
+		duplicatesBuilder := []*relationships_one_to_one.MAAll_builder{
 			{
-				IdEnum:   relationships.PrimaryKeyEnum_ZERO,
+				IdEnum:   relationships_one_to_one.PrimaryKeyEnum_ZERO,
 				IdInt32:  0,
 				IdInt64:  0,
 				IdUint32: 0,
@@ -122,7 +122,7 @@ func TestMAAllRepository_Create_WithADuplicatePrimaryKeyFails(t *testing.T) {
 				Data:     "zero",
 			},
 			{
-				IdEnum:   relationships.PrimaryKeyEnum_ONE,
+				IdEnum:   relationships_one_to_one.PrimaryKeyEnum_ONE,
 				IdInt32:  1,
 				IdInt64:  1,
 				IdUint32: 1,
@@ -131,7 +131,7 @@ func TestMAAllRepository_Create_WithADuplicatePrimaryKeyFails(t *testing.T) {
 				Data:     "one",
 			},
 			{
-				IdEnum:   relationships.PrimaryKeyEnum_TWO,
+				IdEnum:   relationships_one_to_one.PrimaryKeyEnum_TWO,
 				IdInt32:  2,
 				IdInt64:  2,
 				IdUint32: 2,
@@ -140,7 +140,7 @@ func TestMAAllRepository_Create_WithADuplicatePrimaryKeyFails(t *testing.T) {
 				Data:     "two",
 			},
 			{
-				IdEnum:   relationships.PrimaryKeyEnum_THREE,
+				IdEnum:   relationships_one_to_one.PrimaryKeyEnum_THREE,
 				IdInt32:  3,
 				IdInt64:  3,
 				IdUint32: 3,
@@ -149,7 +149,7 @@ func TestMAAllRepository_Create_WithADuplicatePrimaryKeyFails(t *testing.T) {
 				Data:     "three",
 			},
 		}
-		duplicates := make([]*relationships.MAAll, 0, len(duplicatesBuilder))
+		duplicates := make([]*relationships_one_to_one.MAAll, 0, len(duplicatesBuilder))
 		for _, builder := range duplicatesBuilder {
 			duplicates = append(duplicates, builder.Build())
 		}
@@ -220,9 +220,9 @@ func TestMAAllRepository_Create_WithANonDuplicatePrimaryKeySucceeds(t *testing.T
 				len(res),
 			)
 		}
-		expectedBuilder := []*relationships.MAAll_builder{
+		expectedBuilder := []*relationships_one_to_one.MAAll_builder{
 			{
-				IdEnum:   relationships.PrimaryKeyEnum_ZERO,
+				IdEnum:   relationships_one_to_one.PrimaryKeyEnum_ZERO,
 				IdInt32:  0,
 				IdInt64:  0,
 				IdUint32: 0,
@@ -231,7 +231,7 @@ func TestMAAllRepository_Create_WithANonDuplicatePrimaryKeySucceeds(t *testing.T
 				Data:     "zero",
 			},
 			{
-				IdEnum:   relationships.PrimaryKeyEnum_ONE,
+				IdEnum:   relationships_one_to_one.PrimaryKeyEnum_ONE,
 				IdInt32:  1,
 				IdInt64:  1,
 				IdUint32: 1,
@@ -240,7 +240,7 @@ func TestMAAllRepository_Create_WithANonDuplicatePrimaryKeySucceeds(t *testing.T
 				Data:     "one",
 			},
 			{
-				IdEnum:   relationships.PrimaryKeyEnum_TWO,
+				IdEnum:   relationships_one_to_one.PrimaryKeyEnum_TWO,
 				IdInt32:  2,
 				IdInt64:  2,
 				IdUint32: 2,
@@ -249,7 +249,7 @@ func TestMAAllRepository_Create_WithANonDuplicatePrimaryKeySucceeds(t *testing.T
 				Data:     "two",
 			},
 			{
-				IdEnum:   relationships.PrimaryKeyEnum_THREE,
+				IdEnum:   relationships_one_to_one.PrimaryKeyEnum_THREE,
 				IdInt32:  3,
 				IdInt64:  3,
 				IdUint32: 3,
@@ -258,7 +258,7 @@ func TestMAAllRepository_Create_WithANonDuplicatePrimaryKeySucceeds(t *testing.T
 				Data:     "three",
 			},
 		}
-		expected := make([]*relationships.MAAll, 0, len(expectedBuilder))
+		expected := make([]*relationships_one_to_one.MAAll, 0, len(expectedBuilder))
 		for _, builder := range expectedBuilder {
 			expected = append(expected, builder.Build())
 		}
@@ -333,9 +333,9 @@ func TestMAAllRepository_Update_WithUnLocatablePrimaryKeyUpdatesNothing(t *testi
 			)
 		}
 
-		expectedBuilder := []*relationships.MAAll_builder{
+		expectedBuilder := []*relationships_one_to_one.MAAll_builder{
 			{
-				IdEnum:   relationships.PrimaryKeyEnum_ZERO,
+				IdEnum:   relationships_one_to_one.PrimaryKeyEnum_ZERO,
 				IdInt32:  0,
 				IdInt64:  0,
 				IdUint32: 0,
@@ -344,7 +344,7 @@ func TestMAAllRepository_Update_WithUnLocatablePrimaryKeyUpdatesNothing(t *testi
 				Data:     "zero",
 			},
 			{
-				IdEnum:   relationships.PrimaryKeyEnum_ONE,
+				IdEnum:   relationships_one_to_one.PrimaryKeyEnum_ONE,
 				IdInt32:  1,
 				IdInt64:  1,
 				IdUint32: 1,
@@ -353,7 +353,7 @@ func TestMAAllRepository_Update_WithUnLocatablePrimaryKeyUpdatesNothing(t *testi
 				Data:     "one",
 			},
 			{
-				IdEnum:   relationships.PrimaryKeyEnum_TWO,
+				IdEnum:   relationships_one_to_one.PrimaryKeyEnum_TWO,
 				IdInt32:  2,
 				IdInt64:  2,
 				IdUint32: 2,
@@ -362,7 +362,7 @@ func TestMAAllRepository_Update_WithUnLocatablePrimaryKeyUpdatesNothing(t *testi
 				Data:     "two",
 			},
 			{
-				IdEnum:   relationships.PrimaryKeyEnum_THREE,
+				IdEnum:   relationships_one_to_one.PrimaryKeyEnum_THREE,
 				IdInt32:  3,
 				IdInt64:  3,
 				IdUint32: 3,
@@ -371,7 +371,7 @@ func TestMAAllRepository_Update_WithUnLocatablePrimaryKeyUpdatesNothing(t *testi
 				Data:     "three",
 			},
 		}
-		expected := make([]*relationships.MAAll, 0, len(expectedBuilder))
+		expected := make([]*relationships_one_to_one.MAAll, 0, len(expectedBuilder))
 		for _, builder := range expectedBuilder {
 			expected = append(expected, builder.Build())
 		}
@@ -431,9 +431,9 @@ func TestMAAllRepository_Update_WithLocatablePrimaryKeySucceeds(t *testing.T) {
 				len(res),
 			)
 		}
-		initialBuilder := []*relationships.MAAll_builder{
+		initialBuilder := []*relationships_one_to_one.MAAll_builder{
 			{
-				IdEnum:   relationships.PrimaryKeyEnum_ZERO,
+				IdEnum:   relationships_one_to_one.PrimaryKeyEnum_ZERO,
 				IdInt32:  0,
 				IdInt64:  0,
 				IdUint32: 0,
@@ -442,7 +442,7 @@ func TestMAAllRepository_Update_WithLocatablePrimaryKeySucceeds(t *testing.T) {
 				Data:     "zero",
 			},
 			{
-				IdEnum:   relationships.PrimaryKeyEnum_ONE,
+				IdEnum:   relationships_one_to_one.PrimaryKeyEnum_ONE,
 				IdInt32:  1,
 				IdInt64:  1,
 				IdUint32: 1,
@@ -451,7 +451,7 @@ func TestMAAllRepository_Update_WithLocatablePrimaryKeySucceeds(t *testing.T) {
 				Data:     "one",
 			},
 			{
-				IdEnum:   relationships.PrimaryKeyEnum_TWO,
+				IdEnum:   relationships_one_to_one.PrimaryKeyEnum_TWO,
 				IdInt32:  2,
 				IdInt64:  2,
 				IdUint32: 2,
@@ -460,7 +460,7 @@ func TestMAAllRepository_Update_WithLocatablePrimaryKeySucceeds(t *testing.T) {
 				Data:     "two",
 			},
 			{
-				IdEnum:   relationships.PrimaryKeyEnum_THREE,
+				IdEnum:   relationships_one_to_one.PrimaryKeyEnum_THREE,
 				IdInt32:  3,
 				IdInt64:  3,
 				IdUint32: 3,
@@ -469,7 +469,7 @@ func TestMAAllRepository_Update_WithLocatablePrimaryKeySucceeds(t *testing.T) {
 				Data:     "three",
 			},
 		}
-		initial := make([]*relationships.MAAll, 0, len(initialBuilder))
+		initial := make([]*relationships_one_to_one.MAAll, 0, len(initialBuilder))
 		for _, builder := range initialBuilder {
 			initial = append(initial, builder.Build())
 		}
@@ -513,11 +513,11 @@ func TestMAAllRepository_Update_WithLocatablePrimaryKeySucceeds(t *testing.T) {
 			)
 		}
 
-		expected := make([]*relationships.MAAll, 0, len(initial))
+		expected := make([]*relationships_one_to_one.MAAll, 0, len(initial))
 		for _, maall := range initial {
 			expected = append(
 				expected,
-				relationships.MAAll_builder{
+				relationships_one_to_one.MAAll_builder{
 					IdEnum:   maall.GetIdEnum(),
 					IdInt32:  maall.GetIdInt32(),
 					IdInt64:  maall.GetIdInt64(),
@@ -555,14 +555,14 @@ func TestMAAllRepository_Delete_WithLocatablePrimaryKeySucceeds(t *testing.T) {
 	opts := maAllDefaultCmpOpts()
 
 	testCases := map[string]struct {
-		initial          []*relationships.MAAll_builder
+		initial          []*relationships_one_to_one.MAAll_builder
 		deleteExpression expressions.Expression
-		expected         []*relationships.MAAll_builder
+		expected         []*relationships_one_to_one.MAAll_builder
 	}{
 		"using primary key": {
-			initial: []*relationships.MAAll_builder{
+			initial: []*relationships_one_to_one.MAAll_builder{
 				{
-					IdEnum:   relationships.PrimaryKeyEnum_ZERO,
+					IdEnum:   relationships_one_to_one.PrimaryKeyEnum_ZERO,
 					IdInt32:  0,
 					IdInt64:  0,
 					IdUint32: 0,
@@ -571,7 +571,7 @@ func TestMAAllRepository_Delete_WithLocatablePrimaryKeySucceeds(t *testing.T) {
 					Data:     "zero",
 				},
 				{
-					IdEnum:   relationships.PrimaryKeyEnum_ONE,
+					IdEnum:   relationships_one_to_one.PrimaryKeyEnum_ONE,
 					IdInt32:  1,
 					IdInt64:  1,
 					IdUint32: 1,
@@ -580,7 +580,7 @@ func TestMAAllRepository_Delete_WithLocatablePrimaryKeySucceeds(t *testing.T) {
 					Data:     "one",
 				},
 				{
-					IdEnum:   relationships.PrimaryKeyEnum_TWO,
+					IdEnum:   relationships_one_to_one.PrimaryKeyEnum_TWO,
 					IdInt32:  2,
 					IdInt64:  2,
 					IdUint32: 2,
@@ -589,7 +589,7 @@ func TestMAAllRepository_Delete_WithLocatablePrimaryKeySucceeds(t *testing.T) {
 					Data:     "two",
 				},
 				{
-					IdEnum:   relationships.PrimaryKeyEnum_THREE,
+					IdEnum:   relationships_one_to_one.PrimaryKeyEnum_THREE,
 					IdInt32:  3,
 					IdInt64:  3,
 					IdUint32: 3,
@@ -600,17 +600,17 @@ func TestMAAllRepository_Delete_WithLocatablePrimaryKeySucceeds(t *testing.T) {
 			},
 			deleteExpression: expressions.NewOr(
 				expressions.NewEqual(
-					expressions.NewIdentifier(relationships.Maall_IdEnum_Field),
-					expressions.NewScalar(relationships.PrimaryKeyEnum_TWO),
+					expressions.NewIdentifier(relationships_one_to_one.Maall_IdEnum_Field),
+					expressions.NewScalar(relationships_one_to_one.PrimaryKeyEnum_TWO),
 				),
 				expressions.NewEqual(
-					expressions.NewIdentifier(relationships.Maall_IdEnum_Field),
-					expressions.NewScalar(relationships.PrimaryKeyEnum_THREE),
+					expressions.NewIdentifier(relationships_one_to_one.Maall_IdEnum_Field),
+					expressions.NewScalar(relationships_one_to_one.PrimaryKeyEnum_THREE),
 				),
 			),
-			expected: []*relationships.MAAll_builder{
+			expected: []*relationships_one_to_one.MAAll_builder{
 				{
-					IdEnum:   relationships.PrimaryKeyEnum_ZERO,
+					IdEnum:   relationships_one_to_one.PrimaryKeyEnum_ZERO,
 					IdInt32:  0,
 					IdInt64:  0,
 					IdUint32: 0,
@@ -619,7 +619,7 @@ func TestMAAllRepository_Delete_WithLocatablePrimaryKeySucceeds(t *testing.T) {
 					Data:     "zero",
 				},
 				{
-					IdEnum:   relationships.PrimaryKeyEnum_ONE,
+					IdEnum:   relationships_one_to_one.PrimaryKeyEnum_ONE,
 					IdInt32:  1,
 					IdInt64:  1,
 					IdUint32: 1,
@@ -630,9 +630,9 @@ func TestMAAllRepository_Delete_WithLocatablePrimaryKeySucceeds(t *testing.T) {
 			},
 		},
 		"using non-prime attributes": {
-			initial: []*relationships.MAAll_builder{
+			initial: []*relationships_one_to_one.MAAll_builder{
 				{
-					IdEnum:   relationships.PrimaryKeyEnum_ZERO,
+					IdEnum:   relationships_one_to_one.PrimaryKeyEnum_ZERO,
 					IdInt32:  0,
 					IdInt64:  0,
 					IdUint32: 0,
@@ -641,7 +641,7 @@ func TestMAAllRepository_Delete_WithLocatablePrimaryKeySucceeds(t *testing.T) {
 					Data:     "zero",
 				},
 				{
-					IdEnum:   relationships.PrimaryKeyEnum_ONE,
+					IdEnum:   relationships_one_to_one.PrimaryKeyEnum_ONE,
 					IdInt32:  1,
 					IdInt64:  1,
 					IdUint32: 1,
@@ -650,7 +650,7 @@ func TestMAAllRepository_Delete_WithLocatablePrimaryKeySucceeds(t *testing.T) {
 					Data:     "one",
 				},
 				{
-					IdEnum:   relationships.PrimaryKeyEnum_TWO,
+					IdEnum:   relationships_one_to_one.PrimaryKeyEnum_TWO,
 					IdInt32:  2,
 					IdInt64:  2,
 					IdUint32: 2,
@@ -659,7 +659,7 @@ func TestMAAllRepository_Delete_WithLocatablePrimaryKeySucceeds(t *testing.T) {
 					Data:     "two",
 				},
 				{
-					IdEnum:   relationships.PrimaryKeyEnum_THREE,
+					IdEnum:   relationships_one_to_one.PrimaryKeyEnum_THREE,
 					IdInt32:  3,
 					IdInt64:  3,
 					IdUint32: 3,
@@ -670,17 +670,17 @@ func TestMAAllRepository_Delete_WithLocatablePrimaryKeySucceeds(t *testing.T) {
 			},
 			deleteExpression: expressions.NewOr(
 				expressions.NewEqual(
-					expressions.NewIdentifier(relationships.Maall_Data_Field),
+					expressions.NewIdentifier(relationships_one_to_one.Maall_Data_Field),
 					expressions.NewScalar("two"),
 				),
 				expressions.NewEqual(
-					expressions.NewIdentifier(relationships.Maall_Data_Field),
+					expressions.NewIdentifier(relationships_one_to_one.Maall_Data_Field),
 					expressions.NewScalar("three"),
 				),
 			),
-			expected: []*relationships.MAAll_builder{
+			expected: []*relationships_one_to_one.MAAll_builder{
 				{
-					IdEnum:   relationships.PrimaryKeyEnum_ZERO,
+					IdEnum:   relationships_one_to_one.PrimaryKeyEnum_ZERO,
 					IdInt32:  0,
 					IdInt64:  0,
 					IdUint32: 0,
@@ -689,7 +689,7 @@ func TestMAAllRepository_Delete_WithLocatablePrimaryKeySucceeds(t *testing.T) {
 					Data:     "zero",
 				},
 				{
-					IdEnum:   relationships.PrimaryKeyEnum_ONE,
+					IdEnum:   relationships_one_to_one.PrimaryKeyEnum_ONE,
 					IdInt32:  1,
 					IdInt64:  1,
 					IdUint32: 1,
@@ -731,7 +731,7 @@ func TestMAAllRepository_Delete_WithLocatablePrimaryKeySucceeds(t *testing.T) {
 					len(res),
 				)
 			}
-			initial := make([]*relationships.MAAll, 0, len(testCase.initial))
+			initial := make([]*relationships_one_to_one.MAAll, 0, len(testCase.initial))
 			for _, builder := range testCase.initial {
 				initial = append(initial, builder.Build())
 			}
@@ -816,8 +816,8 @@ func TestMAAllRepository_Delete_WithLocatablePrimaryKeySucceeds(t *testing.T) {
 	}
 }
 
-func maAllBuild(in []*relationships.MAAll_builder) []*relationships.MAAll {
-	out := make([]*relationships.MAAll, 0, len(in))
+func maAllBuild(in []*relationships_one_to_one.MAAll_builder) []*relationships_one_to_one.MAAll {
+	out := make([]*relationships_one_to_one.MAAll, 0, len(in))
 	for _, builder := range in {
 		out = append(out, builder.Build())
 	}
@@ -833,8 +833,8 @@ func maAllImplementationsToTest() map[options.Implementation]maAllComponentUnder
 
 func maAllDefaultCmpOpts() cmp.Options {
 	return cmp.Options{
-		cmpopts.IgnoreUnexported(relationships.MAAll{}),
-		cmpopts.SortSlices(func(x, y *relationships.MAAll) bool {
+		cmpopts.IgnoreUnexported(relationships_one_to_one.MAAll{}),
+		cmpopts.SortSlices(func(x, y *relationships_one_to_one.MAAll) bool {
 			switch strings.Compare(x.GetIdEnum().String(), y.GetIdEnum().String()) {
 			case -1:
 				return true
