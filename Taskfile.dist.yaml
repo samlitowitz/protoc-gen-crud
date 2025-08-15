@@ -1,0 +1,49 @@
+version: '3'
+
+vars:
+  VERSION:
+    sh: git describe --tags|sed -e "s/\-/\./g"
+  BUILD:
+    sh: date +%FT%T%z
+  COMMIT:
+    sh: git rev-parse HEAD
+  TARGETDIR:
+    sh: echo $GOPATH/bin
+  BIN: 'protoc-gen-go-crud'
+  PROJECT_PROTO_INCLUDE:
+    sh: cd .. && pwd
+  PROJECT_PROTO_OUT:
+    sh: cd ../../../ && pwd
+
+tasks:
+  clean:
+    cmds:
+      - rm -f {{.TARGETDIR}}/{{.BIN}}
+
+  release:
+    cmds:
+      - go build {{.LDFLAGS}} -o {{.TARGETDIR}}//{{.BIN}} ./cmd/{{.BIN}}
+    vars:
+      LDFLAGS: -ldflags "-X main.Date={{.BUILD}} -X main.Commit={{.COMMIT}}"
+
+  debug:
+    cmds:
+      - go build {{.LDFLAGS}} -o {{.TARGETDIR}}//{{.BIN}} ./cmd/{{.BIN}}
+    vars:
+      LDFLAGS: -ldflags "-s -w -X main.Version={{.VERSION}} -X main.Date={{.BUILD}} -X main.Commit={{.COMMIT}}"
+
+  generate-options:
+    cmds:
+      - PROJECT_PROTO_INCLUDE={{.PROJECT_PROTO_INCLUDE}}} PROJECT_PROTO_OUT={{.PROJECT_PROTO_OUT}} go generate -v ./options/...
+
+  generate-test-cases:
+    cmds:
+      - PROJECT_PROTO_INCLUDE={{.PROJECT_PROTO_INCLUDE}} PROJECT_PROTO_OUT={{.PROJECT_PROTO_OUT}} go generate -v ./test-cases/...
+
+  lint:
+    cmds:
+      - docker-compose run --rm lint
+
+  test:
+    cmds:
+      - docker-compose run --rm --build go-test
