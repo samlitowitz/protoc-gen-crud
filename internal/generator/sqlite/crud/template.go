@@ -321,7 +321,8 @@ func (repo *SQLite{{.GetName}}Repository) Read(ctx context.Context, expr express
 			{{- end}}
 		}
 		{{range $i, $field := .NonPrimeAttributes -}}
-		{{if $field.AsTimestamp}}var {{toLowerCamel $field.GetName}}TimeStr string{{end}}
+		{{if $field.AsTimestamp}}var {{toLowerCamel $field.GetName}}TimeStr string
+		{{end}}
 		{{- end}}
 		if err = rows.Scan(
 		{{- range $i, $col := .QueryableCols -}}

@@ -341,7 +341,8 @@ func (repo *PgSQL{{.GetName}}Repository) Read(ctx context.Context, expr expressi
 			{{- end}}
 		}
 		{{range $i, $field := .NonPrimeAttributes -}}
-		{{if $field.AsTimestamp}}{{toLowerCamel $field.GetName}}Time := &pgtype.Timestamp{}{{end}}
+		{{if $field.AsTimestamp}}{{toLowerCamel $field.GetName}}Time := &pgtype.Timestamp{}
+		{{end}}
 		{{- end}}
 		if err = rows.Scan(
 		{{- range $i, $col := .QueryableCols -}}
@@ -353,7 +354,8 @@ func (repo *PgSQL{{.GetName}}Repository) Read(ctx context.Context, expr expressi
 			return nil, err
 		}
 		{{ range $i, $col := .QueryableCols -}}
-		{{ if $col.Field.AsTimestamp}}{{toLowerCamel $.GetName}}.{{protoFieldField $col}} = timestamppb.New({{toLowerCamel $col.Field.GetName}}Time.Time) {{end }}
+		{{ if $col.Field.AsTimestamp}}{{toLowerCamel $.GetName}}.{{protoFieldField $col}} = timestamppb.New({{toLowerCamel $col.Field.GetName}}Time.Time)
+		{{end }}
 		{{- end }}
 		found = append(found, {{toLowerCamel .GetName}}.Build())
 	}

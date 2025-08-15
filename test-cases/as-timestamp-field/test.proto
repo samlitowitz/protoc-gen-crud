@@ -18,4 +18,9 @@ message AsTimestamp {
       asTimestamp: true
     }
   ];
+  google.protobuf.Timestamp timestamp_two = 3 [
+    (protoc_gen_crud.options.crud_field_options) = {
+      asTimestamp: true
+    }
+  ];
 }
