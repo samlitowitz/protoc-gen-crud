@@ -9,7 +9,7 @@ import (
 
 	"github.com/samlitowitz/protoc-gen-crud/options"
 
-	"github.com/samlitowitz/protoc-gen-crud/expressions"
+	"github.com/samlitowitz/expressions"
 
 	sqliteLib "modernc.org/sqlite/lib"
 
@@ -474,11 +474,11 @@ func TestSAInt32Repository_Delete_WithLocatablePrimaryKeySucceeds(t *testing.T) 
 				},
 			},
 			deleteExpression: expressions.NewOr(
-				expressions.NewEqual(
+				expressions.NewEquals(
 					expressions.NewIdentifier(primaryKey.Saint32_Id_Field),
 					expressions.NewScalar(2),
 				),
-				expressions.NewEqual(
+				expressions.NewEquals(
 					expressions.NewIdentifier(primaryKey.Saint32_Id_Field),
 					expressions.NewScalar(3),
 				),
@@ -514,11 +514,11 @@ func TestSAInt32Repository_Delete_WithLocatablePrimaryKeySucceeds(t *testing.T) 
 				},
 			},
 			deleteExpression: expressions.NewOr(
-				expressions.NewEqual(
+				expressions.NewEquals(
 					expressions.NewIdentifier(primaryKey.Saint32_Data_Field),
 					expressions.NewScalar("2"),
 				),
-				expressions.NewEqual(
+				expressions.NewEquals(
 					expressions.NewIdentifier(primaryKey.Saint32_Data_Field),
 					expressions.NewScalar("3"),
 				),

@@ -14,7 +14,7 @@ import (
 
 	"github.com/samlitowitz/protoc-gen-crud/options"
 
-	"github.com/samlitowitz/protoc-gen-crud/expressions"
+	"github.com/samlitowitz/expressions"
 
 	sqliteLib "modernc.org/sqlite/lib"
 
@@ -481,11 +481,11 @@ func TestInlineTimestamp_DescriptorRepository_Delete_WithLocatablePrimaryKeySucc
 				},
 			},
 			deleteExpression: expressions.NewOr(
-				expressions.NewEqual(
+				expressions.NewEquals(
 					expressions.NewIdentifier(inline_field.InlineTimestamp_Id_Field),
 					expressions.NewScalar(2),
 				),
-				expressions.NewEqual(
+				expressions.NewEquals(
 					expressions.NewIdentifier(inline_field.InlineTimestamp_Id_Field),
 					expressions.NewScalar(3),
 				),
@@ -521,11 +521,11 @@ func TestInlineTimestamp_DescriptorRepository_Delete_WithLocatablePrimaryKeySucc
 				},
 			},
 			deleteExpression: expressions.NewOr(
-				expressions.NewEqual(
+				expressions.NewEquals(
 					expressions.NewIdentifier(inline_field.InlineTimestamp_Timestamp_Seconds_Field),
 					expressions.NewScalar(one_hour_ago.GetSeconds()),
 				),
-				expressions.NewEqual(
+				expressions.NewEquals(
 					expressions.NewIdentifier(inline_field.InlineTimestamp_Timestamp_Seconds_Field),
 					expressions.NewScalar(two_hour_ago.GetSeconds()),
 				),

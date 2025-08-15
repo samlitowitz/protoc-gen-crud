@@ -485,7 +485,7 @@ func (repo *SQLite{{.GetName}}Repository) Delete(ctx context.Context, expr expre
 `))
 
 	_ = template.Must(repositoryTemplate.New("repository-misc").Funcs(funcMap).Parse(`
-var sqlite{{.GetName}}ColumnNameByFieldID = map[expressions.FieldID]string{
+var sqlite{{.GetName}}ColumnNameByFieldID = map[expressions.ID]string{
 {{- range $col := .QueryableCols}}
 	{{fieldIDConstantName $col.QueryableField}}: "{{sqlIdent $col.GetName}}",
 {{- end}}
@@ -524,7 +524,7 @@ func whereClauseFromExpressionForSQLite{{.GetName}}(expr expressions.Expression)
 			}
 			return fmt.Sprintf("NOT %s", operand), binds, nil
 
-		case *expressions.Equal:
+		case *expressions.Equals:
 				left, leftBinds, err := whereClauseFromExpressionForSQLite{{.GetName}}(expr.Left())
 			if err != nil {
 				return "", nil, err

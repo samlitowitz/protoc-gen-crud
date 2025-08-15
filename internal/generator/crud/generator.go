@@ -34,7 +34,7 @@ func New(reg *descriptor.Registry, opts ...Option) gen.Generator {
 	var imports []descriptor.GoPackage
 	for _, pkgpath := range []string{
 		"context",
-		"github.com/samlitowitz/protoc-gen-crud/expressions",
+		"github.com/samlitowitz/expressions",
 	} {
 		pkg := descriptor.GoPackage{
 			Path: pkgpath,

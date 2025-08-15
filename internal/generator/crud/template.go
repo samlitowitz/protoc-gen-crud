@@ -104,11 +104,11 @@ import (
 // These constants are used to specify fields in expressions
 const (
 {{- range $field := queryableFieldsFromMessage .Message}}
-	{{fieldIDConstantName $field}} expressions.FieldID = "{{fieldIDConstantValue $field}}"
+	{{fieldIDConstantName $field}} expressions.ID = "{{fieldIDConstantValue $field}}"
 {{- end}}
 )
 
-var valid{{camelIdentifier .GetName}}Fields = map[expressions.FieldID]struct{}{
+var valid{{camelIdentifier .GetName}}Fields = map[expressions.ID]struct{}{
 {{- range $field := queryableFieldsFromMessage .Message}}
 	{{fieldIDConstantName $field}}: struct{}{},
 {{- end}}

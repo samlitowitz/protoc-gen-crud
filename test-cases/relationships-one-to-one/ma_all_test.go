@@ -8,7 +8,7 @@ import (
 
 	test_cases "github.com/samlitowitz/protoc-gen-crud/test-cases"
 
-	"github.com/samlitowitz/protoc-gen-crud/expressions"
+	"github.com/samlitowitz/expressions"
 	"github.com/samlitowitz/protoc-gen-crud/options"
 
 	sqliteLib "modernc.org/sqlite/lib"
@@ -599,11 +599,11 @@ func TestMAAllRepository_Delete_WithLocatablePrimaryKeySucceeds(t *testing.T) {
 				},
 			},
 			deleteExpression: expressions.NewOr(
-				expressions.NewEqual(
+				expressions.NewEquals(
 					expressions.NewIdentifier(relationships_one_to_one.Maall_IdEnum_Field),
 					expressions.NewScalar(relationships_one_to_one.PrimaryKeyEnum_TWO),
 				),
-				expressions.NewEqual(
+				expressions.NewEquals(
 					expressions.NewIdentifier(relationships_one_to_one.Maall_IdEnum_Field),
 					expressions.NewScalar(relationships_one_to_one.PrimaryKeyEnum_THREE),
 				),
@@ -669,11 +669,11 @@ func TestMAAllRepository_Delete_WithLocatablePrimaryKeySucceeds(t *testing.T) {
 				},
 			},
 			deleteExpression: expressions.NewOr(
-				expressions.NewEqual(
+				expressions.NewEquals(
 					expressions.NewIdentifier(relationships_one_to_one.Maall_Data_Field),
 					expressions.NewScalar("two"),
 				),
-				expressions.NewEqual(
+				expressions.NewEquals(
 					expressions.NewIdentifier(relationships_one_to_one.Maall_Data_Field),
 					expressions.NewScalar("three"),
 				),

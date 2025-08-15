@@ -171,9 +171,9 @@ func (g *generator) addCrudPathParamImports(msg *descriptor.Message, pkgSeen map
 			pkgSeen["github.com/jackc/pgx/v5/stdlib"] = true
 			imports = append(imports, descriptor.GoPackage{Path: "github.com/jackc/pgx/v5/stdlib", Name: "stdlib", Alias: "pgxstdlib"})
 		}
-		if !pkgSeen["github.com/samlitowitz/protoc-gen-crud/expressions"] {
-			pkgSeen["github.com/samlitowitz/protoc-gen-crud/expressions"] = true
-			imports = append(imports, descriptor.GoPackage{Path: "github.com/samlitowitz/protoc-gen-crud/expressions", Name: "expressions"})
+		if !pkgSeen["github.com/samlitowitz/expressions"] {
+			pkgSeen["github.com/samlitowitz/expressions"] = true
+			imports = append(imports, descriptor.GoPackage{Path: "github.com/samlitowitz/expressions", Name: "expressions"})
 		}
 		if !pkgSeen["time"] {
 			pkgSeen["time"] = true

@@ -8,7 +8,7 @@ import (
 	"os"
 	"testing"
 
-	"github.com/samlitowitz/protoc-gen-crud/expressions"
+	"github.com/samlitowitz/expressions"
 
 	"github.com/google/go-cmp/cmp"
 

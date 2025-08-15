@@ -504,7 +504,7 @@ func (repo *PgSQL{{.GetName}}Repository) Delete(ctx context.Context, expr expres
 `))
 
 	_ = template.Must(repositoryTemplate.New("repository-misc").Funcs(funcMap).Parse(`
-var pgsql{{.GetName}}ColumnNameByFieldID = map[expressions.FieldID]string{
+var pgsql{{.GetName}}ColumnNameByFieldID = map[expressions.ID]string{
 {{- range $col := .QueryableCols}}
 	{{fieldIDConstantName $col.QueryableField}}: "{{sqlIdent $col.GetName}}",
 {{- end}}
@@ -543,7 +543,7 @@ func whereClauseFromExpressionForPgSQL{{.GetName}}(expr expressions.Expression, 
 			}
 			return fmt.Sprintf("NOT %s", operand), binds, nil
 
-		case *expressions.Equal:
+		case *expressions.Equals:
 				left, leftBinds, err := whereClauseFromExpressionForPgSQL{{.GetName}}(expr.Left(), paramIdx)
 			if err != nil {
 				return "", nil, err

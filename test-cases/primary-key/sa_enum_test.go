@@ -10,7 +10,7 @@ import (
 
 	"github.com/samlitowitz/protoc-gen-crud/options"
 
-	"github.com/samlitowitz/protoc-gen-crud/expressions"
+	"github.com/samlitowitz/expressions"
 
 	sqliteLib "modernc.org/sqlite/lib"
 
@@ -475,11 +475,11 @@ func TestSAEnumRepository_Delete_WithLocatablePrimaryKeySucceeds(t *testing.T) {
 				},
 			},
 			deleteExpression: expressions.NewOr(
-				expressions.NewEqual(
+				expressions.NewEquals(
 					expressions.NewIdentifier(primaryKey.Saenum_Id_Field),
 					expressions.NewScalar(primaryKey.PrimaryKeyEnum_TWO),
 				),
-				expressions.NewEqual(
+				expressions.NewEquals(
 					expressions.NewIdentifier(primaryKey.Saenum_Id_Field),
 					expressions.NewScalar(primaryKey.PrimaryKeyEnum_THREE),
 				),
@@ -515,11 +515,11 @@ func TestSAEnumRepository_Delete_WithLocatablePrimaryKeySucceeds(t *testing.T) {
 				},
 			},
 			deleteExpression: expressions.NewOr(
-				expressions.NewEqual(
+				expressions.NewEquals(
 					expressions.NewIdentifier(primaryKey.Saenum_Data_Field),
 					expressions.NewScalar(primaryKey.PrimaryKeyEnum_TWO.String()),
 				),
-				expressions.NewEqual(
+				expressions.NewEquals(
 					expressions.NewIdentifier(primaryKey.Saenum_Data_Field),
 					expressions.NewScalar(primaryKey.PrimaryKeyEnum_THREE.String()),
 				),
