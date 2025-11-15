@@ -13,7 +13,10 @@
         1. [Unique Identifiers](#unique-identifiers)
         2. [Auto-generate Strategy](#auto-generate-strategy)
         3. [Nullable](#nullable)
-        4. [Non-scalar Field Relationship Strategy](#non-scalar-field-relationship-strategy)
+        4. [Non-scalar Fields](#non-scalar-fields)
+            1. [Relationships](#relationships)
+               1. [Unidirectional](#unidirectional)
+               2. [Bidirectional](#Bidirectional)
     3. [References](#references)
 
 # Feature Support
@@ -50,10 +53,10 @@
 
 ### Audit Logging
 
-| Implementation |
-|:---------------|
-| SQLite         |
-| PgSQL          |
+| Implementation | Implemented |
+|:---------------|:------------|
+| SQLite         |             |
+| PgSQL          |             |
 
 ## Field
 
@@ -92,22 +95,21 @@
 | SQLite         | :white_check_mark: | :white_check_mark: | -                        |
 | PgSQL          | :white_check_mark: | :white_check_mark: | -                        |
 
-#### Relationship
-
-1. direction
-1. bidirectional
-2. unidirectional
-2. type
-1. one-to-one
-2. one-to-many
-3. many-to-one
+#### Relationships
 
 ##### Unidirectional
 
-| Implementation | One-to-one         | One-to-many       | Many-to-many      |
-|:---------------|:-------------------|:------------------|:------------------|
-| SQLite         | :white_check_mark: | white_check_mark: | white_check_mark: |
-| PgSQL          | :white_check_mark: | white_check_mark: | white_check_mark: |
+| Implementation | One-to-one         | One-to-many        | Many-to-many       |
+|:---------------|:-------------------|:-------------------|:-------------------|
+| SQLite         | :white_check_mark: | :white_check_mark: | :white_check_mark: |
+| PgSQL          | :white_check_mark: | :white_check_mark: | :white_check_mark: |
+
+##### Bidirectional
+
+| Implementation | One-to-one | One-to-many | Many-to-many |
+|:---------------|:-----------|:------------|:-------------|
+| SQLite         |            |             |              |
+| PgSQL          |            |             |              |
 
 # References
 
