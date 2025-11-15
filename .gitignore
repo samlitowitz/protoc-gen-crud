@@ -4,3 +4,6 @@
 !.gitattributes
 !.gitignore
 !.golangci.yaml
+
+!.github/
+
