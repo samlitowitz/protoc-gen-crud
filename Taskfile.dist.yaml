@@ -8,7 +8,7 @@ vars:
   COMMIT:
     sh: git rev-parse HEAD
   TARGETDIR:
-    sh: echo $GOPATH/bin
+    sh: go env GOBIN
   BIN: 'protoc-gen-go-crud'
   PROJECT_PROTO_INCLUDE:
     sh: cd .. && pwd
@@ -42,8 +42,8 @@ tasks:
 
   lint:
     cmds:
-      - docker-compose run --rm lint
+      - golangci-lint run ./...
 
-  test:
+  docker-test:
     cmds:
-      - docker-compose run --rm --build go-test
+      - docker-compose -f docker-compose.dist.yaml run --rm --build go-test

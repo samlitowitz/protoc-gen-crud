@@ -27,19 +27,12 @@ jobs:
     runs-on: ubuntu-latest
     if: |
       github.event_name == 'push'
+        || github.event_name == 'workflow_dispatch'
         || (github.event_name == 'pull_request' && contains(github.event.pull_request.labels.*.name, 'ci'))
     steps:
       - uses: actions/checkout@v5
-      - name: Setup Go
-        uses: actions/setup-go@v6
-        with:
-          go-version: ${{ env.GO_VERSION }}
-      - name: Install Taskfile
-        run: sh -c "$(curl --location https://taskfile.dev/install.sh)" -- -d
-      - name: Install deps
-        run: go mod download
       - name: Build
-        run: GOPATH=$(pwd) ./bin/task release
+        run: docker build --target go-build .
 
   lint:
     runs-on: ubuntu-latest
@@ -63,24 +56,16 @@ jobs:
     runs-on: ubuntu-latest
     if: |
       github.event_name == 'push'
+        || github.event_name == 'workflow_dispatch'
         || (github.event_name == 'pull_request' && contains(github.event.pull_request.labels.*.name, 'ci'))
     steps:
       - uses: actions/checkout@v5
-      - name: Setup Go
-        uses: actions/setup-go@v6
-        with:
-          go-version: ${{ env.GO_VERSION }}
-      - name: Generate options code
-        uses: arduino/setup-protoc@v3
-        with:
-          version: "29.1"
-        run: make generate-options
-      - name: Ensure option code is up to date
-        run: ./scripts/git-has-changes.sh
-      - name: Generate test cases
-        uses: arduino/setup-protoc@v3
-        with:
-          version: "29.1"
-        run: make generate-test-cases
+      - name: Generate credentials for PgSQL test DB
+        run: |
+          echo "postgres" > ./docker/go-test-db/secrets/user
+          openssl rand -base64 32 | tr -dc _A-Z-a-z-0-9 | head -c${1:-32} > ./docker/go-test-db/secrets/password
       - name: Test
-        run: go test ./...
+        run: |
+          export DOCKER_USER=$(id -u):$(id -g)
+          docker compose -f docker-compose.dist.yaml -f docker-compose.ci.yaml run --build go-test
+          docker compose -f docker-compose.dist.yaml -f docker-compose.ci.yaml down

@@ -4,7 +4,6 @@ services:
       context: .
       dockerfile: Dockerfile
       target: "go-test"
-    command: [ "go", "test", "-v", "./test-cases/..." ]
     environment:
       - DB_HOST=go-test-db:5432
       - DB_USER_FILE=/run/secrets/go-test-db-user
@@ -58,22 +57,6 @@ services:
     user: ${DOCKER_USER}
     volumes:
       - ./data/go-test-db/data:/var/lib/postgresql/data
-
-  lint:
-    image: golangci/golangci-lint:v2.3.0
-    entrypoint: [ "golangci-lint" ]
-    command: [ "run" ]
-    environment:
-      - GOCACHE=/.cache/go-build
-      - GOMODCACHE=/.cache/mod
-      - GOLANGCI_LINT_CACHE=/.cache/golangci-lint
-    user: ${DOCKER_USER}
-    working_dir: "/app"
-    volumes:
-      - ./:/app
-      - ${GOCACHE}:/.cache/go-build
-      - ${GOMODCACHE}:/.cache/mod
-      - ${GOLANGCI_LINT_CACHE}:/.cache/golangci-lint
 
 networks:
   test:

@@ -1,0 +1,4 @@
+services:
+  go-test-db:
+    ports: !reset []
+    volumes: !reset []
