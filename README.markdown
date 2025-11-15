@@ -1,4 +1,5 @@
 # Protobuf Annotations
+[![.github/workflows/pipes.yaml](https://github.com/samlitowitz/protoc-gen-crud/actions/workflows/pipes.yaml/badge.svg?branch=master)](https://github.com/samlitowitz/protoc-gen-crud/actions/workflows/pipes.yaml)
 
 # Table of Contents
 
