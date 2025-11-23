@@ -1,4 +1,6 @@
 # Protobuf Annotations
+[![Go Report Card](https://goreportcard.com/badge/github.com/samlitowitz/protoc-gen-crud)](https://goreportcard.com/report/github.com/samlitowitz/protoc-gen-crud)
+[![Go Reference](https://pkg.go.dev/badge/github.com/samlitowitz/protoc-gen-crud.svg)](https://pkg.go.dev/github.com/samlitowitz/protoc-gen-crud)
 [![.github/workflows/pipes.yaml](https://github.com/samlitowitz/protoc-gen-crud/actions/workflows/pipes.yaml/badge.svg?branch=master)](https://github.com/samlitowitz/protoc-gen-crud/actions/workflows/pipes.yaml)
 
 # Table of Contents
