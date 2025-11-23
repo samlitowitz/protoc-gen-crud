@@ -22,6 +22,9 @@
 
 # Feature Support
 
+Items with a check mark have been implemented
+Items without a check mark have not been implemented but are planned for implementation.
+
 ## Message
 
 ### Operations

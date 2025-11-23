@@ -27,7 +27,6 @@ All primary key tests _**MUST**_ cover all allowed attribute types.
 1. Create
     1. A new entity with a duplicate primary key set **MUST** fail
     2. A new entity with a non-duplicate primary key **MUST** succeed
-    3. [FEATURE] A new entity with no prime attributes set **MUST** have them generated
 2. Read
     1. No applicable requirements
 3. Update
@@ -43,7 +42,8 @@ All primary key tests _**MUST**_ cover all allowed attribute types.
 
 1. Create
     1. A new entity with any prime attribute excluded by field mask **MUST** fail
-    2. A new entity with any or all non-prime attributes excluded by field mask **MUST** use empty values for those attributes
+    2. A new entity with any or all non-prime attributes excluded by field mask **MUST** use empty values for those
+       attributes
     3. A new entity with no field mask used **MUST** succeed
 2. Read
     1. No applicable requirements
@@ -54,46 +54,23 @@ All primary key tests _**MUST**_ cover all allowed attribute types.
 4. Delete
     1. No applicable requirements
 
-
 ### Field
 
 #### Ignore
+
 Ignored fields are to be excluded from all generated CRUD code
 
 TODO: How to test?
+
 1. Ignored fields are not supported by any CRUD operations
 2. Including in ignored field in the primary key **MUST** fail to compile
 
 #### Relationships
+
 1. manual/managed/??? - TODO: need correct nomenclature for this
-
-TODO: Need to write test cases/expected behaviors
-
-1. Always generate join types and CRUD code
-1. Managed 
-
-...
-
-* Message
-    * Field Mask
-        * Partial mask of candidate keys prime attributes
-    * Candidate Key
-        * Supported types
-            * string
-            * ints
-            * enums
-        * Single attribute
-        * Multi-attribute
-* Field
-    * Ignore
-    * No Generate (do not generate candidate key attributes, this is ignored on all other fields)
-    * Relationships
-        * type X direction
 
 ## Implementation Specific
 
+### PgSQL
+
 ### SQLite
-
-# References
-
-1. Wikipedia contributors. (2024, March 13). Candidate key. Wikipedia. https://en.wikipedia.org/wiki/Candidate_key
