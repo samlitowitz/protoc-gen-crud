@@ -27,6 +27,7 @@ RUN --mount=type=cache,mode=0755,target=/go/pkg/mod go mod download
 RUN --mount=type=cache,mode=0755,target=/go/pkg/mod go mod verify
 
 RUN task generate-options && \
+    ./scripts/git-has-changes.sh && \
     task release
 
 ############################
