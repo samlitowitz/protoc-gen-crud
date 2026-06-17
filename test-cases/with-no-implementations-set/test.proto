@@ -4,17 +4,17 @@ package protoc_gen_crud.test_cases.with_no_implementations_set;
 
 option go_package = "github.com/samlitowitz/protoc-gen-crud/test-cases/with-no-implementations-set";
 
-import "protoc-gen-crud/options/annotations.proto";
+import "options/v1/annotations.proto";
 
 message NoImplementations {
-  option (protoc_gen_crud.options.crud_message_options) = {
+  option (options.v1.crud_message_options) = {
     primaryKey: ["id"]
   };
   string id = 1;
 }
 
 message EmptyImplementations {
-  option (protoc_gen_crud.options.crud_message_options) = {
+  option (options.v1.crud_message_options) = {
     implementations: []
     primaryKey: ["id"]
   };

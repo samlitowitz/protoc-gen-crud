@@ -4,7 +4,7 @@ package protoc_gen_crud.test_cases.primary_key;
 
 option go_package = "github.com/samlitowitz/protoc-gen-crud/test-cases/primary-key";
 
-import "protoc-gen-crud/options/annotations.proto";
+import "options/v1/annotations.proto";
 
 enum PrimaryKeyEnum {
   ZERO = 0;
@@ -14,7 +14,7 @@ enum PrimaryKeyEnum {
 }
 
 message SAEnum {
-  option (protoc_gen_crud.options.crud_message_options) = {
+  option (options.v1.crud_message_options) = {
     implementations: [IMPLEMENTATION_SQLITE, IMPLEMENTATION_PGSQL]
     primaryKey: ["id"]
   };
@@ -25,7 +25,7 @@ message SAEnum {
 }
 
 message SAInt32 {
-  option (protoc_gen_crud.options.crud_message_options) = {
+  option (options.v1.crud_message_options) = {
     implementations: [IMPLEMENTATION_SQLITE, IMPLEMENTATION_PGSQL]
     primaryKey: ["id"]
   };
@@ -35,7 +35,7 @@ message SAInt32 {
 }
 
 message SAInt64 {
-  option (protoc_gen_crud.options.crud_message_options) = {
+  option (options.v1.crud_message_options) = {
     implementations: [IMPLEMENTATION_SQLITE, IMPLEMENTATION_PGSQL]
     primaryKey: ["id"]
   };
@@ -45,7 +45,7 @@ message SAInt64 {
 }
 
 message SAUint32 {
-  option (protoc_gen_crud.options.crud_message_options) = {
+  option (options.v1.crud_message_options) = {
     implementations: [IMPLEMENTATION_SQLITE, IMPLEMENTATION_PGSQL]
     primaryKey: ["id"]
   };
@@ -55,7 +55,7 @@ message SAUint32 {
 }
 
 message SAUint64 {
-  option (protoc_gen_crud.options.crud_message_options) = {
+  option (options.v1.crud_message_options) = {
     implementations: [IMPLEMENTATION_SQLITE, IMPLEMENTATION_PGSQL]
     primaryKey: ["id"]
   };
@@ -65,7 +65,7 @@ message SAUint64 {
 }
 
 message SAString {
-  option (protoc_gen_crud.options.crud_message_options) = {
+  option (options.v1.crud_message_options) = {
     implementations: [IMPLEMENTATION_SQLITE, IMPLEMENTATION_PGSQL]
     primaryKey: ["id"]
   };
@@ -75,7 +75,7 @@ message SAString {
 }
 
 message MAAll {
-  option (protoc_gen_crud.options.crud_message_options) = {
+  option (options.v1.crud_message_options) = {
     implementations: [IMPLEMENTATION_SQLITE, IMPLEMENTATION_PGSQL]
     primaryKey: ["id_enum", "id_int32", "id_int64", "id_uint32", "id_uint64", "id_string"]
   };

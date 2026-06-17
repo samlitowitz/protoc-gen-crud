@@ -2,6 +2,8 @@ syntax = "proto3";
 
 package options.v1.relationships;
 
+option go_package = "github.com/samlitowitz/protoc-gen-crud/options/v1/relationships";
+
 enum Direction {
   UNKNOWN_DIRECTION = 0;
   BIDIRECTIONAL = 1;

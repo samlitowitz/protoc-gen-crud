@@ -21,6 +21,7 @@ import (
 
 var (
 	formatOutput = flag.Bool("format_output", true, "format code before writing to file")
+	optionsPkg   = flag.String("options_pkg", "protoc_gen_crud.options.v1", "options package to use when generating CRUD proto files")
 	versionFlag  = flag.Bool("version", false, "print protoc-gen-go-crud Version")
 )
 
@@ -44,7 +45,7 @@ func main() {
 		reg := descriptor.NewRegistry()
 
 		crudGen := genGoCRUD.New(reg, genGoCRUD.WithFormatOutput(*formatOutput))
-		relationshipGen := genGoRelationship.New(reg)
+		relationshipGen := genGoRelationship.New(reg, genGoRelationship.WithOptionsPkg(*optionsPkg))
 		pgsqlCRUDGen := genPgSQLCRUD.New(reg)
 		pgsqlSQLGen := genPgSQLSQL.New(reg)
 		sqliteCRUDGen := genSQLiteCRUD.New(reg)

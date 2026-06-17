@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/samlitowitz/protoc-gen-crud/options"
+	options "github.com/samlitowitz/protoc-gen-crud/options/v1"
 	test_cases "github.com/samlitowitz/protoc-gen-crud/test-cases"
 
 	"github.com/samlitowitz/expressions"

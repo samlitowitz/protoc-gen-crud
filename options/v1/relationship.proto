@@ -4,6 +4,8 @@ package options.v1;
 
 import "options/v1/relationships/type.proto";
 
+option go_package = "github.com/samlitowitz/protoc-gen-crud/options/v1";
+
 message Relationship {
   relationships.Type type = 1;
 }

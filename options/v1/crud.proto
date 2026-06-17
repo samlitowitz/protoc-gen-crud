@@ -4,6 +4,8 @@ package options.v1;
 
 import "options/v1/relationship.proto";
 
+option go_package = "github.com/samlitowitz/protoc-gen-crud/options/v1";
+
 // Please see the [test cases](test-cases/) for examples of how to use
 // these options and the output produced.
 

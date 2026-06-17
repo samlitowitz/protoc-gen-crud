@@ -8,7 +8,7 @@ import (
 
 	test_cases "github.com/samlitowitz/protoc-gen-crud/test-cases"
 
-	"github.com/samlitowitz/protoc-gen-crud/options"
+	options "github.com/samlitowitz/protoc-gen-crud/options/v1"
 
 	"github.com/samlitowitz/expressions"
 
