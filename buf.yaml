@@ -4,9 +4,6 @@ modules:
     name: buf.build/samlitowitzorg/protoc-gen-crud
     includes:
       - options
-  - path: .
-    includes:
-      - test-cases/as-timestamp-field
 
 breaking:
   use:
