@@ -1,0 +1,9 @@
+syntax = "proto3";
+
+package options.v1;
+
+import "options/v1/relationships/type.proto";
+
+message Relationship {
+  relationships.Type type = 1;
+}

@@ -7,7 +7,7 @@ import (
 
 	"github.com/samlitowitz/protoc-gen-crud/internal/generator/crud"
 
-	crudOptions "github.com/samlitowitz/protoc-gen-crud/options"
+	crudOptions "github.com/samlitowitz/protoc-gen-crud/options/v1"
 
 	"github.com/samlitowitz/protoc-gen-crud/internal/casing"
 	"github.com/samlitowitz/protoc-gen-crud/internal/descriptor"
