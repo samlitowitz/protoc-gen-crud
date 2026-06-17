@@ -63,6 +63,9 @@ func New(reg *descriptor.Registry, opts ...Option) gen.Generator {
 func (g *generator) Generate(targets []*descriptor.File) ([]*descriptor.ResponseFile, error) {
 	var files []*descriptor.ResponseFile
 	for _, file := range targets {
+		if !g.shouldGenerate(file) {
+			continue
+		}
 		code, err := g.generate(file)
 		if err != nil {
 			return nil, err
@@ -100,4 +103,13 @@ func (g *generator) generate(file *descriptor.File) (string, error) {
 	}
 
 	return applyTemplate(params, g.reg)
+}
+
+func (g *generator) shouldGenerate(file *descriptor.File) bool {
+	for _, msg := range file.Messages {
+		if msg.GenerateCRUD {
+			return true
+		}
+	}
+	return false
 }
