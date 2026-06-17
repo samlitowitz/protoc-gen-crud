@@ -10,5 +10,3 @@ plugins:
     opt:
       - default_api_level=API_OPAQUE
       - paths=source_relative
-#  - local: [ protoc-gen-go-crud ]
-#    out: .
