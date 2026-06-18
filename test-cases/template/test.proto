@@ -4,7 +4,7 @@ package protoc_gen_crud.test_cases.{{TC_PACKAGE}};
 
 option go_package = "github.com/samlitowitz/protoc-gen-crud/test-cases/{{TC_DIR}}";
 
-import "options/v1/annotations.proto";
+import "protoc_gen_crud/options/v1/annotations.proto";
 
 message Test {
   option (options.v1.crud_message_options) = {

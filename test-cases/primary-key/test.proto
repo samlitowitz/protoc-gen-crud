@@ -4,7 +4,7 @@ package protoc_gen_crud.test_cases.primary_key;
 
 option go_package = "github.com/samlitowitz/protoc-gen-crud/test-cases/primary-key";
 
-import "options/v1/annotations.proto";
+import "protoc_gen_crud/options/v1/annotations.proto";
 
 enum PrimaryKeyEnum {
   ZERO = 0;

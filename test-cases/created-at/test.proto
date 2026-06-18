@@ -4,7 +4,7 @@ package protoc_gen_crud.test_cases.created_at;
 
 option go_package = "github.com/samlitowitz/protoc-gen-crud/test-cases/created-at";
 
-import "options/v1/annotations.proto";
+import "protoc_gen_crud/options/v1/annotations.proto";
 import "google/protobuf/timestamp.proto";
 
 message CreatedAt {

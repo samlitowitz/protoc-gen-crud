@@ -4,7 +4,7 @@ package protoc_gen_crud.test_cases.with_only_unknown_implementation_set;
 
 option go_package = "github.com/samlitowitz/protoc-gen-crud/test-cases/with-only-unknown-implementation-set";
 
-import "options/v1/annotations.proto";
+import "protoc_gen_crud/options/v1/annotations.proto";
 
 message OnlyUnknownImplementation {
   option (options.v1.crud_message_options) = {

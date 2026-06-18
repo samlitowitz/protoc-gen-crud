@@ -55,15 +55,15 @@ func (repo *PgSQLUpdatedAtRepository) Create(ctx context.Context, toCreate []*Up
 	bindsIdx := 1
 	for _, updatedAt := range toCreate {
 		binds = append(binds, updatedAt.GetId())
-		binds = append(binds, updatedAt.GetUpdatedAt().AsTime())
 		binds = append(binds, updatedAt.GetData())
+		binds = append(binds, updatedAt.GetUpdatedAt().AsTime())
 		bindsStrs = append(bindsStrs, fmt.Sprintf("($%d, $%d, $%d)", bindsIdx+0, bindsIdx+1, bindsIdx+2))
 		bindsIdx += 3
 	}
 	_, err = tx.ExecContext(
 		ctx,
 		fmt.Sprintf(
-			`INSERT INTO "updated_at" ("id","updated_at","data") VALUES
+			`INSERT INTO "updated_at" ("id","data","updated_at") VALUES
 			%s`,
 			strings.Join(bindsStrs, ",\n"),
 		),
@@ -82,7 +82,7 @@ func (repo *PgSQLUpdatedAtRepository) Create(ctx context.Context, toCreate []*Up
 // Read returns a set of UpdatedAts matching the provided criteria
 // Read is incomplete and it should be considered unstable
 func (repo *PgSQLUpdatedAtRepository) Read(ctx context.Context, expr expressions.Expression) ([]*UpdatedAt, error) {
-	query := `SELECT "id","updated_at","data"
+	query := `SELECT "id","data","updated_at"
 		FROM "updated_at"`
 	clauses, binds, err := whereClauseFromExpressionForPgSQLUpdatedAt(expr, 1)
 	if err != nil {
@@ -105,7 +105,7 @@ func (repo *PgSQLUpdatedAtRepository) Read(ctx context.Context, expr expressions
 		updatedAt := &UpdatedAt_builder{}
 		updatedAtTime := &pgtype.Timestamp{}
 
-		if err = rows.Scan(&updatedAt.Id, &updatedAtTime, &updatedAt.Data); err != nil {
+		if err = rows.Scan(&updatedAt.Id, &updatedAt.Data, &updatedAtTime); err != nil {
 			return nil, err
 		}
 		updatedAt.UpdatedAt = timestamppb.New(updatedAtTime.Time)
@@ -130,7 +130,7 @@ func (repo *PgSQLUpdatedAtRepository) Update(ctx context.Context, toUpdate []*Up
 	defer tx.Rollback()
 
 	stmt, err := tx.Prepare(
-		`UPDATE "updated_at" SET "updated_at" = $1,"data" = $2 WHERE "id" = $3`,
+		`UPDATE "updated_at" SET "data" = $1,"updated_at" = $2 WHERE "id" = $3`,
 	)
 	if err != nil {
 		return nil, err
@@ -144,7 +144,7 @@ func (repo *PgSQLUpdatedAtRepository) Update(ctx context.Context, toUpdate []*Up
 		updatedAt.SetUpdatedAt(timestamppb.New(time.Now()))
 	}
 	for _, updatedAt := range toUpdate {
-		_, err = stmt.ExecContext(ctx, updatedAt.GetUpdatedAt().AsTime(), updatedAt.GetData(), updatedAt.GetId())
+		_, err = stmt.ExecContext(ctx, updatedAt.GetData(), updatedAt.GetUpdatedAt().AsTime(), updatedAt.GetId())
 		if err != nil {
 			return nil, err
 		}
@@ -179,8 +179,8 @@ func (repo *PgSQLUpdatedAtRepository) Delete(ctx context.Context, expr expressio
 
 var pgsqlUpdatedAtColumnNameByFieldID = map[expressions.ID]string{
 	UpdatedAt_Id_Field:        "id",
-	UpdatedAt_UpdatedAt_Field: "updated_at",
 	UpdatedAt_Data_Field:      "data",
+	UpdatedAt_UpdatedAt_Field: "updated_at",
 }
 
 func whereClauseFromExpressionForPgSQLUpdatedAt(expr expressions.Expression, paramIdx int) (string, []any, error) {

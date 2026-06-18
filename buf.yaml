@@ -3,7 +3,7 @@ modules:
   - path: .
     name: buf.build/samlitowitzorg/protoc-gen-crud
     includes:
-      - options
+      - protoc_gen_crud
 
 breaking:
   use:

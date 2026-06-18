@@ -6,7 +6,7 @@ import (
 	"sort"
 	"strings"
 
-	options "github.com/samlitowitz/protoc-gen-crud/options/v1"
+	options "github.com/samlitowitz/protoc-gen-crud/protoc_gen_crud/options/v1"
 
 	_ "google.golang.org/genproto/googleapis/api/annotations"
 	"google.golang.org/protobuf/compiler/protogen"

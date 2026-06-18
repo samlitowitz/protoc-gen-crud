@@ -6,7 +6,7 @@ import (
 	"go/format"
 	"path"
 
-	crudOptions "github.com/samlitowitz/protoc-gen-crud/options/v1"
+	crudOptions "github.com/samlitowitz/protoc-gen-crud/protoc_gen_crud/options/v1"
 
 	"github.com/samlitowitz/protoc-gen-crud/internal/descriptor"
 	gen "github.com/samlitowitz/protoc-gen-crud/internal/generator"
