@@ -9,7 +9,8 @@ import (
 )
 
 type generator struct {
-	reg *descriptor.Registry
+	reg        *descriptor.Registry
+	optionsPkg string
 }
 
 func New(reg *descriptor.Registry, opts ...Option) gen.Generator {
@@ -19,7 +20,8 @@ func New(reg *descriptor.Registry, opts ...Option) gen.Generator {
 	}
 
 	return &generator{
-		reg: reg,
+		reg:        reg,
+		optionsPkg: options.optionsPkg,
 	}
 }
 
@@ -49,7 +51,8 @@ func (g *generator) Generate(targets []*descriptor.File) ([]*descriptor.Response
 
 func (g *generator) generate(file *descriptor.File) (string, error) {
 	params := param{
-		File: file,
+		File:       file,
+		OptionsPkg: g.optionsPkg,
 	}
 
 	return applyTemplate(params, g.reg)

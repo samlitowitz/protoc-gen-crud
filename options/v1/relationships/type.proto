@@ -1,0 +1,13 @@
+syntax = "proto3";
+
+package options.v1.relationships;
+
+option go_package = "github.com/samlitowitz/protoc-gen-crud/options/v1/relationships";
+
+enum Type {
+  TYPE_UNSPECIFIED = 0;
+  TYPE_ONE_TO_ONE = 1;
+  TYPE_ONE_TO_MANY = 2;
+  TYPE_MANY_TO_ONE = 3;
+  TYPE_MANY_TO_MANY = 4;
+}

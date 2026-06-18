@@ -8,7 +8,7 @@ import (
 
 	"github.com/jackc/pgx/v5/pgconn"
 
-	"github.com/samlitowitz/protoc-gen-crud/options"
+	options "github.com/samlitowitz/protoc-gen-crud/options/v1"
 )
 
 func AssertSQLErrorCode(t *testing.T, typ options.Implementation, lut map[options.Implementation]any, err error, prefix string) {

@@ -4,12 +4,12 @@ package protoc_gen_crud.test_cases.{{TC_PACKAGE}};
 
 option go_package = "github.com/samlitowitz/protoc-gen-crud/test-cases/{{TC_DIR}}";
 
-import "protoc-gen-crud/options/annotations.proto";
+import "options/v1/annotations.proto";
 
 message Test {
-  option (protoc_gen_crud.options.crud_message_options) = {
+  option (options.v1.crud_message_options) = {
     implementations: [SQLITE]
-    primaryKey: ["id"]
+    primary_key: ["id"]
   };
   string id = 1;
   string data = 2;

@@ -7,7 +7,7 @@ import (
 
 	"github.com/samlitowitz/protoc-gen-crud/internal/generator/crud"
 
-	"github.com/samlitowitz/protoc-gen-crud/options"
+	options "github.com/samlitowitz/protoc-gen-crud/options/v1"
 
 	"github.com/samlitowitz/protoc-gen-crud/internal/generator/sqlite"
 

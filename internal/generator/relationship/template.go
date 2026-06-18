@@ -7,7 +7,7 @@ import (
 	"strings"
 	"text/template"
 
-	crudOptions "github.com/samlitowitz/protoc-gen-crud/options"
+	crudOptions "github.com/samlitowitz/protoc-gen-crud/options/v1"
 
 	"google.golang.org/protobuf/types/descriptorpb"
 
@@ -22,10 +22,12 @@ func init() {
 
 type param struct {
 	*descriptor.File
+	OptionsPkg string
 }
 
 type relationshipParam struct {
 	*descriptor.Relationship
+	OptionsPkg string
 }
 
 func (r *relationshipParam) GetName() string {
@@ -138,7 +140,7 @@ func applyTemplate(p param, reg *descriptor.Registry) (string, error) {
 	}
 
 	for _, relationship := range p.Relationships {
-		if err := protoMessageTemplate.Execute(w, &relationshipParam{relationship}); err != nil {
+		if err := protoMessageTemplate.Execute(w, &relationshipParam{Relationship: relationship, OptionsPkg: p.OptionsPkg}); err != nil {
 			return "", err
 		}
 	}
@@ -174,9 +176,9 @@ import "{{.GetName}}";
 
 	protoMessageTemplate = template.Must(template.New("proto-message").Funcs(funcMap).Parse(`
 message {{.GetName}} {
-  option (protoc_gen_crud.options.crud_message_options) = {
+  option ({{.OptionsPkg}}.crud_message_options) = {
     implementations: {{crudImplementations .}}
-    primaryKey: {{crudPrimaryKey .}}
+    primary_key: {{crudPrimaryKey .}}
   };
 {{- range $i, $field := .Fields }}
   {{protoType $field}} {{protoFieldName $field}} = {{addOne $i}};

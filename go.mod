@@ -5,13 +5,13 @@ go 1.24.3
 require (
 	github.com/iancoleman/strcase v0.3.0
 	google.golang.org/genproto v0.0.0-20231106174013-bbf56f31fb17
-	google.golang.org/protobuf v1.32.0
+	google.golang.org/protobuf v1.36.11
 )
 
 require github.com/google/uuid v1.6.0 // indirect
 
 require (
-	github.com/google/go-cmp v0.6.0
+	github.com/google/go-cmp v0.7.0
 	github.com/jackc/pgx-zap v0.0.0-20221202020421-94b1cb2f889f
 	github.com/jackc/pgx/v5 v5.7.5
 	github.com/mennanov/fmutils v0.2.1

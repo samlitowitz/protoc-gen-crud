@@ -11,7 +11,9 @@ vars:
     sh: go env GOBIN
   BIN: 'protoc-gen-go-crud'
   PROJECT_PROTO_INCLUDE:
-    sh: cd .. && pwd
+    sh: pwd
+  PROJECT_PARENT_PROTO_INCLUDE:
+    sh: (cd ../ && pwd)
   PROJECT_PROTO_OUT:
     sh: cd ../../../ && pwd
 
@@ -34,11 +36,11 @@ tasks:
 
   generate-options:
     cmds:
-      - PROJECT_PROTO_INCLUDE={{.PROJECT_PROTO_INCLUDE}}} PROJECT_PROTO_OUT={{.PROJECT_PROTO_OUT}} go generate -v ./options/...
+      - PROJECT_PROTO_INCLUDE={{.PROJECT_PROTO_INCLUDE}} PROJECT_PROTO_OUT={{.PROJECT_PROTO_OUT}} go generate -v ./options/...
 
   generate-test-cases:
     cmds:
-      - PROJECT_PROTO_INCLUDE={{.PROJECT_PROTO_INCLUDE}} PROJECT_PROTO_OUT={{.PROJECT_PROTO_OUT}} go generate -v ./test-cases/...
+      - PROJECT_PROTO_INCLUDE={{.PROJECT_PROTO_INCLUDE}} PROJECT_PROTO_OUT={{.PROJECT_PROTO_OUT}} PROJECT_PARENT_PROTO_INCLUDE={{.PROJECT_PARENT_PROTO_INCLUDE}} go generate -v ./test-cases/...
 
   lint:
     cmds:

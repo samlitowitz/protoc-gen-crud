@@ -3,9 +3,9 @@ package descriptor
 import (
 	"fmt"
 
-	relationshipOptions "github.com/samlitowitz/protoc-gen-crud/options/relationships"
+	relationshipOptions "github.com/samlitowitz/protoc-gen-crud/options/v1/relationships"
 
-	crudOptions "github.com/samlitowitz/protoc-gen-crud/options"
+	crudOptions "github.com/samlitowitz/protoc-gen-crud/options/v1"
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/descriptorpb"
 )
@@ -166,10 +166,10 @@ func assignRelationships(r *Registry, msg *Message, field *Field, fieldOpts *cru
 	}
 
 	switch fieldOpts.GetRelationship().GetType() {
-	case relationshipOptions.Type_MANY_TO_ONE:
-	case relationshipOptions.Type_MANY_TO_MANY:
-	case relationshipOptions.Type_ONE_TO_MANY:
-	case relationshipOptions.Type_ONE_TO_ONE:
+	case relationshipOptions.Type_TYPE_MANY_TO_ONE:
+	case relationshipOptions.Type_TYPE_MANY_TO_MANY:
+	case relationshipOptions.Type_TYPE_ONE_TO_MANY:
+	case relationshipOptions.Type_TYPE_ONE_TO_ONE:
 		if field.IsRepeated() {
 			return fmt.Errorf(
 				"relationship type %s: repeated fields are not supported",
@@ -177,7 +177,7 @@ func assignRelationships(r *Registry, msg *Message, field *Field, fieldOpts *cru
 			)
 		}
 
-	case relationshipOptions.Type_UNKNOWN_TYPE:
+	case relationshipOptions.Type_TYPE_UNSPECIFIED:
 		fallthrough
 	default:
 		return fmt.Errorf("unsupported relationship type %s", fieldOpts.GetRelationship().GetType().String())
