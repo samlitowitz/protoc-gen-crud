@@ -6,7 +6,7 @@ import (
 	"testing"
 	"time"
 
-	options "github.com/samlitowitz/protoc-gen-crud/protoc-gen-crud/options/v1"
+	options "github.com/samlitowitz/protoc-gen-crud/protoc_gen_crud/options/v1"
 	as_timestamp_field "github.com/samlitowitz/protoc-gen-crud/test-cases/as-timestamp-field"
 
 	"google.golang.org/protobuf/types/known/timestamppb"

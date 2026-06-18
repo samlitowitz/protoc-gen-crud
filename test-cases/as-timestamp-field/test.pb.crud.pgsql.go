@@ -55,15 +55,15 @@ func (repo *PgSQLAsTimestampRepository) Create(ctx context.Context, toCreate []*
 	bindsIdx := 1
 	for _, asTimestamp := range toCreate {
 		binds = append(binds, asTimestamp.GetId())
-		binds = append(binds, asTimestamp.GetTimestampTwo().AsTime())
 		binds = append(binds, asTimestamp.GetTimestamp().AsTime())
+		binds = append(binds, asTimestamp.GetTimestampTwo().AsTime())
 		bindsStrs = append(bindsStrs, fmt.Sprintf("($%d, $%d, $%d)", bindsIdx+0, bindsIdx+1, bindsIdx+2))
 		bindsIdx += 3
 	}
 	_, err = tx.ExecContext(
 		ctx,
 		fmt.Sprintf(
-			`INSERT INTO "as_timestamp" ("id","timestamp_two","timestamp") VALUES
+			`INSERT INTO "as_timestamp" ("id","timestamp","timestamp_two") VALUES
 			%s`,
 			strings.Join(bindsStrs, ",\n"),
 		),
@@ -82,7 +82,7 @@ func (repo *PgSQLAsTimestampRepository) Create(ctx context.Context, toCreate []*
 // Read returns a set of AsTimestamps matching the provided criteria
 // Read is incomplete and it should be considered unstable
 func (repo *PgSQLAsTimestampRepository) Read(ctx context.Context, expr expressions.Expression) ([]*AsTimestamp, error) {
-	query := `SELECT "id","timestamp_two","timestamp"
+	query := `SELECT "id","timestamp","timestamp_two"
 		FROM "as_timestamp"`
 	clauses, binds, err := whereClauseFromExpressionForPgSQLAsTimestamp(expr, 1)
 	if err != nil {
@@ -103,14 +103,14 @@ func (repo *PgSQLAsTimestampRepository) Read(ctx context.Context, expr expressio
 	var found []*AsTimestamp
 	for rows.Next() {
 		asTimestamp := &AsTimestamp_builder{}
-		timestampTwoTime := &pgtype.Timestamp{}
 		timestampTime := &pgtype.Timestamp{}
+		timestampTwoTime := &pgtype.Timestamp{}
 
-		if err = rows.Scan(&asTimestamp.Id, &timestampTwoTime, &timestampTime); err != nil {
+		if err = rows.Scan(&asTimestamp.Id, &timestampTime, &timestampTwoTime); err != nil {
 			return nil, err
 		}
-		asTimestamp.TimestampTwo = timestamppb.New(timestampTwoTime.Time)
 		asTimestamp.Timestamp = timestamppb.New(timestampTime.Time)
+		asTimestamp.TimestampTwo = timestamppb.New(timestampTwoTime.Time)
 
 		found = append(found, asTimestamp.Build())
 	}
@@ -132,7 +132,7 @@ func (repo *PgSQLAsTimestampRepository) Update(ctx context.Context, toUpdate []*
 	defer tx.Rollback()
 
 	stmt, err := tx.Prepare(
-		`UPDATE "as_timestamp" SET "timestamp_two" = $1,"timestamp" = $2 WHERE "id" = $3`,
+		`UPDATE "as_timestamp" SET "timestamp" = $1,"timestamp_two" = $2 WHERE "id" = $3`,
 	)
 	if err != nil {
 		return nil, err
@@ -140,7 +140,7 @@ func (repo *PgSQLAsTimestampRepository) Update(ctx context.Context, toUpdate []*
 	defer stmt.Close()
 
 	for _, asTimestamp := range toUpdate {
-		_, err = stmt.ExecContext(ctx, asTimestamp.GetTimestampTwo().AsTime(), asTimestamp.GetTimestamp().AsTime(), asTimestamp.GetId())
+		_, err = stmt.ExecContext(ctx, asTimestamp.GetTimestamp().AsTime(), asTimestamp.GetTimestampTwo().AsTime(), asTimestamp.GetId())
 		if err != nil {
 			return nil, err
 		}
@@ -175,8 +175,8 @@ func (repo *PgSQLAsTimestampRepository) Delete(ctx context.Context, expr express
 
 var pgsqlAsTimestampColumnNameByFieldID = map[expressions.ID]string{
 	AsTimestamp_Id_Field:           "id",
-	AsTimestamp_TimestampTwo_Field: "timestamp_two",
 	AsTimestamp_Timestamp_Field:    "timestamp",
+	AsTimestamp_TimestampTwo_Field: "timestamp_two",
 }
 
 func whereClauseFromExpressionForPgSQLAsTimestamp(expr expressions.Expression, paramIdx int) (string, []any, error) {

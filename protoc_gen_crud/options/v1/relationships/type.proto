@@ -1,8 +1,8 @@
 syntax = "proto3";
 
-package options.v1.relationships;
+package protoc_gen_crud.options.v1.relationships;
 
-option go_package = "github.com/samlitowitz/protoc-gen-crud/options/v1/relationships";
+option go_package = "github.com/samlitowitz/protoc-gen-crud/protoc_gen_crud/options/v1/relationships";
 
 enum Type {
   TYPE_UNSPECIFIED = 0;

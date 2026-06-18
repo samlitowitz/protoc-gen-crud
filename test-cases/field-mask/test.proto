@@ -5,7 +5,7 @@ package protoc_gen_crud.test_cases.field_mask;
 option go_package = "github.com/samlitowitz/protoc-gen-crud/test-cases/field-mask";
 
 import "google/protobuf/field_mask.proto";
-import "protoc-gen-crud/options/v1/annotations.proto";
+import "protoc_gen_crud/options/v1/annotations.proto";
 
 enum PrimaryKeyEnum {
   ZERO = 0;

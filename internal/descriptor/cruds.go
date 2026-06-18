@@ -3,8 +3,8 @@ package descriptor
 import (
 	"fmt"
 
-	"github.com/samlitowitz/protoc-gen-crud/protoc-gen-crud/options/v1"
-	relationshipOptions "github.com/samlitowitz/protoc-gen-crud/protoc-gen-crud/options/v1/relationships"
+	"github.com/samlitowitz/protoc-gen-crud/protoc_gen_crud/options/v1"
+	relationshipOptions "github.com/samlitowitz/protoc-gen-crud/protoc_gen_crud/options/v1/relationships"
 
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/descriptorpb"

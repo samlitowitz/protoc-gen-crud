@@ -18,14 +18,14 @@ import (
 // These constants are used to specify fields in expressions
 const (
 	AsTimestamp_Id_Field           expressions.ID = "f4c4993bdcc7a28f6147c6f1ac798d9154e8eefc861a420d55daec4cf09c3d22"
-	AsTimestamp_TimestampTwo_Field expressions.ID = "91f19641c4e2191563a8c33e73cddd2fce7b158190057efb20212e0a7645b456"
 	AsTimestamp_Timestamp_Field    expressions.ID = "e14948788f3b6e80e86bad57dc2921ee91c7d79c474e60168417559055743605"
+	AsTimestamp_TimestampTwo_Field expressions.ID = "91f19641c4e2191563a8c33e73cddd2fce7b158190057efb20212e0a7645b456"
 )
 
 var validAsTimestampFields = map[expressions.ID]struct{}{
 	AsTimestamp_Id_Field:           struct{}{},
-	AsTimestamp_TimestampTwo_Field: struct{}{},
 	AsTimestamp_Timestamp_Field:    struct{}{},
+	AsTimestamp_TimestampTwo_Field: struct{}{},
 }
 
 type AsTimestampRepository interface {

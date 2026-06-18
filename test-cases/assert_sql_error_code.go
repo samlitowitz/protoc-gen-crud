@@ -3,7 +3,7 @@ package test_cases
 import (
 	"testing"
 
-	options "github.com/samlitowitz/protoc-gen-crud/protoc-gen-crud/options/v1"
+	options "github.com/samlitowitz/protoc-gen-crud/protoc_gen_crud/options/v1"
 	"modernc.org/sqlite"
 	sqliteLib "modernc.org/sqlite/lib"
 

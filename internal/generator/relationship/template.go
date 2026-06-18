@@ -7,7 +7,7 @@ import (
 	"strings"
 	"text/template"
 
-	crudOptions "github.com/samlitowitz/protoc-gen-crud/protoc-gen-crud/options/v1"
+	crudOptions "github.com/samlitowitz/protoc-gen-crud/protoc_gen_crud/options/v1"
 
 	"google.golang.org/protobuf/types/descriptorpb"
 

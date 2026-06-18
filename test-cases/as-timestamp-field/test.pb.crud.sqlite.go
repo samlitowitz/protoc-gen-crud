@@ -53,14 +53,14 @@ func (repo *SQLiteAsTimestampRepository) Create(ctx context.Context, toCreate []
 	bindsStrs := []string{}
 	for _, asTimestamp := range toCreate {
 		binds = append(binds, asTimestamp.GetId())
-		binds = append(binds, asTimestamp.GetTimestampTwo().AsTime().Format(time.RFC3339))
 		binds = append(binds, asTimestamp.GetTimestamp().AsTime().Format(time.RFC3339))
+		binds = append(binds, asTimestamp.GetTimestampTwo().AsTime().Format(time.RFC3339))
 		bindsStrs = append(bindsStrs, "(?,?,?)")
 	}
 	_, err = tx.ExecContext(
 		ctx,
 		fmt.Sprintf(
-			`INSERT INTO "as_timestamp" ("id","timestamp_two","timestamp") VALUES
+			`INSERT INTO "as_timestamp" ("id","timestamp","timestamp_two") VALUES
 			%s`,
 			strings.Join(bindsStrs, ",\n"),
 		),
@@ -79,7 +79,7 @@ func (repo *SQLiteAsTimestampRepository) Create(ctx context.Context, toCreate []
 // Read returns a set of AsTimestamps matching the provided criteria
 // Read is incomplete and it should be considered unstable
 func (repo *SQLiteAsTimestampRepository) Read(ctx context.Context, expr expressions.Expression) ([]*AsTimestamp, error) {
-	query := `SELECT "id","timestamp_two","timestamp"
+	query := `SELECT "id","timestamp","timestamp_two"
 		FROM "as_timestamp"`
 	clauses, binds, err := whereClauseFromExpressionForSQLiteAsTimestamp(expr)
 	if err != nil {
@@ -100,24 +100,24 @@ func (repo *SQLiteAsTimestampRepository) Read(ctx context.Context, expr expressi
 	var found []*AsTimestamp
 	for rows.Next() {
 		asTimestamp := &AsTimestamp_builder{}
-		var timestampTwoTimeStr string
 		var timestampTimeStr string
+		var timestampTwoTimeStr string
 
-		if err = rows.Scan(&asTimestamp.Id, &timestampTwoTimeStr, &timestampTimeStr); err != nil {
+		if err = rows.Scan(&asTimestamp.Id, &timestampTimeStr, &timestampTwoTimeStr); err != nil {
 			return nil, err
 		}
-
-		timestampTwoTime, err := time.Parse(time.RFC3339, timestampTwoTimeStr)
-		if err != nil {
-			return nil, err
-		}
-		asTimestamp.TimestampTwo = timestamppb.New(timestampTwoTime)
 
 		timestampTime, err := time.Parse(time.RFC3339, timestampTimeStr)
 		if err != nil {
 			return nil, err
 		}
 		asTimestamp.Timestamp = timestamppb.New(timestampTime)
+
+		timestampTwoTime, err := time.Parse(time.RFC3339, timestampTwoTimeStr)
+		if err != nil {
+			return nil, err
+		}
+		asTimestamp.TimestampTwo = timestamppb.New(timestampTwoTime)
 
 		found = append(found, asTimestamp.Build())
 	}
@@ -139,7 +139,7 @@ func (repo *SQLiteAsTimestampRepository) Update(ctx context.Context, toUpdate []
 	defer tx.Rollback()
 
 	stmt, err := tx.Prepare(
-		`UPDATE "as_timestamp" SET "timestamp_two" = ?,"timestamp" = ? WHERE "id" = ?`,
+		`UPDATE "as_timestamp" SET "timestamp" = ?,"timestamp_two" = ? WHERE "id" = ?`,
 	)
 	if err != nil {
 		return nil, err
@@ -147,7 +147,7 @@ func (repo *SQLiteAsTimestampRepository) Update(ctx context.Context, toUpdate []
 	defer stmt.Close()
 
 	for _, asTimestamp := range toUpdate {
-		_, err = stmt.ExecContext(ctx, asTimestamp.GetTimestampTwo().AsTime().Format(time.RFC3339), asTimestamp.GetTimestamp().AsTime().Format(time.RFC3339), asTimestamp.GetId())
+		_, err = stmt.ExecContext(ctx, asTimestamp.GetTimestamp().AsTime().Format(time.RFC3339), asTimestamp.GetTimestampTwo().AsTime().Format(time.RFC3339), asTimestamp.GetId())
 		if err != nil {
 			return nil, err
 		}
@@ -182,8 +182,8 @@ func (repo *SQLiteAsTimestampRepository) Delete(ctx context.Context, expr expres
 
 var sqliteAsTimestampColumnNameByFieldID = map[expressions.ID]string{
 	AsTimestamp_Id_Field:           "id",
-	AsTimestamp_TimestampTwo_Field: "timestamp_two",
 	AsTimestamp_Timestamp_Field:    "timestamp",
+	AsTimestamp_TimestampTwo_Field: "timestamp_two",
 }
 
 func whereClauseFromExpressionForSQLiteAsTimestamp(expr expressions.Expression) (string, []any, error) {

@@ -4,7 +4,7 @@ package protoc_gen_crud.test_cases.relationships_one_to_one;
 
 option go_package = "github.com/samlitowitz/protoc-gen-crud/test-cases/relationships-one-to-one";
 
-import "protoc-gen-crud/options/v1/annotations.proto";
+import "protoc_gen_crud/options/v1/annotations.proto";
 
 enum PrimaryKeyEnum {
   ZERO = 0;
