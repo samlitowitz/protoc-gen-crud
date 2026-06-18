@@ -1,7 +1,0 @@
-*
-
-!.gitignore
-
-!generate.go
-!*_test.go
-!*.proto
