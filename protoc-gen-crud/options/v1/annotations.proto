@@ -3,7 +3,7 @@ syntax = "proto3";
 package options.v1;
 
 import "google/protobuf/descriptor.proto";
-import "options/v1/crud.proto";
+import "protoc-gen-crud/options/v1/crud.proto";
 
 option go_package = "github.com/samlitowitz/protoc-gen-crud/options/v1";
 

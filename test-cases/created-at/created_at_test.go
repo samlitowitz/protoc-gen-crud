@@ -5,13 +5,12 @@ import (
 	"fmt"
 	"testing"
 
+	options "github.com/samlitowitz/protoc-gen-crud/protoc-gen-crud/options/v1"
 	created_at "github.com/samlitowitz/protoc-gen-crud/test-cases/created-at"
 
 	"google.golang.org/protobuf/types/known/timestamppb"
 
 	test_cases "github.com/samlitowitz/protoc-gen-crud/test-cases"
-
-	options "github.com/samlitowitz/protoc-gen-crud/options/v1"
 
 	"github.com/samlitowitz/expressions"
 

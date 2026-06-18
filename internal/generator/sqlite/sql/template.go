@@ -6,8 +6,7 @@ import (
 	"text/template"
 
 	"github.com/samlitowitz/protoc-gen-crud/internal/generator/crud"
-
-	options "github.com/samlitowitz/protoc-gen-crud/options/v1"
+	options "github.com/samlitowitz/protoc-gen-crud/protoc-gen-crud/options/v1"
 
 	"github.com/samlitowitz/protoc-gen-crud/internal/generator/sqlite"
 

@@ -3,12 +3,11 @@ package test_cases
 import (
 	"testing"
 
+	options "github.com/samlitowitz/protoc-gen-crud/protoc-gen-crud/options/v1"
 	"modernc.org/sqlite"
 	sqliteLib "modernc.org/sqlite/lib"
 
 	"github.com/jackc/pgx/v5/pgconn"
-
-	options "github.com/samlitowitz/protoc-gen-crud/options/v1"
 )
 
 func AssertSQLErrorCode(t *testing.T, typ options.Implementation, lut map[options.Implementation]any, err error, prefix string) {

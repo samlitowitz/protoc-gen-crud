@@ -6,13 +6,12 @@ import (
 	"testing"
 	"time"
 
+	options "github.com/samlitowitz/protoc-gen-crud/protoc-gen-crud/options/v1"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
 	inline_field "github.com/samlitowitz/protoc-gen-crud/test-cases/inline-field"
 
 	test_cases "github.com/samlitowitz/protoc-gen-crud/test-cases"
-
-	options "github.com/samlitowitz/protoc-gen-crud/options/v1"
 
 	"github.com/samlitowitz/expressions"
 

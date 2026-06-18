@@ -2,7 +2,7 @@
 // versions:
 // 	protoc-gen-go v1.36.0
 // 	protoc        v7.35.0
-// source: options/v1/annotations.proto
+// source: protoc-gen-crud/options/v1/annotations.proto
 
 package v1
 
@@ -20,14 +20,14 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
-var file_options_v1_annotations_proto_extTypes = []protoimpl.ExtensionInfo{
+var file_protoc_gen_crud_options_v1_annotations_proto_extTypes = []protoimpl.ExtensionInfo{
 	{
 		ExtendedType:  (*descriptorpb.FileOptions)(nil),
 		ExtensionType: (*FileOptions)(nil),
 		Field:         65535,
 		Name:          "options.v1.crud_file_options",
 		Tag:           "bytes,65535,opt,name=crud_file_options",
-		Filename:      "options/v1/annotations.proto",
+		Filename:      "protoc-gen-crud/options/v1/annotations.proto",
 	},
 	{
 		ExtendedType:  (*descriptorpb.MethodOptions)(nil),
@@ -35,7 +35,7 @@ var file_options_v1_annotations_proto_extTypes = []protoimpl.ExtensionInfo{
 		Field:         65535,
 		Name:          "options.v1.crud_method_options",
 		Tag:           "bytes,65535,opt,name=crud_method_options",
-		Filename:      "options/v1/annotations.proto",
+		Filename:      "protoc-gen-crud/options/v1/annotations.proto",
 	},
 	{
 		ExtendedType:  (*descriptorpb.MessageOptions)(nil),
@@ -43,7 +43,7 @@ var file_options_v1_annotations_proto_extTypes = []protoimpl.ExtensionInfo{
 		Field:         65535,
 		Name:          "options.v1.crud_message_options",
 		Tag:           "bytes,65535,opt,name=crud_message_options",
-		Filename:      "options/v1/annotations.proto",
+		Filename:      "protoc-gen-crud/options/v1/annotations.proto",
 	},
 	{
 		ExtendedType:  (*descriptorpb.ServiceOptions)(nil),
@@ -51,7 +51,7 @@ var file_options_v1_annotations_proto_extTypes = []protoimpl.ExtensionInfo{
 		Field:         65535,
 		Name:          "options.v1.crud_service_options",
 		Tag:           "bytes,65535,opt,name=crud_service_options",
-		Filename:      "options/v1/annotations.proto",
+		Filename:      "protoc-gen-crud/options/v1/annotations.proto",
 	},
 	{
 		ExtendedType:  (*descriptorpb.FieldOptions)(nil),
@@ -59,7 +59,7 @@ var file_options_v1_annotations_proto_extTypes = []protoimpl.ExtensionInfo{
 		Field:         65535,
 		Name:          "options.v1.crud_field_options",
 		Tag:           "bytes,65535,opt,name=crud_field_options",
-		Filename:      "options/v1/annotations.proto",
+		Filename:      "protoc-gen-crud/options/v1/annotations.proto",
 	},
 }
 
@@ -69,7 +69,7 @@ var (
 	// different descriptor messages.
 	//
 	// optional options.v1.FileOptions crud_file_options = 65535;
-	E_CrudFileOptions = &file_options_v1_annotations_proto_extTypes[0]
+	E_CrudFileOptions = &file_protoc_gen_crud_options_v1_annotations_proto_extTypes[0]
 )
 
 // Extension fields to descriptorpb.MethodOptions.
@@ -78,7 +78,7 @@ var (
 	// different descriptor messages.
 	//
 	// optional options.v1.MethodOptions crud_method_options = 65535;
-	E_CrudMethodOptions = &file_options_v1_annotations_proto_extTypes[1]
+	E_CrudMethodOptions = &file_protoc_gen_crud_options_v1_annotations_proto_extTypes[1]
 )
 
 // Extension fields to descriptorpb.MessageOptions.
@@ -87,7 +87,7 @@ var (
 	// different descriptor messages.
 	//
 	// optional options.v1.MessageOptions crud_message_options = 65535;
-	E_CrudMessageOptions = &file_options_v1_annotations_proto_extTypes[2]
+	E_CrudMessageOptions = &file_protoc_gen_crud_options_v1_annotations_proto_extTypes[2]
 )
 
 // Extension fields to descriptorpb.ServiceOptions.
@@ -96,7 +96,7 @@ var (
 	// different descriptor messages.
 	//
 	// optional options.v1.ServiceOptions crud_service_options = 65535;
-	E_CrudServiceOptions = &file_options_v1_annotations_proto_extTypes[3]
+	E_CrudServiceOptions = &file_protoc_gen_crud_options_v1_annotations_proto_extTypes[3]
 )
 
 // Extension fields to descriptorpb.FieldOptions.
@@ -105,17 +105,19 @@ var (
 	// different descriptor messages.
 	//
 	// optional options.v1.FieldOptions crud_field_options = 65535;
-	E_CrudFieldOptions = &file_options_v1_annotations_proto_extTypes[4]
+	E_CrudFieldOptions = &file_protoc_gen_crud_options_v1_annotations_proto_extTypes[4]
 )
 
-var File_options_v1_annotations_proto protoreflect.FileDescriptor
+var File_protoc_gen_crud_options_v1_annotations_proto protoreflect.FileDescriptor
 
-var file_options_v1_annotations_proto_rawDesc = []byte{
-	0x0a, 0x1c, 0x6f, 0x70, 0x74, 0x69, 0x6f, 0x6e, 0x73, 0x2f, 0x76, 0x31, 0x2f, 0x61, 0x6e, 0x6e,
+var file_protoc_gen_crud_options_v1_annotations_proto_rawDesc = []byte{
+	0x0a, 0x2c, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x63, 0x2d, 0x67, 0x65, 0x6e, 0x2d, 0x63, 0x72, 0x75,
+	0x64, 0x2f, 0x6f, 0x70, 0x74, 0x69, 0x6f, 0x6e, 0x73, 0x2f, 0x76, 0x31, 0x2f, 0x61, 0x6e, 0x6e,
 	0x6f, 0x74, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x73, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x12, 0x0a,
 	0x6f, 0x70, 0x74, 0x69, 0x6f, 0x6e, 0x73, 0x2e, 0x76, 0x31, 0x1a, 0x20, 0x67, 0x6f, 0x6f, 0x67,
 	0x6c, 0x65, 0x2f, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x62, 0x75, 0x66, 0x2f, 0x64, 0x65, 0x73, 0x63,
-	0x72, 0x69, 0x70, 0x74, 0x6f, 0x72, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x1a, 0x15, 0x6f, 0x70,
+	0x72, 0x69, 0x70, 0x74, 0x6f, 0x72, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x1a, 0x25, 0x70, 0x72,
+	0x6f, 0x74, 0x6f, 0x63, 0x2d, 0x67, 0x65, 0x6e, 0x2d, 0x63, 0x72, 0x75, 0x64, 0x2f, 0x6f, 0x70,
 	0x74, 0x69, 0x6f, 0x6e, 0x73, 0x2f, 0x76, 0x31, 0x2f, 0x63, 0x72, 0x75, 0x64, 0x2e, 0x70, 0x72,
 	0x6f, 0x74, 0x6f, 0x3a, 0x63, 0x0a, 0x11, 0x63, 0x72, 0x75, 0x64, 0x5f, 0x66, 0x69, 0x6c, 0x65,
 	0x5f, 0x6f, 0x70, 0x74, 0x69, 0x6f, 0x6e, 0x73, 0x12, 0x1c, 0x2e, 0x67, 0x6f, 0x6f, 0x67, 0x6c,
@@ -157,7 +159,7 @@ var file_options_v1_annotations_proto_rawDesc = []byte{
 	0x6e, 0x73, 0x2f, 0x76, 0x31, 0x62, 0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
 }
 
-var file_options_v1_annotations_proto_goTypes = []any{
+var file_protoc_gen_crud_options_v1_annotations_proto_goTypes = []any{
 	(*descriptorpb.FileOptions)(nil),    // 0: google.protobuf.FileOptions
 	(*descriptorpb.MethodOptions)(nil),  // 1: google.protobuf.MethodOptions
 	(*descriptorpb.MessageOptions)(nil), // 2: google.protobuf.MessageOptions
@@ -169,7 +171,7 @@ var file_options_v1_annotations_proto_goTypes = []any{
 	(*ServiceOptions)(nil),              // 8: options.v1.ServiceOptions
 	(*FieldOptions)(nil),                // 9: options.v1.FieldOptions
 }
-var file_options_v1_annotations_proto_depIdxs = []int32{
+var file_protoc_gen_crud_options_v1_annotations_proto_depIdxs = []int32{
 	0,  // 0: options.v1.crud_file_options:extendee -> google.protobuf.FileOptions
 	1,  // 1: options.v1.crud_method_options:extendee -> google.protobuf.MethodOptions
 	2,  // 2: options.v1.crud_message_options:extendee -> google.protobuf.MessageOptions
@@ -187,28 +189,28 @@ var file_options_v1_annotations_proto_depIdxs = []int32{
 	0,  // [0:0] is the sub-list for field type_name
 }
 
-func init() { file_options_v1_annotations_proto_init() }
-func file_options_v1_annotations_proto_init() {
-	if File_options_v1_annotations_proto != nil {
+func init() { file_protoc_gen_crud_options_v1_annotations_proto_init() }
+func file_protoc_gen_crud_options_v1_annotations_proto_init() {
+	if File_protoc_gen_crud_options_v1_annotations_proto != nil {
 		return
 	}
-	file_options_v1_crud_proto_init()
+	file_protoc_gen_crud_options_v1_crud_proto_init()
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
-			RawDescriptor: file_options_v1_annotations_proto_rawDesc,
+			RawDescriptor: file_protoc_gen_crud_options_v1_annotations_proto_rawDesc,
 			NumEnums:      0,
 			NumMessages:   0,
 			NumExtensions: 5,
 			NumServices:   0,
 		},
-		GoTypes:           file_options_v1_annotations_proto_goTypes,
-		DependencyIndexes: file_options_v1_annotations_proto_depIdxs,
-		ExtensionInfos:    file_options_v1_annotations_proto_extTypes,
+		GoTypes:           file_protoc_gen_crud_options_v1_annotations_proto_goTypes,
+		DependencyIndexes: file_protoc_gen_crud_options_v1_annotations_proto_depIdxs,
+		ExtensionInfos:    file_protoc_gen_crud_options_v1_annotations_proto_extTypes,
 	}.Build()
-	File_options_v1_annotations_proto = out.File
-	file_options_v1_annotations_proto_rawDesc = nil
-	file_options_v1_annotations_proto_goTypes = nil
-	file_options_v1_annotations_proto_depIdxs = nil
+	File_protoc_gen_crud_options_v1_annotations_proto = out.File
+	file_protoc_gen_crud_options_v1_annotations_proto_rawDesc = nil
+	file_protoc_gen_crud_options_v1_annotations_proto_goTypes = nil
+	file_protoc_gen_crud_options_v1_annotations_proto_depIdxs = nil
 }

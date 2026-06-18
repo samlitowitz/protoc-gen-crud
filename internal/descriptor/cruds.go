@@ -3,9 +3,9 @@ package descriptor
 import (
 	"fmt"
 
-	relationshipOptions "github.com/samlitowitz/protoc-gen-crud/options/v1/relationships"
+	"github.com/samlitowitz/protoc-gen-crud/protoc-gen-crud/options/v1"
+	relationshipOptions "github.com/samlitowitz/protoc-gen-crud/protoc-gen-crud/options/v1/relationships"
 
-	crudOptions "github.com/samlitowitz/protoc-gen-crud/options/v1"
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/descriptorpb"
 )
@@ -81,8 +81,8 @@ func (r *Registry) loadCRUDs(file *File) error {
 	return nil
 }
 
-func assignMessageOptions(msg *Message, msgOpts *crudOptions.MessageOptions) error {
-	msg.Implementations = make(map[crudOptions.Implementation]struct{})
+func assignMessageOptions(msg *Message, msgOpts *v1.MessageOptions) error {
+	msg.Implementations = make(map[v1.Implementation]struct{})
 	msg.PrimaryKeyByFQFN = make(map[string]*Field)
 	msg.NonPrimeAttributesByFQFN = make(map[string]*Field)
 
@@ -147,7 +147,7 @@ func assignMessageOptions(msg *Message, msgOpts *crudOptions.MessageOptions) err
 	return nil
 }
 
-func assignRelationships(r *Registry, msg *Message, field *Field, fieldOpts *crudOptions.FieldOptions) error {
+func assignRelationships(r *Registry, msg *Message, field *Field, fieldOpts *v1.FieldOptions) error {
 	if !fieldOpts.HasRelationship() {
 		return nil
 	}
@@ -191,37 +191,37 @@ func assignRelationships(r *Registry, msg *Message, field *Field, fieldOpts *cru
 	return nil
 }
 
-func assignFieldOptions(field *Field, fieldOpts *crudOptions.FieldOptions) error {
+func assignFieldOptions(field *Field, fieldOpts *v1.FieldOptions) error {
 	field.Ignore = fieldOpts.GetIgnore()
 	field.Inline = fieldOpts.GetInline()
 	field.AsTimestamp = fieldOpts.GetAsTimestamp()
 	return nil
 }
 
-func extractMessageOptions(msg *descriptorpb.DescriptorProto) (*crudOptions.MessageOptions, error) {
+func extractMessageOptions(msg *descriptorpb.DescriptorProto) (*v1.MessageOptions, error) {
 	if msg.GetOptions() == nil {
 		return nil, nil
 	}
-	if !proto.HasExtension(msg.GetOptions(), crudOptions.E_CrudMessageOptions) {
+	if !proto.HasExtension(msg.GetOptions(), v1.E_CrudMessageOptions) {
 		return nil, nil
 	}
-	ext := proto.GetExtension(msg.GetOptions(), crudOptions.E_CrudMessageOptions)
-	opts, ok := ext.(*crudOptions.MessageOptions)
+	ext := proto.GetExtension(msg.GetOptions(), v1.E_CrudMessageOptions)
+	opts, ok := ext.(*v1.MessageOptions)
 	if !ok {
 		return nil, fmt.Errorf("extension is %T; want MessageOptions", ext)
 	}
 	return opts, nil
 }
 
-func extractFieldOptions(fd *descriptorpb.FieldDescriptorProto) (*crudOptions.FieldOptions, error) {
+func extractFieldOptions(fd *descriptorpb.FieldDescriptorProto) (*v1.FieldOptions, error) {
 	if fd.GetOptions() == nil {
 		return nil, nil
 	}
-	if !proto.HasExtension(fd.GetOptions(), crudOptions.E_CrudFieldOptions) {
+	if !proto.HasExtension(fd.GetOptions(), v1.E_CrudFieldOptions) {
 		return nil, nil
 	}
-	ext := proto.GetExtension(fd.GetOptions(), crudOptions.E_CrudFieldOptions)
-	opts, ok := ext.(*crudOptions.FieldOptions)
+	ext := proto.GetExtension(fd.GetOptions(), v1.E_CrudFieldOptions)
+	opts, ok := ext.(*v1.FieldOptions)
 	if !ok {
 		return nil, fmt.Errorf("extension is %T; want CRUD", ext)
 	}

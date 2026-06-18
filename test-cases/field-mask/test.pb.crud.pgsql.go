@@ -1879,12 +1879,12 @@ func (repo *PgSQLMAAllRepository) Create(ctx context.Context, toCreate []*MAAll)
 	noMaskBindsIdx := 1
 	for _, maall := range toCreate {
 		if maall.GetFieldMask() == nil {
-			noMaskBinds = append(noMaskBinds, maall.GetIdEnum())
 			noMaskBinds = append(noMaskBinds, maall.GetIdInt32())
 			noMaskBinds = append(noMaskBinds, maall.GetIdInt64())
 			noMaskBinds = append(noMaskBinds, maall.GetIdUint32())
 			noMaskBinds = append(noMaskBinds, maall.GetIdUint64())
 			noMaskBinds = append(noMaskBinds, maall.GetIdString())
+			noMaskBinds = append(noMaskBinds, maall.GetIdEnum())
 			noMaskBinds = append(noMaskBinds, maall.GetData())
 			noMaskBindsStrs = append(noMaskBindsStrs, fmt.Sprintf("($%d, $%d, $%d, $%d, $%d, $%d, $%d)", noMaskBindsIdx+0, noMaskBindsIdx+1, noMaskBindsIdx+2, noMaskBindsIdx+3, noMaskBindsIdx+4, noMaskBindsIdx+5, noMaskBindsIdx+6))
 			noMaskBindsIdx += 7
@@ -1917,7 +1917,7 @@ func (repo *PgSQLMAAllRepository) Create(ctx context.Context, toCreate []*MAAll)
 		}
 	}
 	if len(noMaskBinds) > 0 {
-		query := fmt.Sprintf(`INSERT INTO "ma_all" ("id_enum","id_int_32","id_int_64","id_uint_32","id_uint_64","id_string","data") VALUES %s`,
+		query := fmt.Sprintf(`INSERT INTO "ma_all" ("id_int_32","id_int_64","id_uint_32","id_uint_64","id_string","id_enum","data") VALUES %s`,
 			strings.Join(noMaskBindsStrs, ",\n"),
 		)
 		_, err = tx.ExecContext(ctx, query, noMaskBinds...)
@@ -1935,7 +1935,7 @@ func (repo *PgSQLMAAllRepository) Create(ctx context.Context, toCreate []*MAAll)
 // Read returns a set of MAAlls matching the provided criteria
 // Read is incomplete and it should be considered unstable
 func (repo *PgSQLMAAllRepository) Read(ctx context.Context, expr expressions.Expression) ([]*MAAll, error) {
-	query := `SELECT "id_enum","id_int_32","id_int_64","id_uint_32","id_uint_64","id_string","data"
+	query := `SELECT "id_int_32","id_int_64","id_uint_32","id_uint_64","id_string","id_enum","data"
 		FROM "ma_all"`
 	clauses, binds, err := whereClauseFromExpressionForPgSQLMAAll(expr, 1)
 	if err != nil {
@@ -1957,7 +1957,7 @@ func (repo *PgSQLMAAllRepository) Read(ctx context.Context, expr expressions.Exp
 	for rows.Next() {
 		maall := &MAAll_builder{}
 
-		if err = rows.Scan(&maall.IdEnum, &maall.IdInt32, &maall.IdInt64, &maall.IdUint32, &maall.IdUint64, &maall.IdString, &maall.Data); err != nil {
+		if err = rows.Scan(&maall.IdInt32, &maall.IdInt64, &maall.IdUint32, &maall.IdUint64, &maall.IdString, &maall.IdEnum, &maall.Data); err != nil {
 			return nil, err
 		}
 
@@ -1981,7 +1981,7 @@ func (repo *PgSQLMAAllRepository) Update(ctx context.Context, toUpdate []*MAAll)
 	defer tx.Rollback()
 
 	stmt, err := tx.Prepare(
-		`UPDATE "ma_all" SET "data" = $1 WHERE "id_enum" = $2 AND "id_int_32" = $3 AND "id_int_64" = $4 AND "id_uint_32" = $5 AND "id_uint_64" = $6 AND "id_string" = $7`,
+		`UPDATE "ma_all" SET "data" = $1 WHERE "id_int_32" = $2 AND "id_int_64" = $3 AND "id_uint_32" = $4 AND "id_uint_64" = $5 AND "id_string" = $6 AND "id_enum" = $7`,
 	)
 	if err != nil {
 		return nil, err
@@ -1990,7 +1990,7 @@ func (repo *PgSQLMAAllRepository) Update(ctx context.Context, toUpdate []*MAAll)
 
 	for _, maall := range toUpdate {
 		if maall.GetFieldMask() == nil {
-			_, err = stmt.ExecContext(ctx, maall.GetData(), maall.GetIdEnum(), maall.GetIdInt32(), maall.GetIdInt64(), maall.GetIdUint32(), maall.GetIdUint64(), maall.GetIdString())
+			_, err = stmt.ExecContext(ctx, maall.GetData(), maall.GetIdInt32(), maall.GetIdInt64(), maall.GetIdUint32(), maall.GetIdUint64(), maall.GetIdString(), maall.GetIdEnum())
 			if err != nil {
 				return nil, err
 			}
@@ -2014,13 +2014,13 @@ func (repo *PgSQLMAAllRepository) Update(ctx context.Context, toUpdate []*MAAll)
 		_, err = tx.ExecContext(
 			ctx,
 			fmt.Sprintf(
-				`UPDATE "ma_all" SET %s WHERE "id_enum" = $%d AND "id_int_32" = $%d AND "id_int_64" = $%d AND "id_uint_32" = $%d AND "id_uint_64" = $%d AND "id_string" = $%d`,
+				`UPDATE "ma_all" SET %s WHERE "id_int_32" = $%d AND "id_int_64" = $%d AND "id_uint_32" = $%d AND "id_uint_64" = $%d AND "id_string" = $%d AND "id_enum" = $%d`,
 				strings.Join(setStmts, ", "),
 				bindsIdx+0, bindsIdx+1, bindsIdx+2, bindsIdx+3, bindsIdx+4, bindsIdx+5,
 			),
 			append(
 				binds,
-				maall.GetIdEnum(), maall.GetIdInt32(), maall.GetIdInt64(), maall.GetIdUint32(), maall.GetIdUint64(), maall.GetIdString(),
+				maall.GetIdInt32(), maall.GetIdInt64(), maall.GetIdUint32(), maall.GetIdUint64(), maall.GetIdString(), maall.GetIdEnum(),
 			)...,
 		)
 		if err != nil {
@@ -2056,12 +2056,12 @@ func (repo *PgSQLMAAllRepository) Delete(ctx context.Context, expr expressions.E
 }
 
 var pgsqlMAAllColumnNameByFieldID = map[expressions.ID]string{
-	Maall_IdEnum_Field:   "id_enum",
 	Maall_IdInt32_Field:  "id_int_32",
 	Maall_IdInt64_Field:  "id_int_64",
 	Maall_IdUint32_Field: "id_uint_32",
 	Maall_IdUint64_Field: "id_uint_64",
 	Maall_IdString_Field: "id_string",
+	Maall_IdEnum_Field:   "id_enum",
 	Maall_Data_Field:     "data",
 }
 
@@ -2134,10 +2134,6 @@ func pgsqlMAAllGetCreateValuesByColumnName(def *MAAll, fieldMask *fieldmaskpb.Fi
 	maall := &MAAll{}
 	valuesByColumnName := make(map[string]any, 0)
 	nestedMask := fmutils.NestedMaskFromPaths(fieldMask.Paths)
-	if _, ok := nestedMask["id_enum"]; !ok {
-		return nil, fmt.Errorf("primary key field excluded by field mask: id_enum")
-	}
-	valuesByColumnName["id_enum"] = def.GetIdEnum()
 	if _, ok := nestedMask["id_int32"]; !ok {
 		return nil, fmt.Errorf("primary key field excluded by field mask: id_int32")
 	}
@@ -2158,6 +2154,10 @@ func pgsqlMAAllGetCreateValuesByColumnName(def *MAAll, fieldMask *fieldmaskpb.Fi
 		return nil, fmt.Errorf("primary key field excluded by field mask: id_string")
 	}
 	valuesByColumnName["id_string"] = def.GetIdString()
+	if _, ok := nestedMask["id_enum"]; !ok {
+		return nil, fmt.Errorf("primary key field excluded by field mask: id_enum")
+	}
+	valuesByColumnName["id_enum"] = def.GetIdEnum()
 	if _, ok := nestedMask["data"]; ok {
 		valuesByColumnName["data"] = def.GetData()
 	} else {
@@ -2171,9 +2171,6 @@ func pgsqlMAAllGetUpdateValuesByColumnName(def *MAAll, fieldMask *fieldmaskpb.Fi
 	}
 	valuesByColumnName := make(map[string]any, 0)
 	nestedMask := fmutils.NestedMaskFromPaths(fieldMask.Paths)
-	if _, ok := nestedMask["id_enum"]; !ok {
-		return nil, fmt.Errorf("primary key field excluded by field mask: id_enum")
-	}
 	if _, ok := nestedMask["id_int32"]; !ok {
 		return nil, fmt.Errorf("primary key field excluded by field mask: id_int32")
 	}
@@ -2188,6 +2185,9 @@ func pgsqlMAAllGetUpdateValuesByColumnName(def *MAAll, fieldMask *fieldmaskpb.Fi
 	}
 	if _, ok := nestedMask["id_string"]; !ok {
 		return nil, fmt.Errorf("primary key field excluded by field mask: id_string")
+	}
+	if _, ok := nestedMask["id_enum"]; !ok {
+		return nil, fmt.Errorf("primary key field excluded by field mask: id_enum")
 	}
 	if _, ok := nestedMask["data"]; ok {
 		valuesByColumnName["data"] = def.GetData()

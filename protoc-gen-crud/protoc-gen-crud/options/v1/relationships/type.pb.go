@@ -2,7 +2,7 @@
 // versions:
 // 	protoc-gen-go v1.36.0
 // 	protoc        v7.35.0
-// source: options/v1/relationships/type.proto
+// source: protoc-gen-crud/options/v1/relationships/type.proto
 
 package relationships
 
@@ -58,21 +58,22 @@ func (x Type) String() string {
 }
 
 func (Type) Descriptor() protoreflect.EnumDescriptor {
-	return file_options_v1_relationships_type_proto_enumTypes[0].Descriptor()
+	return file_protoc_gen_crud_options_v1_relationships_type_proto_enumTypes[0].Descriptor()
 }
 
 func (Type) Type() protoreflect.EnumType {
-	return &file_options_v1_relationships_type_proto_enumTypes[0]
+	return &file_protoc_gen_crud_options_v1_relationships_type_proto_enumTypes[0]
 }
 
 func (x Type) Number() protoreflect.EnumNumber {
 	return protoreflect.EnumNumber(x)
 }
 
-var File_options_v1_relationships_type_proto protoreflect.FileDescriptor
+var File_protoc_gen_crud_options_v1_relationships_type_proto protoreflect.FileDescriptor
 
-var file_options_v1_relationships_type_proto_rawDesc = []byte{
-	0x0a, 0x23, 0x6f, 0x70, 0x74, 0x69, 0x6f, 0x6e, 0x73, 0x2f, 0x76, 0x31, 0x2f, 0x72, 0x65, 0x6c,
+var file_protoc_gen_crud_options_v1_relationships_type_proto_rawDesc = []byte{
+	0x0a, 0x33, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x63, 0x2d, 0x67, 0x65, 0x6e, 0x2d, 0x63, 0x72, 0x75,
+	0x64, 0x2f, 0x6f, 0x70, 0x74, 0x69, 0x6f, 0x6e, 0x73, 0x2f, 0x76, 0x31, 0x2f, 0x72, 0x65, 0x6c,
 	0x61, 0x74, 0x69, 0x6f, 0x6e, 0x73, 0x68, 0x69, 0x70, 0x73, 0x2f, 0x74, 0x79, 0x70, 0x65, 0x2e,
 	0x70, 0x72, 0x6f, 0x74, 0x6f, 0x12, 0x18, 0x6f, 0x70, 0x74, 0x69, 0x6f, 0x6e, 0x73, 0x2e, 0x76,
 	0x31, 0x2e, 0x72, 0x65, 0x6c, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x73, 0x68, 0x69, 0x70, 0x73, 0x2a,
@@ -90,11 +91,11 @@ var file_options_v1_relationships_type_proto_rawDesc = []byte{
 	0x69, 0x6f, 0x6e, 0x73, 0x68, 0x69, 0x70, 0x73, 0x62, 0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
 }
 
-var file_options_v1_relationships_type_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
-var file_options_v1_relationships_type_proto_goTypes = []any{
+var file_protoc_gen_crud_options_v1_relationships_type_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
+var file_protoc_gen_crud_options_v1_relationships_type_proto_goTypes = []any{
 	(Type)(0), // 0: options.v1.relationships.Type
 }
-var file_options_v1_relationships_type_proto_depIdxs = []int32{
+var file_protoc_gen_crud_options_v1_relationships_type_proto_depIdxs = []int32{
 	0, // [0:0] is the sub-list for method output_type
 	0, // [0:0] is the sub-list for method input_type
 	0, // [0:0] is the sub-list for extension type_name
@@ -102,27 +103,27 @@ var file_options_v1_relationships_type_proto_depIdxs = []int32{
 	0, // [0:0] is the sub-list for field type_name
 }
 
-func init() { file_options_v1_relationships_type_proto_init() }
-func file_options_v1_relationships_type_proto_init() {
-	if File_options_v1_relationships_type_proto != nil {
+func init() { file_protoc_gen_crud_options_v1_relationships_type_proto_init() }
+func file_protoc_gen_crud_options_v1_relationships_type_proto_init() {
+	if File_protoc_gen_crud_options_v1_relationships_type_proto != nil {
 		return
 	}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
-			RawDescriptor: file_options_v1_relationships_type_proto_rawDesc,
+			RawDescriptor: file_protoc_gen_crud_options_v1_relationships_type_proto_rawDesc,
 			NumEnums:      1,
 			NumMessages:   0,
 			NumExtensions: 0,
 			NumServices:   0,
 		},
-		GoTypes:           file_options_v1_relationships_type_proto_goTypes,
-		DependencyIndexes: file_options_v1_relationships_type_proto_depIdxs,
-		EnumInfos:         file_options_v1_relationships_type_proto_enumTypes,
+		GoTypes:           file_protoc_gen_crud_options_v1_relationships_type_proto_goTypes,
+		DependencyIndexes: file_protoc_gen_crud_options_v1_relationships_type_proto_depIdxs,
+		EnumInfos:         file_protoc_gen_crud_options_v1_relationships_type_proto_enumTypes,
 	}.Build()
-	File_options_v1_relationships_type_proto = out.File
-	file_options_v1_relationships_type_proto_rawDesc = nil
-	file_options_v1_relationships_type_proto_goTypes = nil
-	file_options_v1_relationships_type_proto_depIdxs = nil
+	File_protoc_gen_crud_options_v1_relationships_type_proto = out.File
+	file_protoc_gen_crud_options_v1_relationships_type_proto_rawDesc = nil
+	file_protoc_gen_crud_options_v1_relationships_type_proto_goTypes = nil
+	file_protoc_gen_crud_options_v1_relationships_type_proto_depIdxs = nil
 }

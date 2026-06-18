@@ -6,11 +6,10 @@ import (
 	"strings"
 	"testing"
 
+	options "github.com/samlitowitz/protoc-gen-crud/protoc-gen-crud/options/v1"
 	test_cases "github.com/samlitowitz/protoc-gen-crud/test-cases"
 
 	"github.com/samlitowitz/expressions"
-	options "github.com/samlitowitz/protoc-gen-crud/options/v1"
-
 	sqliteLib "modernc.org/sqlite/lib"
 
 	"github.com/google/go-cmp/cmp"

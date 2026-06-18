@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"strings"
 
-	options "github.com/samlitowitz/protoc-gen-crud/options/v1"
+	"github.com/samlitowitz/protoc-gen-crud/protoc-gen-crud/options/v1"
 
 	"github.com/samlitowitz/protoc-gen-crud/internal/casing"
 
@@ -55,7 +55,7 @@ type File struct {
 	// of "dir/foo". Appending ".pb.go" produces an output file of "dir/foo.pb.go".
 	GeneratedFilenamePrefix string
 	// Implementations is a set of implementations used by any message in this file
-	Implementations map[options.Implementation]struct{}
+	Implementations map[v1.Implementation]struct{}
 	// Messages is the list of messages defined in this file.
 	Messages []*Message
 	// Enums is the list of enums defined in this file.
@@ -96,7 +96,7 @@ type Message struct {
 	// GenerateCRUD is true if CRUD code should be generated for this Message
 	GenerateCRUD bool
 	// Implementations is a set of implementations to generate for CRUD operations
-	Implementations map[options.Implementation]struct{}
+	Implementations map[v1.Implementation]struct{}
 	// FieldMask is the field definition of the field mask
 	FieldMask *Field
 	// PrimaryKeyByFQFN is a map of the fully qualified field names of minimal set of attributes that uniquely identify a specific message of this type to the fields
@@ -263,7 +263,7 @@ func (e *Enum) GoType(currentPackage string) string {
 }
 
 type Relationship struct {
-	*options.Relationship
+	*v1.Relationship
 
 	DefinedOn *Message
 	With      *Message

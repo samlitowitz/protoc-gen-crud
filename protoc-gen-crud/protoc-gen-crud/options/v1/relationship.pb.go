@@ -2,7 +2,7 @@
 // versions:
 // 	protoc-gen-go v1.36.0
 // 	protoc        v7.35.0
-// source: options/v1/relationship.proto
+// source: protoc-gen-crud/options/v1/relationship.proto
 
 package v1
 
@@ -29,7 +29,7 @@ type Relationship struct {
 
 func (x *Relationship) Reset() {
 	*x = Relationship{}
-	mi := &file_options_v1_relationship_proto_msgTypes[0]
+	mi := &file_protoc_gen_crud_options_v1_relationship_proto_msgTypes[0]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -41,7 +41,7 @@ func (x *Relationship) String() string {
 func (*Relationship) ProtoMessage() {}
 
 func (x *Relationship) ProtoReflect() protoreflect.Message {
-	mi := &file_options_v1_relationship_proto_msgTypes[0]
+	mi := &file_protoc_gen_crud_options_v1_relationship_proto_msgTypes[0]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -77,12 +77,14 @@ func (b0 Relationship_builder) Build() *Relationship {
 	return m0
 }
 
-var File_options_v1_relationship_proto protoreflect.FileDescriptor
+var File_protoc_gen_crud_options_v1_relationship_proto protoreflect.FileDescriptor
 
-var file_options_v1_relationship_proto_rawDesc = []byte{
-	0x0a, 0x1d, 0x6f, 0x70, 0x74, 0x69, 0x6f, 0x6e, 0x73, 0x2f, 0x76, 0x31, 0x2f, 0x72, 0x65, 0x6c,
+var file_protoc_gen_crud_options_v1_relationship_proto_rawDesc = []byte{
+	0x0a, 0x2d, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x63, 0x2d, 0x67, 0x65, 0x6e, 0x2d, 0x63, 0x72, 0x75,
+	0x64, 0x2f, 0x6f, 0x70, 0x74, 0x69, 0x6f, 0x6e, 0x73, 0x2f, 0x76, 0x31, 0x2f, 0x72, 0x65, 0x6c,
 	0x61, 0x74, 0x69, 0x6f, 0x6e, 0x73, 0x68, 0x69, 0x70, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x12,
-	0x0a, 0x6f, 0x70, 0x74, 0x69, 0x6f, 0x6e, 0x73, 0x2e, 0x76, 0x31, 0x1a, 0x23, 0x6f, 0x70, 0x74,
+	0x0a, 0x6f, 0x70, 0x74, 0x69, 0x6f, 0x6e, 0x73, 0x2e, 0x76, 0x31, 0x1a, 0x33, 0x70, 0x72, 0x6f,
+	0x74, 0x6f, 0x63, 0x2d, 0x67, 0x65, 0x6e, 0x2d, 0x63, 0x72, 0x75, 0x64, 0x2f, 0x6f, 0x70, 0x74,
 	0x69, 0x6f, 0x6e, 0x73, 0x2f, 0x76, 0x31, 0x2f, 0x72, 0x65, 0x6c, 0x61, 0x74, 0x69, 0x6f, 0x6e,
 	0x73, 0x68, 0x69, 0x70, 0x73, 0x2f, 0x74, 0x79, 0x70, 0x65, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f,
 	0x22, 0x42, 0x0a, 0x0c, 0x52, 0x65, 0x6c, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x73, 0x68, 0x69, 0x70,
@@ -96,12 +98,12 @@ var file_options_v1_relationship_proto_rawDesc = []byte{
 	0x33,
 }
 
-var file_options_v1_relationship_proto_msgTypes = make([]protoimpl.MessageInfo, 1)
-var file_options_v1_relationship_proto_goTypes = []any{
+var file_protoc_gen_crud_options_v1_relationship_proto_msgTypes = make([]protoimpl.MessageInfo, 1)
+var file_protoc_gen_crud_options_v1_relationship_proto_goTypes = []any{
 	(*Relationship)(nil),    // 0: options.v1.Relationship
 	(relationships.Type)(0), // 1: options.v1.relationships.Type
 }
-var file_options_v1_relationship_proto_depIdxs = []int32{
+var file_protoc_gen_crud_options_v1_relationship_proto_depIdxs = []int32{
 	1, // 0: options.v1.Relationship.type:type_name -> options.v1.relationships.Type
 	1, // [1:1] is the sub-list for method output_type
 	1, // [1:1] is the sub-list for method input_type
@@ -110,27 +112,27 @@ var file_options_v1_relationship_proto_depIdxs = []int32{
 	0, // [0:1] is the sub-list for field type_name
 }
 
-func init() { file_options_v1_relationship_proto_init() }
-func file_options_v1_relationship_proto_init() {
-	if File_options_v1_relationship_proto != nil {
+func init() { file_protoc_gen_crud_options_v1_relationship_proto_init() }
+func file_protoc_gen_crud_options_v1_relationship_proto_init() {
+	if File_protoc_gen_crud_options_v1_relationship_proto != nil {
 		return
 	}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
-			RawDescriptor: file_options_v1_relationship_proto_rawDesc,
+			RawDescriptor: file_protoc_gen_crud_options_v1_relationship_proto_rawDesc,
 			NumEnums:      0,
 			NumMessages:   1,
 			NumExtensions: 0,
 			NumServices:   0,
 		},
-		GoTypes:           file_options_v1_relationship_proto_goTypes,
-		DependencyIndexes: file_options_v1_relationship_proto_depIdxs,
-		MessageInfos:      file_options_v1_relationship_proto_msgTypes,
+		GoTypes:           file_protoc_gen_crud_options_v1_relationship_proto_goTypes,
+		DependencyIndexes: file_protoc_gen_crud_options_v1_relationship_proto_depIdxs,
+		MessageInfos:      file_protoc_gen_crud_options_v1_relationship_proto_msgTypes,
 	}.Build()
-	File_options_v1_relationship_proto = out.File
-	file_options_v1_relationship_proto_rawDesc = nil
-	file_options_v1_relationship_proto_goTypes = nil
-	file_options_v1_relationship_proto_depIdxs = nil
+	File_protoc_gen_crud_options_v1_relationship_proto = out.File
+	file_protoc_gen_crud_options_v1_relationship_proto_rawDesc = nil
+	file_protoc_gen_crud_options_v1_relationship_proto_goTypes = nil
+	file_protoc_gen_crud_options_v1_relationship_proto_depIdxs = nil
 }

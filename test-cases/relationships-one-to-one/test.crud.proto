@@ -8,20 +8,20 @@ package protoc_gen_crud.test_cases.relationships_one_to_one;
 
 option go_package = "github.com/samlitowitz/protoc-gen-crud/test-cases/relationships-one-to-one";
 
-import "options/v1/annotations.proto";
+import "protoc-gen-crud/options/v1/annotations.proto";
 
 import "test-cases/relationships-one-to-one/test.proto";
 
 message SAInt32MAAll {
   option (options.v1.crud_message_options) = {
-    implementations: [IMPLEMENTATION_PGSQL, IMPLEMENTATION_SQLITE]
-    primary_key: ["saint32_id", "maall_id_string", "maall_id_enum", "maall_id_int32", "maall_id_int64", "maall_id_uint32", "maall_id_uint64"]
+    implementations: [IMPLEMENTATION_SQLITE, IMPLEMENTATION_PGSQL]
+    primary_key: ["saint32_id", "maall_id_enum", "maall_id_int32", "maall_id_int64", "maall_id_uint32", "maall_id_uint64", "maall_id_string"]
   };
   int32 saint32_id = 1;
-  string maall_id_string = 2;
-  protoc_gen_crud.test_cases.relationships_one_to_one.PrimaryKeyEnum maall_id_enum = 3;
-  int32 maall_id_int32 = 4;
-  int64 maall_id_int64 = 5;
-  uint32 maall_id_uint32 = 6;
-  uint64 maall_id_uint64 = 7;
+  protoc_gen_crud.test_cases.relationships_one_to_one.PrimaryKeyEnum maall_id_enum = 2;
+  int32 maall_id_int32 = 3;
+  int64 maall_id_int64 = 4;
+  uint32 maall_id_uint32 = 5;
+  uint64 maall_id_uint64 = 6;
+  string maall_id_string = 7;
 }

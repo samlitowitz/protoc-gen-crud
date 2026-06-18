@@ -36,7 +36,7 @@ tasks:
 
   generate-options:
     cmds:
-      - PROJECT_PROTO_INCLUDE={{.PROJECT_PROTO_INCLUDE}} PROJECT_PROTO_OUT={{.PROJECT_PROTO_OUT}} go generate -v ./options/...
+      - PROJECT_PROTO_INCLUDE={{.PROJECT_PROTO_INCLUDE}} PROJECT_PROTO_OUT={{.PROJECT_PROTO_OUT}} go generate -v ./protoc-gen-crud/options/...
 
   generate-test-cases:
     cmds:

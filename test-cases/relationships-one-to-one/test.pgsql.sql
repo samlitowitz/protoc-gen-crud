@@ -87,20 +87,20 @@ INSERT INTO "primary_key_enum" ("id", "value") VALUES
 
 DROP TABLE IF EXISTS "ma_all";
 CREATE TABLE IF NOT EXISTS "ma_all" (
-    "id_string" TEXT,
     "id_enum" INTEGER /* references "primary_key_enum"."id" */,
     "id_int_32" INTEGER,
     "id_int_64" INTEGER,
     "id_uint_32" INTEGER,
     "id_uint_64" INTEGER,
+    "id_string" TEXT,
     "data" TEXT,
 
     PRIMARY KEY (
-        "id_string",
         "id_enum",
         "id_int_32",
         "id_int_64",
         "id_uint_32",
-        "id_uint_64"
+        "id_uint_64",
+        "id_string"
     )
 );
