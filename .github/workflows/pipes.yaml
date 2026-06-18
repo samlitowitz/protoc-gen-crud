@@ -19,7 +19,7 @@ on:
   workflow_dispatch:
 
 env:
-  GO_VERSION: stable
+  GO_VERSION: 1.26.1
   GOLANGCI_LINT_VERSION: v2.11.3
 
 jobs:
