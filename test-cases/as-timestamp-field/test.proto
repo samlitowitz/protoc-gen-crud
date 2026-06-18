@@ -10,17 +10,17 @@ import "google/protobuf/timestamp.proto";
 message AsTimestamp {
   option (options.v1.crud_message_options) = {
     implementations: [IMPLEMENTATION_SQLITE, IMPLEMENTATION_PGSQL]
-    primaryKey: ["id"]
+    primary_key: ["id"]
   };
   int32 id = 1;
   google.protobuf.Timestamp timestamp = 2 [
     (options.v1.crud_field_options) = {
-      asTimestamp: true
+      as_timestamp: true
     }
   ];
   google.protobuf.Timestamp timestamp_two = 3 [
     (options.v1.crud_field_options) = {
-      asTimestamp: true
+      as_timestamp: true
     }
   ];
 }

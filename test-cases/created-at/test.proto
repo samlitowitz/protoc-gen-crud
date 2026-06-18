@@ -10,14 +10,14 @@ import "google/protobuf/timestamp.proto";
 message CreatedAt {
   option (options.v1.crud_message_options) = {
     implementations: [IMPLEMENTATION_SQLITE, IMPLEMENTATION_PGSQL]
-    primaryKey: ["id"]
-    createdAt: "createdAt"
+    primary_key: ["id"]
+    created_at: "createdAt"
   };
   int32 id = 1;
   string data = 2;
   google.protobuf.Timestamp createdAt = 3 [
     (options.v1.crud_field_options) = {
-      asTimestamp: true
+      as_timestamp: true
     }
   ];
 }

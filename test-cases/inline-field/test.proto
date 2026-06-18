@@ -10,7 +10,7 @@ import "google/protobuf/timestamp.proto";
 message InlineTimestamp {
   option (options.v1.crud_message_options) = {
     implementations: [IMPLEMENTATION_SQLITE, IMPLEMENTATION_PGSQL]
-    primaryKey: ["id"]
+    primary_key: ["id"]
   };
   int32 id = 1;
   google.protobuf.Timestamp timestamp = 2 [

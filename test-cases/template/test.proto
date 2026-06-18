@@ -9,7 +9,7 @@ import "options/v1/annotations.proto";
 message Test {
   option (options.v1.crud_message_options) = {
     implementations: [SQLITE]
-    primaryKey: ["id"]
+    primary_key: ["id"]
   };
   string id = 1;
   string data = 2;

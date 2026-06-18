@@ -34,19 +34,19 @@ message MessageOptions {
   // The field mask is enables and is required for partial create and update support.
   // If set, the property must exist on the message and be of type `google.protobuf.FieldMask`.
   // If not set updates affect all message properties.
-  string fieldMask = 2;
+  string field_mask = 2;
 
   // Sets the properties of this message to be used as primary key(s).
   // There must be at least one primary key defined.
-  repeated string primaryKey = 3;
+  repeated string primary_key = 3;
 
   // Sets the property of this message to be used to track when this message was created.
   // If set, the property must exist on the message and must have `asTimestamp` set to true.
-  string createdAt = 4;
+  string created_at = 4;
 
   // Sets the property of this message to be used to track when this message was created.
   // If set, the property must exist on the message and must have `asTimestamp` set to true.
-  string updatedAt = 5;
+  string updated_at = 5;
 }
 
 message ServiceOptions {}
@@ -56,5 +56,5 @@ message FieldOptions {
   Relationship relationship = 1;
   bool ignore = 2;
   bool inline = 3;
-  bool asTimestamp = 4;
+  bool as_timestamp = 4;
 }

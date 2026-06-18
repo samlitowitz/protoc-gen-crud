@@ -8,7 +8,7 @@ import "options/v1/annotations.proto";
 
 message NoImplementations {
   option (options.v1.crud_message_options) = {
-    primaryKey: ["id"]
+    primary_key: ["id"]
   };
   string id = 1;
 }
@@ -16,7 +16,7 @@ message NoImplementations {
 message EmptyImplementations {
   option (options.v1.crud_message_options) = {
     implementations: []
-    primaryKey: ["id"]
+    primary_key: ["id"]
   };
   string id = 1;
 }

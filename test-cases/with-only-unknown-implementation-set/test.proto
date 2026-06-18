@@ -9,7 +9,7 @@ import "options/v1/annotations.proto";
 message OnlyUnknownImplementation {
   option (options.v1.crud_message_options) = {
     implementations: [IMPLEMENTATION_UNSPECIFIED]
-    primaryKey: ["id"]
+    primary_key: ["id"]
   };
   string id = 1;
 }
