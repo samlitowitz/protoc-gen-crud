@@ -178,7 +178,7 @@ import "{{.GetName}}";
 message {{.GetName}} {
   option ({{.OptionsPkg}}.crud_message_options) = {
     implementations: {{crudImplementations .}}
-    primaryKey: {{crudPrimaryKey .}}
+    primary_key: {{crudPrimaryKey .}}
   };
 {{- range $i, $field := .Fields }}
   {{protoType $field}} {{protoFieldName $field}} = {{addOne $i}};

@@ -53,14 +53,14 @@ func (repo *SQLiteUpdatedAtRepository) Create(ctx context.Context, toCreate []*U
 	bindsStrs := []string{}
 	for _, updatedAt := range toCreate {
 		binds = append(binds, updatedAt.GetId())
-		binds = append(binds, updatedAt.GetData())
 		binds = append(binds, updatedAt.GetUpdatedAt().AsTime().Format(time.RFC3339))
+		binds = append(binds, updatedAt.GetData())
 		bindsStrs = append(bindsStrs, "(?,?,?)")
 	}
 	_, err = tx.ExecContext(
 		ctx,
 		fmt.Sprintf(
-			`INSERT INTO "updated_at" ("id","data","updated_at") VALUES
+			`INSERT INTO "updated_at" ("id","updated_at","data") VALUES
 			%s`,
 			strings.Join(bindsStrs, ",\n"),
 		),
@@ -79,7 +79,7 @@ func (repo *SQLiteUpdatedAtRepository) Create(ctx context.Context, toCreate []*U
 // Read returns a set of UpdatedAts matching the provided criteria
 // Read is incomplete and it should be considered unstable
 func (repo *SQLiteUpdatedAtRepository) Read(ctx context.Context, expr expressions.Expression) ([]*UpdatedAt, error) {
-	query := `SELECT "id","data","updated_at"
+	query := `SELECT "id","updated_at","data"
 		FROM "updated_at"`
 	clauses, binds, err := whereClauseFromExpressionForSQLiteUpdatedAt(expr)
 	if err != nil {
@@ -102,7 +102,7 @@ func (repo *SQLiteUpdatedAtRepository) Read(ctx context.Context, expr expression
 		updatedAt := &UpdatedAt_builder{}
 		var updatedAtTimeStr string
 
-		if err = rows.Scan(&updatedAt.Id, &updatedAt.Data, &updatedAtTimeStr); err != nil {
+		if err = rows.Scan(&updatedAt.Id, &updatedAtTimeStr, &updatedAt.Data); err != nil {
 			return nil, err
 		}
 
@@ -132,7 +132,7 @@ func (repo *SQLiteUpdatedAtRepository) Update(ctx context.Context, toUpdate []*U
 	defer tx.Rollback()
 
 	stmt, err := tx.Prepare(
-		`UPDATE "updated_at" SET "data" = ?,"updated_at" = ? WHERE "id" = ?`,
+		`UPDATE "updated_at" SET "updated_at" = ?,"data" = ? WHERE "id" = ?`,
 	)
 	if err != nil {
 		return nil, err
@@ -146,7 +146,7 @@ func (repo *SQLiteUpdatedAtRepository) Update(ctx context.Context, toUpdate []*U
 		updatedAt.SetUpdatedAt(timestamppb.New(time.Now()))
 	}
 	for _, updatedAt := range toUpdate {
-		_, err = stmt.ExecContext(ctx, updatedAt.GetData(), updatedAt.GetUpdatedAt().AsTime().Format(time.RFC3339), updatedAt.GetId())
+		_, err = stmt.ExecContext(ctx, updatedAt.GetUpdatedAt().AsTime().Format(time.RFC3339), updatedAt.GetData(), updatedAt.GetId())
 		if err != nil {
 			return nil, err
 		}
@@ -181,8 +181,8 @@ func (repo *SQLiteUpdatedAtRepository) Delete(ctx context.Context, expr expressi
 
 var sqliteUpdatedAtColumnNameByFieldID = map[expressions.ID]string{
 	UpdatedAt_Id_Field:        "id",
-	UpdatedAt_Data_Field:      "data",
 	UpdatedAt_UpdatedAt_Field: "updated_at",
+	UpdatedAt_Data_Field:      "data",
 }
 
 func whereClauseFromExpressionForSQLiteUpdatedAt(expr expressions.Expression) (string, []any, error) {

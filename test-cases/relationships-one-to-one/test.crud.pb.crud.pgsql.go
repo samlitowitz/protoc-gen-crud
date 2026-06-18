@@ -52,20 +52,20 @@ func (repo *PgSQLSAInt32MAAllRepository) Create(ctx context.Context, toCreate []
 	bindsStrs := []string{}
 	bindsIdx := 1
 	for _, saint32Maall := range toCreate {
+		binds = append(binds, saint32Maall.GetSaint32Id())
 		binds = append(binds, saint32Maall.GetMaallIdEnum())
 		binds = append(binds, saint32Maall.GetMaallIdInt32())
 		binds = append(binds, saint32Maall.GetMaallIdInt64())
 		binds = append(binds, saint32Maall.GetMaallIdUint32())
 		binds = append(binds, saint32Maall.GetMaallIdUint64())
 		binds = append(binds, saint32Maall.GetMaallIdString())
-		binds = append(binds, saint32Maall.GetSaint32Id())
 		bindsStrs = append(bindsStrs, fmt.Sprintf("($%d, $%d, $%d, $%d, $%d, $%d, $%d)", bindsIdx+0, bindsIdx+1, bindsIdx+2, bindsIdx+3, bindsIdx+4, bindsIdx+5, bindsIdx+6))
 		bindsIdx += 7
 	}
 	_, err = tx.ExecContext(
 		ctx,
 		fmt.Sprintf(
-			`INSERT INTO "sa_int_32_ma_all" ("maall_id_enum","maall_id_int_32","maall_id_int_64","maall_id_uint_32","maall_id_uint_64","maall_id_string","saint_32_id") VALUES
+			`INSERT INTO "sa_int_32_ma_all" ("saint_32_id","maall_id_enum","maall_id_int_32","maall_id_int_64","maall_id_uint_32","maall_id_uint_64","maall_id_string") VALUES
 			%s`,
 			strings.Join(bindsStrs, ",\n"),
 		),
@@ -84,7 +84,7 @@ func (repo *PgSQLSAInt32MAAllRepository) Create(ctx context.Context, toCreate []
 // Read returns a set of SAInt32MAAlls matching the provided criteria
 // Read is incomplete and it should be considered unstable
 func (repo *PgSQLSAInt32MAAllRepository) Read(ctx context.Context, expr expressions.Expression) ([]*SAInt32MAAll, error) {
-	query := `SELECT "maall_id_enum","maall_id_int_32","maall_id_int_64","maall_id_uint_32","maall_id_uint_64","maall_id_string","saint_32_id"
+	query := `SELECT "saint_32_id","maall_id_enum","maall_id_int_32","maall_id_int_64","maall_id_uint_32","maall_id_uint_64","maall_id_string"
 		FROM "sa_int_32_ma_all"`
 	clauses, binds, err := whereClauseFromExpressionForPgSQLSAInt32MAAll(expr, 1)
 	if err != nil {
@@ -106,7 +106,7 @@ func (repo *PgSQLSAInt32MAAllRepository) Read(ctx context.Context, expr expressi
 	for rows.Next() {
 		saint32Maall := &SAInt32MAAll_builder{}
 
-		if err = rows.Scan(&saint32Maall.MaallIdEnum, &saint32Maall.MaallIdInt32, &saint32Maall.MaallIdInt64, &saint32Maall.MaallIdUint32, &saint32Maall.MaallIdUint64, &saint32Maall.MaallIdString, &saint32Maall.Saint32Id); err != nil {
+		if err = rows.Scan(&saint32Maall.Saint32Id, &saint32Maall.MaallIdEnum, &saint32Maall.MaallIdInt32, &saint32Maall.MaallIdInt64, &saint32Maall.MaallIdUint32, &saint32Maall.MaallIdUint64, &saint32Maall.MaallIdString); err != nil {
 			return nil, err
 		}
 
@@ -145,13 +145,13 @@ func (repo *PgSQLSAInt32MAAllRepository) Delete(ctx context.Context, expr expres
 }
 
 var pgsqlSAInt32MAAllColumnNameByFieldID = map[expressions.ID]string{
+	Saint32Maall_Saint32Id_Field:     "saint_32_id",
 	Saint32Maall_MaallIdEnum_Field:   "maall_id_enum",
 	Saint32Maall_MaallIdInt32_Field:  "maall_id_int_32",
 	Saint32Maall_MaallIdInt64_Field:  "maall_id_int_64",
 	Saint32Maall_MaallIdUint32_Field: "maall_id_uint_32",
 	Saint32Maall_MaallIdUint64_Field: "maall_id_uint_64",
 	Saint32Maall_MaallIdString_Field: "maall_id_string",
-	Saint32Maall_Saint32Id_Field:     "saint_32_id",
 }
 
 func whereClauseFromExpressionForPgSQLSAInt32MAAll(expr expressions.Expression, paramIdx int) (string, []any, error) {

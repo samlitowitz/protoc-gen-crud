@@ -179,22 +179,22 @@ type SAStringRepository interface {
 
 // These constants are used to specify fields in expressions
 const (
+	Maall_IdEnum_Field   expressions.ID = "636a9720c4690ccf1c12f89efd03e1bc46825c95a8e8964c8764149acf93a029"
+	Maall_IdInt32_Field  expressions.ID = "0c13ae8842e126a1f7649137506d6e2723337c7cc4ab8853b2532e893e20578e"
 	Maall_IdInt64_Field  expressions.ID = "0b9156a99e30819cd82d392bf29a9241cf9b8f4a2936f58f13609b6329fc7ce8"
 	Maall_IdUint32_Field expressions.ID = "30e70c33dce744105ddcaeaf1b550717a86c4491da96d98e53054b62853bf884"
 	Maall_IdUint64_Field expressions.ID = "432e5a8514069e63e67704346c081aac2f5b7c8b98cd255454c73c3ed2a84f90"
 	Maall_IdString_Field expressions.ID = "88ca7d547db4362d993ad28be40fee17d2b44156b348f6dd21dc933ce7921d0b"
-	Maall_IdEnum_Field   expressions.ID = "636a9720c4690ccf1c12f89efd03e1bc46825c95a8e8964c8764149acf93a029"
-	Maall_IdInt32_Field  expressions.ID = "0c13ae8842e126a1f7649137506d6e2723337c7cc4ab8853b2532e893e20578e"
 	Maall_Data_Field     expressions.ID = "2ac49ba8de9b05129997b2b47a4784833e3eb940b215e7319bd58f22bf79a4cd"
 )
 
 var validMAAllFields = map[expressions.ID]struct{}{
+	Maall_IdEnum_Field:   struct{}{},
+	Maall_IdInt32_Field:  struct{}{},
 	Maall_IdInt64_Field:  struct{}{},
 	Maall_IdUint32_Field: struct{}{},
 	Maall_IdUint64_Field: struct{}{},
 	Maall_IdString_Field: struct{}{},
-	Maall_IdEnum_Field:   struct{}{},
-	Maall_IdInt32_Field:  struct{}{},
 	Maall_Data_Field:     struct{}{},
 }
 

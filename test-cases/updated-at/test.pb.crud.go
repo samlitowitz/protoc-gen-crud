@@ -18,14 +18,14 @@ import (
 // These constants are used to specify fields in expressions
 const (
 	UpdatedAt_Id_Field        expressions.ID = "f3993e68f73e420da045e8ee92d04137b7eee1aef5b704a372371eb734825175"
-	UpdatedAt_Data_Field      expressions.ID = "ceabdd24edde7b8e0cbad683fbe5701cbe68c074b6ef9743657f5d3b35cd2403"
 	UpdatedAt_UpdatedAt_Field expressions.ID = "f59c9519de374ae29d212538fbc20ed0f57e3df4e8d606622ac0a323d62e4988"
+	UpdatedAt_Data_Field      expressions.ID = "ceabdd24edde7b8e0cbad683fbe5701cbe68c074b6ef9743657f5d3b35cd2403"
 )
 
 var validUpdatedAtFields = map[expressions.ID]struct{}{
 	UpdatedAt_Id_Field:        struct{}{},
-	UpdatedAt_Data_Field:      struct{}{},
 	UpdatedAt_UpdatedAt_Field: struct{}{},
+	UpdatedAt_Data_Field:      struct{}{},
 }
 
 type UpdatedAtRepository interface {

@@ -17,23 +17,23 @@ import (
 
 // These constants are used to specify fields in expressions
 const (
+	Saint32Maall_Saint32Id_Field     expressions.ID = "bf0ee967e4e935eb2eed373297d48762589a653ce882e141f942b48fe23f05dc"
 	Saint32Maall_MaallIdEnum_Field   expressions.ID = "0d5dc89edb368833c7c474fe95a5afcfba9206c6526bc0390026e8370196949b"
 	Saint32Maall_MaallIdInt32_Field  expressions.ID = "169fd573fbac685e674d16012f8055f6ff55e21c588af6f4d4fd7602bffe4e5e"
 	Saint32Maall_MaallIdInt64_Field  expressions.ID = "4d3434d60f5db7d1d7d843986ece4fbd166c22a7ea4549c4f3e048bee4e99d92"
 	Saint32Maall_MaallIdUint32_Field expressions.ID = "55b385e3e539671ce4090cf45a125b4e7b12b822cc6d028f134138a7b67c33eb"
 	Saint32Maall_MaallIdUint64_Field expressions.ID = "18ae6a055ae52b9df241138af04ce07aa358402dbf084c284b41e9d9fa4e3fdd"
 	Saint32Maall_MaallIdString_Field expressions.ID = "c5671e423394a57f3e5484d773f36607360222d86d81dd2e96e59dbbb093c82a"
-	Saint32Maall_Saint32Id_Field     expressions.ID = "bf0ee967e4e935eb2eed373297d48762589a653ce882e141f942b48fe23f05dc"
 )
 
 var validSAInt32MAAllFields = map[expressions.ID]struct{}{
+	Saint32Maall_Saint32Id_Field:     struct{}{},
 	Saint32Maall_MaallIdEnum_Field:   struct{}{},
 	Saint32Maall_MaallIdInt32_Field:  struct{}{},
 	Saint32Maall_MaallIdInt64_Field:  struct{}{},
 	Saint32Maall_MaallIdUint32_Field: struct{}{},
 	Saint32Maall_MaallIdUint64_Field: struct{}{},
 	Saint32Maall_MaallIdString_Field: struct{}{},
-	Saint32Maall_Saint32Id_Field:     struct{}{},
 }
 
 type SAInt32MAAllRepository interface {

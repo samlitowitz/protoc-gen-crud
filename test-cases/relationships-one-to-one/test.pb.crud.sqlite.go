@@ -1317,19 +1317,19 @@ func (repo *SQLiteMAAllRepository) Create(ctx context.Context, toCreate []*MAAll
 	binds := []any{}
 	bindsStrs := []string{}
 	for _, maall := range toCreate {
+		binds = append(binds, maall.GetIdString())
 		binds = append(binds, maall.GetIdEnum())
 		binds = append(binds, maall.GetIdInt32())
 		binds = append(binds, maall.GetIdInt64())
 		binds = append(binds, maall.GetIdUint32())
 		binds = append(binds, maall.GetIdUint64())
-		binds = append(binds, maall.GetIdString())
 		binds = append(binds, maall.GetData())
 		bindsStrs = append(bindsStrs, "(?,?,?,?,?,?,?)")
 	}
 	_, err = tx.ExecContext(
 		ctx,
 		fmt.Sprintf(
-			`INSERT INTO "ma_all" ("id_enum","id_int_32","id_int_64","id_uint_32","id_uint_64","id_string","data") VALUES
+			`INSERT INTO "ma_all" ("id_string","id_enum","id_int_32","id_int_64","id_uint_32","id_uint_64","data") VALUES
 			%s`,
 			strings.Join(bindsStrs, ",\n"),
 		),
@@ -1348,7 +1348,7 @@ func (repo *SQLiteMAAllRepository) Create(ctx context.Context, toCreate []*MAAll
 // Read returns a set of MAAlls matching the provided criteria
 // Read is incomplete and it should be considered unstable
 func (repo *SQLiteMAAllRepository) Read(ctx context.Context, expr expressions.Expression) ([]*MAAll, error) {
-	query := `SELECT "id_enum","id_int_32","id_int_64","id_uint_32","id_uint_64","id_string","data"
+	query := `SELECT "id_string","id_enum","id_int_32","id_int_64","id_uint_32","id_uint_64","data"
 		FROM "ma_all"`
 	clauses, binds, err := whereClauseFromExpressionForSQLiteMAAll(expr)
 	if err != nil {
@@ -1370,7 +1370,7 @@ func (repo *SQLiteMAAllRepository) Read(ctx context.Context, expr expressions.Ex
 	for rows.Next() {
 		maall := &MAAll_builder{}
 
-		if err = rows.Scan(&maall.IdEnum, &maall.IdInt32, &maall.IdInt64, &maall.IdUint32, &maall.IdUint64, &maall.IdString, &maall.Data); err != nil {
+		if err = rows.Scan(&maall.IdString, &maall.IdEnum, &maall.IdInt32, &maall.IdInt64, &maall.IdUint32, &maall.IdUint64, &maall.Data); err != nil {
 			return nil, err
 		}
 
@@ -1394,7 +1394,7 @@ func (repo *SQLiteMAAllRepository) Update(ctx context.Context, toUpdate []*MAAll
 	defer tx.Rollback()
 
 	stmt, err := tx.Prepare(
-		`UPDATE "ma_all" SET "data" = ? WHERE "id_enum" = ? AND "id_int_32" = ? AND "id_int_64" = ? AND "id_uint_32" = ? AND "id_uint_64" = ? AND "id_string" = ?`,
+		`UPDATE "ma_all" SET "data" = ? WHERE "id_string" = ? AND "id_enum" = ? AND "id_int_32" = ? AND "id_int_64" = ? AND "id_uint_32" = ? AND "id_uint_64" = ?`,
 	)
 	if err != nil {
 		return nil, err
@@ -1402,7 +1402,7 @@ func (repo *SQLiteMAAllRepository) Update(ctx context.Context, toUpdate []*MAAll
 	defer stmt.Close()
 
 	for _, maall := range toUpdate {
-		_, err = stmt.ExecContext(ctx, maall.GetData(), maall.GetIdEnum(), maall.GetIdInt32(), maall.GetIdInt64(), maall.GetIdUint32(), maall.GetIdUint64(), maall.GetIdString())
+		_, err = stmt.ExecContext(ctx, maall.GetData(), maall.GetIdString(), maall.GetIdEnum(), maall.GetIdInt32(), maall.GetIdInt64(), maall.GetIdUint32(), maall.GetIdUint64())
 		if err != nil {
 			return nil, err
 		}
@@ -1436,12 +1436,12 @@ func (repo *SQLiteMAAllRepository) Delete(ctx context.Context, expr expressions.
 }
 
 var sqliteMAAllColumnNameByFieldID = map[expressions.ID]string{
+	Maall_IdString_Field: "id_string",
 	Maall_IdEnum_Field:   "id_enum",
 	Maall_IdInt32_Field:  "id_int_32",
 	Maall_IdInt64_Field:  "id_int_64",
 	Maall_IdUint32_Field: "id_uint_32",
 	Maall_IdUint64_Field: "id_uint_64",
-	Maall_IdString_Field: "id_string",
 	Maall_Data_Field:     "data",
 }
 
